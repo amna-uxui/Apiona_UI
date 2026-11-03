@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Specimen</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+  main { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; display: grid; gap: 64px; }
+  section { display: grid; gap: 20px; }
+  p { margin: 0; max-width: 62ch; }
+  .muted { color: var(--text-2); }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+
+  .logo-tile { display: grid; place-items: center; height: 140px; border-radius: 4px; border: 1px solid var(--rule); }
+  .logo-tile img { width: 62%; max-width: 260px; }
+
+  .palette { display: grid; grid-template-columns: 6fr 2fr 1fr 0.8fr 0.25fr 0.25fr 0.25fr; height: 160px; border: 1px solid var(--rule-strong); }
+  .palette div { display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; font-size: var(--size-caption); gap: 2px; min-width: 0; overflow: hidden; }
+  .palette b { font-weight: var(--weight-medium); white-space: nowrap; }
+  .swatch-key { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .swatch-key div { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 4px 10px; align-items: center; font-size: var(--size-small); }
+  .swatch-key i { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--rule-strong); grid-row: span 2; }
+  .swatch-key span { font-size: var(--size-caption); color: var(--text-2); }
+
+  .ramp { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); border-radius: 4px; overflow: hidden; }
+  .ramp div { height: 96px; padding: 8px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 11px; gap: 2px; }
+
+  .ui { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn { font: var(--weight-medium) var(--size-small)/1 var(--font-sans); padding: 12px 18px; border-radius: 999px; border: 1px solid var(--black); background: var(--action); color: var(--on-action); }
+  .btn.secondary { background: transparent; color: var(--text); }
+  .chip { font: var(--weight-regular) var(--size-small)/1 var(--font-sans); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--rule-strong); background: var(--surface); }
+  .chip.on { background: var(--accent); border-color: var(--accent); }
+  a { color: var(--link); }
+  mark { background: var(--flag); color: var(--text); padding: 0 3px; }
+
+  .mosaic { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; padding: 3px; background: var(--grey-100); border-radius: 6px; }
+  .mosaic i { aspect-ratio: 1; border-radius: 5px; background: var(--cream); }
+  .mosaic .p { background: var(--voice-patient); }
+  .mosaic .c { background: var(--voice-clinician); box-shadow: inset 0 0 0 1px var(--rule-strong); }
+  .mosaic .f { background: var(--flag); }
+  .mosaic .d { background: var(--dismissal); box-shadow: inset 0 0 0 1.5px var(--pink-ink); }
+  .mosaic .g { background: var(--confirmed); }
+  .mosaic .y { background: var(--white); box-shadow: inset 0 0 0 2px var(--you); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: var(--size-small); color: var(--text-2); }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 16px; height: 16px; border-radius: 4px; display: block; }
+
+  .weights { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px 16px; }
+  .weights div { display: grid; gap: 6px; border-top: 1px solid var(--rule-strong); padding-top: 12px; }
+  .weights b { font-size: 44px; line-height: 1; }
+  .weights span { font-size: var(--size-caption); color: var(--text-2); }
+  .scale { display: grid; gap: 14px; }
+  .scale div { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: baseline; gap: 16px; border-top: 1px solid var(--rule-strong); padding-top: 10px; }
+  .scale code { font-size: var(--size-caption); color: var(--text-2); font-family: var(--font-sans); }
+  .voices { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .voices div { display: grid; gap: 10px; align-content: start; padding: 16px; border-radius: 6px; }
+  .figs { display: flex; flex-wrap: wrap; gap: 40px; }
+  .figs div { display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:20px">
+    <img src="logo/apiona-logo.svg" alt="Apiona" style="width:180px">
+    <h1 class="t-display" style="margin:0">Design specimen</h1>
+    <p class="t-lead muted">Fresh and calm: cream and white for space, black type for authority, blue as the one colour you notice. Yellow, pink and green only ever mark something.</p>
+  </header>
+
+  <section>
+    <p class="t-label muted">Logo</p>
+    <div class="row">
+      <div class="logo-tile" style="background:var(--cream)"><img src="logo/apiona-logo.svg" alt="Apiona logo in black on cream"></div>
+      <div class="logo-tile" style="background:var(--black);border-color:var(--black)"><img src="logo/apiona-logo-white.svg" alt="Apiona logo in white on black"></div>
+      <div class="logo-tile" style="background:var(--blue);border-color:var(--blue)"><img src="logo/apiona-logo.svg" alt="Apiona logo in black on blue"></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Palette, sized by how much of a screen each should cover</p>
+    <div class="palette" role="img" aria-label="Cream 60 percent, white 20, black 10, blue 8, yellow, pink and green about 2 together">
+      <div style="background:var(--cream)"><b>Cream</b>~60%</div>
+      <div style="background:var(--white)"><b>White</b>~20%</div>
+      <div style="background:var(--black);color:var(--white)"><b>Black</b>~10%</div>
+      <div style="background:var(--blue)"><b>Blue</b>~8%</div>
+      <div style="background:var(--yellow)"></div>
+      <div style="background:var(--pink)"></div>
+      <div style="background:var(--green)"></div>
+    </div>
+    <div class="swatch-key">
+      <div><i style="background:var(--cream)"></i>Cream<span>#FDF4E6 · background</span></div>
+      <div><i style="background:var(--white)"></i>White<span>#FFFFFF · cards</span></div>
+      <div><i style="background:var(--black)"></i>Black<span>#000000 · type, buttons</span></div>
+      <div><i style="background:var(--blue)"></i>Blue<span>#B1CCEE · primary</span></div>
+      <div><i style="background:var(--yellow)"></i>Yellow<span>#FCD74E · flags</span></div>
+      <div><i style="background:var(--pink)"></i>Pink<span>#FFB5DE · dismissals</span></div>
+      <div><i style="background:var(--green)"></i>Green<span>#97AD58 · confirmed</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Blue ramp</p>
+    <p class="muted">Your blue is a light tint, so black text sits on it (12.7:1). When blue itself has to be text, a link or a line, use the deeper steps.</p>
+    <div class="ramp">
+      <div style="background:var(--blue-50)">50<br>#F2F7FF</div>
+      <div style="background:var(--blue-100)">100<br>#E3ECF8</div>
+      <div style="background:var(--blue-200)">200<br>#CADDF5</div>
+      <div style="background:var(--blue-300);outline:2px solid var(--black);outline-offset:-2px"><b>300 brand</b>#B1CCEE</div>
+      <div style="background:var(--blue-500);color:var(--white)">500 lines<br>#5F89BC</div>
+      <div style="background:var(--blue-600);color:var(--white)">600 links<br>#3D6BA1</div>
+      <div style="background:var(--blue-700);color:var(--white)">700 text<br>#2A5486</div>
+      <div style="background:var(--blue-900);color:var(--white)">900 deep<br>#173960</div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Controls</p>
+    <div class="ui">
+      <button class="btn">Open the brief</button>
+      <button class="btn secondary">Add a note</button>
+      <span class="chip on">Joints and pain</span>
+      <span class="chip">Autonomic</span>
+      <span class="chip">Gut</span>
+      <a href="#">rheum_2019.pdf, page 2</a>
+    </div>
+    <p class="t-body">Rheumatology wrote: <mark>Beighton 7/9. No inflammatory disease.</mark> Discharged without follow-up.</p>
+  </section>
+
+  <section>
+    <p class="t-label muted">The record in these colours (proposal)</p>
+    <div class="mosaic" aria-hidden="true">
+      <i></i><i class="p"></i><i></i><i class="c"></i><i></i><i class="p"></i><i class="c"></i><i></i><i class="p"></i><i></i><i class="c"></i><i class="p"></i><i></i><i class="p"></i>
+      <i class="c"></i><i></i><i class="d"></i><i></i><i class="p"></i><i></i><i class="f"></i><i class="c"></i><i></i><i class="p"></i><i class="d"></i><i></i><i class="c"></i><i></i>
+      <i></i><i class="p"></i><i class="c"></i><i class="p"></i><i></i><i class="c"></i><i></i><i class="p"></i><i class="g"></i><i></i><i class="p"></i><i class="c"></i><i></i><i class="y"></i>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--voice-patient)"></i>Patient’s own words</span>
+      <span><i style="background:var(--white);box-shadow:inset 0 0 0 1px var(--rule-strong)"></i>Clinician wrote</span>
+      <span><i style="background:var(--flag)"></i>Flagged by the brief</span>
+      <span><i style="background:var(--dismissal);box-shadow:inset 0 0 0 1.5px var(--pink-ink)"></i>Ended in a dismissal</span>
+      <span><i style="background:var(--confirmed)"></i>Confirmed</span>
+      <span><i style="background:var(--white);box-shadow:inset 0 0 0 2px var(--black)"></i>Your notes</span>
+      <span><i style="background:var(--cream);box-shadow:inset 0 0 0 1px var(--grey-100)"></i>Nothing on file</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Installed weights · Helvetica Neue</p>
+    <div class="weights">
+      <div><b style="font-weight:100">Aa</b><span>UltraLight · 100</span></div>
+      <div><b style="font-weight:200">Aa</b><span>Thin · 200</span></div>
+      <div><b style="font-weight:300">Aa</b><span>Light · 300</span></div>
+      <div><b style="font-weight:400">Aa</b><span>Regular · 400</span></div>
+      <div><b style="font-weight:500">Aa</b><span>Medium · 500</span></div>
+      <div><b style="font-weight:700">Aa</b><span>Bold · 700</span></div>
+      <div><b style="font-family:var(--font-condensed);font-weight:700">Aa</b><span>Condensed Bold</span></div>
+      <div><b style="font-family:var(--font-condensed);font-weight:900">Aa</b><span>Condensed Black</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Type roles</p>
+    <div class="scale">
+      <div><code>display · 64</code><span class="t-display">The living record</span></div>
+      <div><code>h1 · 44</code><span class="t-h1">Léa M., 34</span></div>
+      <div><code>h2 · 32</code><span class="t-h2">Joints and pain</span></div>
+      <div><code>h3 · 24</code><span class="t-h3">Rheumatology, 2019</span></div>
+      <div><code>lead · 20</code><span class="t-lead">Fifteen years from first symptoms to diagnosis.</span></div>
+      <div><code>body · 16</code><span class="t-body">Beighton score 7/9. No inflammatory disease. Discharged without follow-up.</span></div>
+      <div><code>small · 14</code><span class="t-small">rheum_2019.pdf, page 2 · 4 documents</span></div>
+      <div><code>label · 12</code><span class="t-label">Flagged by the brief</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Figures · Condensed Bold</p>
+    <div class="figs">
+      <div><span class="t-figure">15</span><span class="t-small muted">years to diagnosis</span></div>
+      <div><span class="t-figure">12</span><span class="t-small muted">specialists seen</span></div>
+      <div><span class="t-figure">6</span><span class="t-small muted">dismissals</span></div>
+      <div><span class="t-figure">+38</span><span class="t-small muted">bpm on standing</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Three voices, type and colour together</p>
+    <div class="voices">
+      <div style="background:var(--voice-patient)"><span class="t-label">Léa said</span><p class="voice-patient">“I don’t need someone to tell me it’s in my head. I need help living with it.”</p></div>
+      <div style="background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule-strong)"><span class="t-label muted">Clinician wrote</span><p class="voice-clinician">Normal echo. Palpitations likely anxiety-related.</p></div>
+      <div style="background:var(--surface);box-shadow:inset 0 0 0 1px var(--rule-strong)"><span class="t-label muted">Brief flagged</span><p class="voice-brief"><mark>Early sign of hEDS</mark>, seven years before anyone acted on it.</p></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

@@ -9,9 +9,13 @@ Focus scenario: a patient with SEDH (hypermobile Ehlers-Danlos syndrome) before 
 - `concepts/` — interactive concept prototypes
   - `living-record.html` — the record as a cross-section that grows a ring each year; zoom from body system to moment to source document
 
+- `design/` — the design system
+  - `tokens.css` — colours (cream, black, white, blue first; yellow, pink and green as markers) and type (Helvetica Neue)
+  - `specimen.html` — a page showing the logo, palette, type and record colours together
+  - `logo/` — Apiona logo: `apiona-logo.svg` (black, or any colour via CSS) and `apiona-logo-white.svg`
+
 Planned as we go:
 
-- `design/` — colour scheme, fonts and other design tokens
 - `references/` — mood board and visual references
 - `frames/` — UX frames from the team
 
