@@ -16,6 +16,19 @@
 
   .logo-tile { display: grid; place-items: center; height: 140px; border-radius: 4px; border: 1px solid var(--rule); }
   .logo-tile img { width: 62%; max-width: 260px; }
+  .logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .logo-grid div { display: grid; place-items: center; height: 110px; border-radius: 4px; }
+  .logo-grid img { width: 68%; }
+  .icon-tiles { display: flex; flex-wrap: wrap; gap: 16px; }
+  .icon-tiles div { width: 96px; height: 96px; border-radius: 22px; display: grid; place-items: center; }
+  .icon-tiles img { width: 58%; }
+  .cream-test { display: grid; gap: 4px; }
+  .cream-row { display: grid; grid-template-columns: 220px repeat(4, 96px); align-items: center; gap: 28px; padding: 14px 0; border-top: 1px solid var(--rule); }
+  .cream-row img { width: 72px; }
+  .cream-row.small img { width: 32px; }
+  @media (max-width: 700px) { .cream-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; } .cream-row span { grid-column: 1 / -1; } .cream-row img { width: 100%; max-width: 72px; } }
+  .icon-sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px; font-size: var(--size-caption); color: var(--text-2); }
+  .icon-sizes span { display: grid; justify-items: center; gap: 8px; }
 
   .palette { display: grid; grid-template-columns: 6fr 2fr 1fr 0.8fr 0.25fr 0.25fr 0.25fr; height: 160px; border: 1px solid var(--rule-strong); }
   .palette div { display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; font-size: var(--size-caption); gap: 2px; min-width: 0; overflow: hidden; }
@@ -73,8 +86,51 @@
     <p class="t-label muted">Logo</p>
     <div class="row">
       <div class="logo-tile" style="background:var(--cream)"><img src="logo/apiona-logo.svg" alt="Apiona logo in black on cream"></div>
-      <div class="logo-tile" style="background:var(--black);border-color:var(--black)"><img src="logo/apiona-logo-white.svg" alt="Apiona logo in white on black"></div>
+      <div class="logo-tile" style="background:var(--black);border-color:var(--black)"><img src="logo/colours/apiona-logo-white.svg" alt="Apiona logo in white on black"></div>
       <div class="logo-tile" style="background:var(--blue);border-color:var(--blue)"><img src="logo/apiona-logo.svg" alt="Apiona logo in black on blue"></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Logo in colour</p>
+    <p class="muted">The colours are light, so a coloured logo only goes on black. On a coloured ground, the logo is black. On cream the full logo stays black, because the thin letters fade in colour; the icon alone can be coloured (see below).</p>
+    <div class="logo-grid">
+      <div style="background:var(--black)"><img src="logo/colours/apiona-logo-blue.svg" alt="Blue logo on black"></div>
+      <div style="background:var(--black)"><img src="logo/colours/apiona-logo-yellow.svg" alt="Yellow logo on black"></div>
+      <div style="background:var(--black)"><img src="logo/colours/apiona-logo-pink.svg" alt="Pink logo on black"></div>
+      <div style="background:var(--black)"><img src="logo/colours/apiona-logo-green.svg" alt="Green logo on black"></div>
+      <div style="background:var(--blue)"><img src="logo/apiona-logo.svg" alt="Black logo on blue"></div>
+      <div style="background:var(--yellow)"><img src="logo/apiona-logo.svg" alt="Black logo on yellow"></div>
+      <div style="background:var(--pink)"><img src="logo/apiona-logo.svg" alt="Black logo on pink"></div>
+      <div style="background:var(--green)"><img src="logo/apiona-logo.svg" alt="Black logo on green"></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="t-label muted">Icon on its own</p>
+    <p class="muted">For tight spaces: the app header, browser tab, avatar fallbacks and loading states. Same rule as the logo: colour on black, black on colour.</p>
+    <div class="icon-tiles">
+      <div style="background:var(--black)"><img src="logo/colours/apiona-icon-blue.svg" alt="Blue icon on black"></div>
+      <div style="background:var(--blue)"><img src="logo/apiona-icon.svg" alt="Black icon on blue"></div>
+      <div style="background:var(--yellow)"><img src="logo/apiona-icon.svg" alt="Black icon on yellow"></div>
+      <div style="background:var(--pink)"><img src="logo/apiona-icon.svg" alt="Black icon on pink"></div>
+      <div style="background:var(--green)"><img src="logo/apiona-icon.svg" alt="Black icon on green"></div>
+      <div style="background:var(--white);box-shadow:inset 0 0 0 1px var(--rule-strong)"><img src="logo/apiona-icon.svg" alt="Black icon on white"></div>
+    </div>
+    <div class="cream-test">
+      <p class="t-label muted">Colour on cream</p>
+      <p class="muted">Flat colour on cream, from 48 px up: welcome screens, empty states, loading, section markers. Blue first; yellow, pink and green for small accents. Below 48 px, use the black icon so it stays readable.</p>
+      <div class="cream-row"><span class="t-small">48 px and up · flat colour</span>
+        <img src="logo/colours/apiona-icon-blue.svg" alt="Blue icon on cream"><img src="logo/colours/apiona-icon-yellow.svg" alt="Yellow icon on cream"><img src="logo/colours/apiona-icon-pink.svg" alt="Pink icon on cream"><img src="logo/colours/apiona-icon-green.svg" alt="Green icon on cream"></div>
+      <div class="cream-row small"><span class="t-small">Under 48 px · black</span>
+        <img src="logo/apiona-icon.svg" alt="Black icon at 32 pixels" width="32"><img src="logo/apiona-icon.svg" alt="Black icon at 24 pixels" width="24"></div>
+    </div>
+    <div class="icon-sizes">
+      <span><img src="logo/apiona-icon.svg" alt="" width="16" height="16">16</span>
+      <span><img src="logo/apiona-icon.svg" alt="" width="24" height="24">24</span>
+      <span><img src="logo/apiona-icon.svg" alt="" width="32" height="32">32</span>
+      <span><img src="logo/apiona-icon.svg" alt="" width="48" height="48">48</span>
+      <span><img src="logo/apiona-icon.svg" alt="" width="96" height="96">96 px</span>
     </div>
   </section>
 

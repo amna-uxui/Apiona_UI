@@ -14,7 +14,10 @@ Focus scenario: a patient with SEDH (hypermobile Ehlers-Danlos syndrome) before 
 - `design/` — the design system
   - `tokens.css` — colours (cream, black, white, blue first; yellow, pink and green as markers) and type (Helvetica Neue)
   - `specimen.html` — a page showing the logo, palette, type and record colours together
-  - `logo/` — Apiona logo: `apiona-logo.svg` (black, or any colour via CSS) and `apiona-logo-white.svg`
+  - `logo/` — Apiona logo and icon
+    - `apiona-logo.svg`, `apiona-icon.svg` — black, or any colour via CSS
+    - `colours/` — logo and icon in black, white, blue, yellow, pink and green
+    - Rules: coloured logos on black; black logo on colour; flat coloured icon on cream from 48 px up, black below that
 
 Planned as we go:
 
