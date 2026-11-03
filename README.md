@@ -1,6 +1,8 @@
-# Living Record
+# Apiona Web portal
 
-UI and visual design work for the pre-consultation experience: helping a practitioner understand a patient's medical history before the first visit. The patient's record is drawn as a living, growing structure (a garden of cells) instead of a stack of documents.
+UI and visual design work for the Apiona web portal, which brings practitioners and patients with chronic illness together.
+
+The current focus is the pre-consultation experience: helping a practitioner understand a patient's medical history before the first visit. The main concept, the Living Record, draws the patient's record as a living, growing structure (a garden of cells) instead of a stack of documents.
 
 Focus scenario: a patient with SEDH (hypermobile Ehlers-Danlos syndrome) before their first visit with a psychotherapist.
 

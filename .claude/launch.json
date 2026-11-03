@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "living-record",
+      "name": "apiona-web-portal",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "/Users/amnaahmad/Desktop/living-record"],
+      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "/Users/amnaahmad/Desktop/Apiona Web portal"],
       "port": 8765
     }
   ]
