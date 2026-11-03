@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camille M. · Patient summary</title>
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="../design/components.css">
+<style>
+  /* Structure follows the UX frame "1 · Consultation tab":
+     1. In brief: one block with the summary sentence and three panels
+     2. Where it hurts | What happened
+     3. Details and sources: diagnoses, history and care team | patient and coverage, prescription */
+
+  /* 1 · In brief */
+  .brief { display: grid; }
+  .brief-slab { background: var(--blue); border-radius: 40px; padding: 40px 44px 128px; }
+  .brief-sentence { margin-top: 12px; max-width: 28em; font: var(--weight-regular) var(--size-xl)/1.2 var(--font-sans); letter-spacing: var(--tracking-tight); }
+  .brief-note { margin-top: 14px; color: var(--black); }
+  .panels { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .95fr); gap: 20px; align-items: start; margin: -96px 28px 0; }
+  .panels .card { gap: 18px; border-radius: 28px; box-shadow: 0 28px 56px -28px rgba(0, 0, 0, .22); }
+  .panels .know { transform: translateY(-18px); }
+
+  .wants-more { display: grid; gap: 6px; }
+
+  .know-list { display: grid; gap: 16px; }
+  .know-list li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; }
+  .know-list .source { margin-top: 3px; }
+  .know-more { padding-top: 16px; border-top: 1px solid var(--black); display: grid; gap: 2px; }
+  .rules { font-size: var(--size-s); }
+  .rules a { color: var(--black); text-underline-offset: 3px; }
+
+  .complete-list li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--rule); }
+  .complete-list li:first-child { border-top: 0; padding-top: 0; }
+  .admin { display: grid; gap: 4px; padding-top: 16px; border-top: 1px solid var(--rule); margin-top: auto; }
+
+  /* 2 · Where it hurts | What happened */
+  .row-2 { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; }
+  .body-card { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .body-map { position: relative; width: 170px; }
+  .body-map svg { display: block; width: 100%; height: auto; }
+  .body-map .marker { position: absolute; transform: translate(-50%, -50%); width: 24px; height: 24px; box-shadow: 0 0 0 3px var(--white); }
+  .pain-list { display: grid; gap: 18px; }
+  .pain-list li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; }
+  .card > .source:last-child { margin-top: auto; }
+
+  .steps { display: grid; }
+  .steps li { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 16px; padding-bottom: 22px; }
+  .steps li::before { content: ""; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: var(--black); }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li:last-child::before { display: none; }
+  .step-icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--black); color: var(--white); }
+  .today .step-icon { background: var(--blue); color: var(--black); }
+  .related { padding-top: 18px; border-top: 1px solid var(--rule); }
+
+  /* 3 · Details and sources */
+  .details-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; padding-top: 24px; border-top: 1px solid var(--rule-strong); }
+  .details { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+  .details-col { display: grid; gap: 20px; min-width: 0; }
+  .table .source { white-space: nowrap; }
+  .table .link { display: inline-flex; align-items: center; gap: 6px; }
+  .history { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; }
+  .history > * { padding: 14px 16px 14px 0; border-top: 1px solid var(--rule); }
+  .history > :nth-child(-n+3) { border-top: 0; padding-top: 0; }
+  .history dt { color: var(--text-2); }
+  .history .who { padding-right: 0; text-align: right; }
+  .team { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .team li { background: var(--cream); border-radius: 18px; padding: 16px; display: grid; gap: 2px; align-content: start; }
+  .team .with-photo { grid-template-columns: 44px minmax(0, 1fr); gap: 12px; }
+  .team .with-photo img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+  .team .with-photo div { display: grid; gap: 2px; }
+  .team-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; }
+  .kv { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px 16px; }
+  .kv dt { color: var(--text-2); }
+  .doc-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .foot { color: var(--text-2); font-size: var(--size-s); }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .tile {
+    border: 0; background: var(--band, var(--white)); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+    border-radius: 24px; padding: 24px; display: grid; gap: 6px; align-content: start;
+    box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .15s;
+  }
+  .tile:hover { box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25); }
+  .tile[aria-expanded="true"] { box-shadow: inset 0 0 0 2px var(--black); }
+  .tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--black); font-size: var(--size-s); color: var(--text); }
+  .tile-foot .icon { flex: none; transition: transform .2s; color: var(--text); }
+  .tile[aria-expanded="true"] .tile-foot .icon { transform: rotate(180deg); }
+  .card.detail-panel, .detail-panel.two > .card { border-top: 8px solid var(--band); }
+  .detail-panel.two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .detail-panel.two[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { .tile, .tile-foot .icon { transition: none; } }
+
+  @container (max-width: 1100px) {
+    .panels { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .panels .know { grid-column: 1 / -1; order: -1; transform: none; }
+    .panels { margin: -88px 20px 0; }
+    .row-2, .details { grid-template-columns: minmax(0, 1fr); }
+    .team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .detail-panel.two { grid-template-columns: minmax(0, 1fr); }
+  }
+  @container (max-width: 640px) {
+    .brief-slab { padding: 24px 22px 104px; border-radius: 28px; }
+    .brief-sentence { font-size: 26px; }
+    .panels { margin: -80px 12px 0; }
+    .panels, .body-card, .team { grid-template-columns: minmax(0, 1fr); }
+    .body-map { margin: 0 auto; }
+    .history { grid-template-columns: minmax(0, 1fr); }
+    .history > * { border-top: 0; padding: 0; }
+    .history dt { padding-top: 14px; border-top: 1px solid var(--rule); }
+    .history dt:first-child { border-top: 0; padding-top: 0; }
+    .history .who { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<script src="../design/icons.js"></script>
+<div class="app">
+
+  <aside class="sidebar">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-label="Expand menu"><svg class="icon icon--s"><use href="#i-chevron-left"/></svg></button>
+    <a class="sidebar-logo" href="#" aria-label="Apiona home">
+      <img class="logo-icon" src="../design/logo/colours/apiona-icon-blue.svg" alt="">
+      <img class="logo-full" src="../design/logo/colours/apiona-logo-blue.svg" alt="">
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#" title="Schedule"><svg class="icon"><use href="#i-calendar"/></svg><span class="nav-label">Schedule</span></a>
+      <a href="#" title="Patients" aria-current="page"><svg class="icon"><use href="#i-users"/></svg><span class="nav-label">Patients</span></a>
+      <a href="#" title="Billing"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-label">Billing</span></a>
+    </nav>
+    <nav class="nav nav--bottom" aria-label="Account">
+      <a href="#" title="Settings"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span></a>
+      <a href="#" title="Log out"><svg class="icon"><use href="#i-log-out"/></svg><span class="nav-label">Log out</span></a>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <header class="patient-head">
+      <div>
+        <h1 class="t-xl">Camille M.</h1>
+        <dl class="facts">
+          <div><dt>Age</dt><dd>28</dd></div>
+          <div><dt>Sex</dt><dd>Female</dd></div>
+          <div><dt>Status</dt><dd>New patient</dd></div>
+          <div><dt>Case</dt><dd>Accident</dd></div>
+          <div><dt>Session</dt><dd>1 of 9, initial assessment</dd></div>
+          <div><dt>Billing</dt><dd>OK</dd></div>
+        </dl>
+      </div>
+      <a class="btn" href="#">Start consultation</a>
+    </header>
+
+    <nav class="tabs" aria-label="Patient record">
+      <a href="#" aria-current="page">Consultation</a>
+      <a href="#">Follow-up</a>
+      <a href="#">Documents</a>
+    </nav>
+
+    <!-- 1 · In brief -->
+    <section class="brief" aria-labelledby="brief-title">
+      <div class="brief-slab">
+        <h2 class="card-title" id="brief-title">In brief</h2>
+        <p class="brief-sentence">Mid-foot sprain after a fall on the stairs. Referred by the emergency department of Clinique Bois-Cerf. X‑ray shows no fracture. 9 sessions prescribed.</p>
+        <span class="source brief-note">Sentence assembled from the prescription and record fields, not rephrased</span>
+      </div>
+
+      <div class="panels">
+        <section class="card" aria-labelledby="wants-title">
+          <h3 class="card-title" id="wants-title">What she wants</h3>
+          <blockquote class="t-quote">“Mostly, to be in less pain. I sleep badly and it hurts even sitting at my desk.”</blockquote>
+          <div class="wants-more">
+            <p class="t-m-strong">She also expects this first visit to tell her</p>
+            <p>How long it will take</p>
+            <p>Which exercises to do at home</p>
+          </div>
+          <span class="source">Her words, preparation of 3 Nov</span>
+        </section>
+
+        <section class="card card--yellow know" aria-labelledby="know-title">
+          <div class="card-head" style="margin:0">
+            <h3 class="card-title" id="know-title">Know before the session</h3>
+            <span class="t-s">5 points</span>
+          </div>
+          <ol class="know-list">
+            <li><span class="marker">1</span><div><p><b class="t-m-strong">Hypermobility (Ehlers-Danlos)</b> “joint instability, repeated sprains, proprioception problems”</p><span class="source">GP, medical report attached</span></div></li>
+            <li><span class="marker">2</span><div><p><b class="t-m-strong">Frequent dizziness</b> chronic migraines</p><span class="source">Neurology clinic, entered by the patient</span></div></li>
+            <li><span class="marker">3</span><div><p><b class="t-m-strong">Cerebral cavernoma</b> “history of bleeding episodes”</p><span class="source">Neurosurgery, medical report attached</span></div></li>
+            <li><span class="marker">4</span><div><p><b class="t-m-strong">Asthma</b> “breathless on exertion”</p><span class="source">Pulmonologist, entered by the patient</span></div></li>
+            <li><span class="marker">5</span><div><p><b class="t-m-strong">Other pain</b> right knee (compensating), right wrist (crutches), already followed at the hand centre</p><span class="source">Patient, hand centre</span></div></li>
+          </ol>
+          <div class="know-more">
+            <p class="t-m-strong">Current treatments</p>
+            <p>Asthma treatment, duloxetine, botulinum toxin (migraines)</p>
+            <span class="source">Patient, doses not given, to ask in session</span>
+          </div>
+          <p class="rules">Highlighted by your practice’s rules: balance and falls, neurology, breathing, other pain, treatments. Text taken from the record, nothing interpreted. <a href="#">Edit rules</a></p>
+        </section>
+
+        <section class="card" aria-labelledby="complete-title">
+          <h3 class="card-title" id="complete-title">To complete in session</h3>
+          <ul class="complete-list">
+            <li><svg class="icon"><use href="#i-alert"/></svg><span class="t-m-strong">Allergies</span><span class="tag">Not given</span></li>
+            <li><svg class="icon"><use href="#i-pill"/></svg><span class="t-m-strong">Medication doses</span><span class="tag">Not given</span></li>
+            <li><svg class="icon"><use href="#i-calendar"/></svg><span class="t-m-strong">Assessment date</span><span class="tag">To set</span></li>
+          </ul>
+          <div class="admin">
+            <p class="t-m-strong">Administrative</p>
+            <p>Accident case corrected by the patient</p>
+            <p>Claim number provided</p>
+            <p>Waiting: insurance letter</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- 2 · Where it hurts | What happened -->
+    <div class="row-2">
+      <section class="card" aria-labelledby="body-title">
+        <h2 class="card-title" id="body-title">Where it hurts</h2>
+        <div class="body-card">
+          <div class="body-map body--female">
+            <svg role="img" aria-label="Female body, front view. Her right side is on the left." viewBox="0 -10 201 471"><g fill="currentColor"><ellipse cx="100.7" cy="2" rx="12" ry="10"/><path d="M194.4 243.9C192.9 242.3 189.9 236.4 188.3 234.4C186.5 232.4 178.9 225.8 174.0 222.7C172.8 221.9 171.7 221.3 170.8 221.0C165.7 215.5 160.6 193.8 161.8 177.2C161.4 159.7 156.7 152.8 156.7 152.8C157.3 138.4 153.2 123.6 153.3 120.0C153.2 116.5 152.3 105.5 152.3 105.5C154.1 87.5 146.7 84.0 138.0 80.6C128.8 77.3 117.1 70.9 115.3 69.3C113.5 67.6 113.5 64.9 113.4 60.4C113.4 56.1 115.1 51.5 116.5 46.2C120.3 46.1 122.5 34.1 120.6 33.0C120.0 32.6 119.5 32.5 119.1 32.7C119.7 26.5 119.4 19.6 116.6 14.2C111.4 4.0 101.1 4.4 101.1 4.4L100.2 4.4C100.2 4.4 90.0 4.0 84.7 14.2C81.9 19.6 81.7 26.5 82.2 32.7C81.9 32.5 81.4 32.6 80.7 33.0C78.8 34.1 81.0 46.1 84.8 46.2C86.2 51.5 88.0 56.1 87.9 60.4C87.8 64.9 87.8 67.6 86.0 69.3C84.3 70.9 72.5 77.3 63.3 80.6C54.6 84.0 47.2 87.5 49.0 105.5C49.0 105.5 48.1 116.5 48.0 120.0C48.1 123.6 44.0 138.4 44.7 152.8C44.7 152.8 39.9 159.7 39.5 177.2C40.7 193.8 35.7 215.5 30.5 221.0C29.6 221.3 28.5 221.9 27.3 222.7C22.4 225.8 14.8 232.4 13.0 234.4C11.4 236.4 8.4 242.3 6.9 243.9C5.1 245.7 4.6 248.4 7.5 247.1C10.4 245.9 13.6 242.8 14.8 241.0C15.9 239.2 16.7 238.7 16.7 238.7C16.7 238.7 13.3 250.6 11.8 254.3C10.1 258.3 7.3 263.8 9.3 264.3C11.6 265.0 12.8 261.9 13.7 259.6C14.8 257.2 20.2 245.9 21.0 245.2C22.1 244.4 21.5 245.7 20.6 248.4C20.4 249.3 18.8 253.9 17.5 256.9C16.3 259.9 13.5 266.5 16.9 266.1C20.3 265.7 25.1 247.9 25.9 246.6C26.6 245.3 27.0 245.8 26.0 249.0C25.7 250.0 21.1 262.0 21.3 264.4C21.7 266.8 24.2 266.5 25.3 263.3C26.7 260.2 30.4 247.7 31.1 246.7C31.8 245.8 31.6 247.5 31.0 249.8C30.5 251.4 27.4 260.5 29.2 260.9C31.0 261.3 32.0 260.2 34.0 253.5C35.7 247.7 36.3 244.5 36.9 240.8C37.4 237.0 41.2 226.1 41.2 222.8C41.2 222.8 48.2 211.6 53.3 201.9C56.4 192.2 60.4 175.2 59.6 166.8C59.4 159.9 64.4 135.8 66.2 127.7C66.4 129.7 66.6 131.9 67.0 134.1C68.8 145.0 71.6 158.2 71.2 166.4C71.1 174.6 71.3 187.0 70.9 191.9C70.5 196.7 64.4 215.5 58.7 238.7C56.3 261.9 60.5 289.3 62.4 295.0C64.2 300.8 64.7 306.5 64.3 310.5C64.0 314.4 63.4 323.2 64.6 329.1C64.6 329.1 61.4 344.5 64.2 365.6C67.2 386.7 72.3 409.9 72.3 412.3C72.3 412.5 72.3 412.9 72.3 413.3C72.1 414.4 71.8 415.5 71.6 416.7C71.3 418.0 71.2 419.4 71.1 420.8C71.1 422.2 71.2 423.6 71.2 425.0C71.2 425.9 71.2 426.9 71.1 427.9C70.5 429.3 69.7 430.6 68.9 431.9C67.8 433.7 66.5 435.4 65.3 437.0C64.0 438.6 62.7 440.3 61.4 442.0C60.8 442.8 60.2 443.7 59.7 444.6C59.1 445.5 58.5 446.5 58.3 447.6C58.1 448.6 58.4 449.6 59.3 450.1C59.5 450.2 59.7 450.3 59.9 450.3C59.9 450.6 59.9 450.9 60.0 451.3C60.3 452.5 61.5 453.3 62.6 453.4C62.8 453.9 63.2 454.4 63.8 454.6C64.6 454.8 65.4 454.6 66.1 454.1C66.1 454.3 66.2 454.5 66.3 454.7C66.7 455.6 67.6 455.9 68.5 455.9C69.6 455.9 70.5 455.2 71.2 454.4C71.6 454.0 71.9 453.6 72.2 453.2C72.1 453.7 72.1 454.4 72.3 454.9C72.7 456.0 73.8 456.5 74.8 456.7C75.7 456.8 76.7 456.6 77.5 456.2C77.9 456.0 78.2 455.8 78.5 455.5C79.1 455.2 79.6 454.8 80.1 454.3C81.1 453.2 81.8 451.9 82.3 450.5C83.5 447.4 83.9 444.1 84.5 440.9C84.6 440.3 84.7 439.6 84.8 439.0C84.9 439.1 85.0 439.1 85.1 439.0C86.5 437.6 87.0 435.3 87.1 433.4C87.3 431.1 86.9 428.8 86.5 426.5C86.1 424.1 85.6 421.7 85.4 419.2C85.1 416.8 84.9 414.3 84.8 411.9C84.7 410.5 84.7 409.2 84.6 407.8C84.6 407.7 84.6 407.6 84.6 407.5C84.8 403.8 85.1 400.1 85.5 397.0C86.9 384.0 92.0 362.3 90.6 351.1C89.3 339.8 90.7 311.2 92.1 303.0C93.5 294.8 100.5 248.7 99.0 235.5L100.7 235.4L102.3 235.5C100.8 248.7 107.9 294.8 109.3 303.0C110.7 311.2 112.0 339.8 110.7 351.1C109.4 362.3 114.4 384.0 115.9 397.0C116.2 400.1 116.5 403.8 116.7 407.5C116.7 407.6 116.7 407.7 116.7 407.8C116.7 409.2 116.6 410.5 116.5 411.9C116.4 414.3 116.2 416.8 116.0 419.2C115.7 421.7 115.2 424.1 114.8 426.5C114.4 428.8 114.0 431.1 114.2 433.4C114.4 435.3 114.9 437.6 116.2 439.0C116.3 439.1 116.4 439.1 116.5 439.0C116.6 439.6 116.7 440.3 116.8 440.9C117.5 444.1 117.8 447.4 119.0 450.5C119.5 451.9 120.2 453.2 121.2 454.3C121.7 454.8 122.2 455.2 122.8 455.5C123.1 455.8 123.5 456.0 123.8 456.2C124.6 456.6 125.6 456.8 126.6 456.7C127.6 456.5 128.7 456.0 129.1 454.9C129.3 454.4 129.2 453.7 129.1 453.2C129.4 453.6 129.8 454.0 130.1 454.4C130.8 455.2 131.7 455.9 132.8 455.9C133.7 455.9 134.6 455.6 135.1 454.7C135.1 454.5 135.2 454.3 135.2 454.1C135.9 454.6 136.7 454.8 137.5 454.6C138.1 454.4 138.5 453.9 138.7 453.4C139.9 453.3 141.0 452.5 141.4 451.3C141.4 450.9 141.5 450.6 141.4 450.3C141.6 450.3 141.8 450.2 142.0 450.1C142.9 449.6 143.2 448.6 143.0 447.6C142.8 446.5 142.2 445.5 141.6 444.6C141.1 443.7 140.5 442.8 139.9 442.0C138.7 440.3 137.4 438.6 136.1 437.0C134.8 435.4 133.6 433.7 132.5 431.9C131.6 430.6 130.8 429.3 130.2 427.9C130.1 426.9 130.1 425.9 130.1 425.0C130.1 423.6 130.2 422.2 130.2 420.8C130.2 419.4 130.0 418.0 129.7 416.7C129.5 415.5 129.2 414.4 129.0 413.3C129.0 412.9 129.0 412.5 129.0 412.3C129.0 409.9 134.2 386.7 137.1 365.6C140.0 344.5 136.8 329.1 136.8 329.1C137.9 323.2 137.4 314.4 137.0 310.5C136.6 306.5 137.1 300.8 138.9 295.0C140.9 289.3 145.0 261.9 142.6 238.7C137.0 215.5 130.8 196.7 130.4 191.9C130.0 187.0 130.2 174.6 130.1 166.4C129.8 158.2 132.5 145.0 134.3 134.1C134.7 131.9 134.9 129.7 135.1 127.7C137.0 135.8 142.0 159.9 141.7 166.8C141.0 175.2 144.9 192.2 148.0 201.9C153.1 211.6 160.2 222.8 160.2 222.8C160.1 226.1 164.0 237.0 164.4 240.8C165.1 244.5 165.6 247.7 167.3 253.5C169.3 260.2 170.3 261.3 172.1 260.9C173.9 260.5 170.8 251.4 170.3 249.8C169.7 247.5 169.5 245.8 170.2 246.7C170.9 247.7 174.6 260.2 176.0 263.3C177.2 266.5 179.7 266.8 180.0 264.4C180.3 262.0 175.6 250.0 175.3 249.0C174.3 245.8 174.7 245.3 175.5 246.6C176.3 247.9 181.1 265.7 184.4 266.1C187.8 266.5 185.1 259.9 183.8 256.9C182.5 253.9 181.0 249.3 180.7 248.4C179.9 245.7 179.2 244.4 180.3 245.2C181.2 245.9 186.6 257.2 187.6 259.6C188.5 261.9 189.7 265.0 192.0 264.3C194.1 263.8 191.2 258.3 189.5 254.3C188.1 250.6 184.6 238.7 184.6 238.7C184.6 238.7 185.4 239.2 186.5 241.0C187.7 242.8 190.9 245.9 193.8 247.1C196.8 248.4 196.3 245.7 194.4 243.9Z"/></g></svg>
+            <span class="marker" style="left:13%;top:51%">3</span>
+            <span class="marker" style="left:40%;top:74%">2</span>
+            <span class="marker" style="left:50%;top:97%">1</span>
+          </div>
+          <ol class="pain-list">
+            <li><span class="marker">1</span><div><p class="t-m-strong">Mid-foot, side not stated</p><p>Swollen, limping, pain when walking, at night and&nbsp;sitting</p></div></li>
+            <li><span class="marker">2</span><div><p class="t-m-strong">Right knee</p><p>Since she started compensating</p></div></li>
+            <li><span class="marker">3</span><div><p class="t-m-strong">Right wrist</p><p>From the crutches</p></div></li>
+          </ol>
+        </div>
+        <span class="source">Patient, preparation of 3 Nov</span>
+      </section>
+
+      <section class="card" aria-labelledby="happened-title">
+        <h2 class="card-title" id="happened-title">What happened</h2>
+        <ol class="steps">
+          <li><span class="step-icon"><svg class="icon icon--s"><use href="#i-footprints"/></svg></span><div><p class="t-m-strong">Saturday</p><p>Misses a step on the stairs of her building</p></div></li>
+          <li><span class="step-icon"><svg class="icon icon--s"><use href="#i-hospital"/></svg></span><div><p class="t-m-strong">Sunday</p><p>Emergency, Bois-Cerf. X‑ray: no fracture. 9 sessions.</p></div></li>
+          <li><span class="step-icon"><svg class="icon icon--s"><use href="#i-briefcase"/></svg></span><div><p class="t-m-strong">Monday</p><p>Her employer reports the accident</p></div></li>
+          <li><span class="step-icon"><svg class="icon icon--s"><use href="#i-send"/></svg></span><div><p class="t-m-strong">Tuesday 3 Nov</p><p>Prepares and sends her file</p></div></li>
+          <li class="today"><span class="step-icon"><svg class="icon icon--s"><use href="#i-calendar-check"/></svg></span><div><p class="t-m-strong">Today</p><p>Session 1 of 9</p></div></li>
+        </ol>
+        <p class="related"><b class="t-m-strong">Related history:</b> several ankle sprains, arthroscopic stabilisation of the left shoulder (recurrent dislocations), 2021</p>
+        <span class="source">Patient, emergency prescription, X‑ray report</span>
+      </section>
+    </div>
+
+    <!-- 3 · Details and sources: four tiles, each opens its full content -->
+    <div class="details-head">
+      <h2 class="t-xl">Details and sources</h2>
+      <span class="source">Everything in the record, to check</span>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" style="--band:var(--blue)" type="button" aria-expanded="false" aria-controls="d-diagnoses">
+        <span class="t-figure">5</span><span class="t-m-strong">Documented diagnoses</span>
+        <span class="tile-foot"><span>2 with a medical report</span><svg class="icon"><use href="#i-chevron-down"/></svg></span>
+      </button>
+      <button class="tile" style="--band:var(--green)" type="button" aria-expanded="false" aria-controls="d-history">
+        <span class="t-figure">4</span><span class="t-m-strong">History and treatments</span>
+        <span class="tile-foot"><span>Allergies not given</span><svg class="icon"><use href="#i-chevron-down"/></svg></span>
+      </button>
+      <button class="tile" style="--band:var(--yellow)" type="button" aria-expanded="false" aria-controls="d-team">
+        <span class="t-figure">10</span><span class="t-m-strong">Carers</span>
+        <span class="tile-foot"><span>GP will be informed</span><svg class="icon"><use href="#i-chevron-down"/></svg></span>
+      </button>
+      <button class="tile" style="--band:var(--pink)" type="button" aria-expanded="false" aria-controls="d-docs">
+        <span class="t-figure">5</span><span class="t-m-strong">Documents and coverage</span>
+        <span class="tile-foot"><span>Prescription valid</span><svg class="icon"><use href="#i-chevron-down"/></svg></span>
+      </button>
+    </div>
+
+    <section class="card detail-panel" style="--band:var(--blue)" id="d-diagnoses" hidden aria-label="Documented diagnoses">
+      <div class="card-head" style="margin:0">
+        <h3 class="card-title">Documented diagnoses</h3>
+        <span class="source">Taken from the record, nothing interpreted by Apiona</span>
+      </div>
+      <div class="scroll-x">
+        <table class="table">
+          <thead><tr><th>Diagnosis</th><th>Diagnosed by</th><th>Note</th><th>Added to the record</th></tr></thead>
+          <tbody>
+            <tr><td class="t-m-strong">Hypermobile Ehlers-Danlos syndrome</td><td>GP</td><td>“Ligament laxity, joint instability, repeated sprains, proprioception problems”</td><td><a class="link source" href="#"><svg class="icon icon--s"><use href="#i-paperclip"/></svg>Medical report</a></td></tr>
+            <tr><td class="t-m-strong">Chronic migraines</td><td>Neurology clinic</td><td>“Frequent dizziness”</td><td><span class="source">Entered by the patient</span></td></tr>
+            <tr><td class="t-m-strong">Left parietal cavernoma, 7 mm</td><td>Neurosurgery</td><td>“History of bleeding episodes”</td><td><a class="link source" href="#"><svg class="icon icon--s"><use href="#i-paperclip"/></svg>Medical report</a></td></tr>
+            <tr><td class="t-m-strong">Asthma</td><td>Pulmonologist</td><td>“Breathless on exertion”</td><td><span class="source">Entered by the patient</span></td></tr>
+            <tr><td class="t-m-strong">Extensor tendinopathy of the fingers, right wrist</td><td>Hand centre</td><td>“Limited use of the right hand”</td><td><span class="source">Entered by the patient</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="source"><span><span class="tag">General information</span> Hypermobile Ehlers-Danlos syndrome: <a class="link" href="#">encyclopedia entry</a>, not specific to this patient</span></p>
+    </section>
+
+    <section class="card detail-panel" style="--band:var(--green)" id="d-history" hidden aria-label="History and treatments">
+      <h3 class="card-title">History and treatments</h3>
+      <dl class="history">
+        <dt>Surgery</dt><dd>Arthroscopic stabilisation of the left shoulder (recurrent dislocations), 2021</dd><dd class="who source">Patient</dd>
+        <dt>Sprains</dt><dd>Several ankle sprains in the past</dd><dd class="who source">Patient</dd>
+        <dt>Allergies</dt><dd><span class="tag tag--pink">Not given by the patient</span></dd><dd class="who"></dd>
+        <dt>Treatments</dt><dd>Asthma treatment, duloxetine, botulinum toxin (migraines)<span class="source">Doses not given</span></dd><dd class="who source">Patient</dd>
+      </dl>
+    </section>
+
+    <section class="card detail-panel" style="--band:var(--yellow)" id="d-team" hidden aria-label="Care team">
+      <h3 class="card-title">Care team</h3>
+      <ul class="team">
+        <li class="with-photo"><img src="assets/practitioner.jpg" alt=""><div><span class="source">GP, coordination</span><p class="t-m-strong">Dr Thomas Keller</p><p>Will be informed (consent signed)</p></div></li>
+        <li><span class="source">Prescriber</span><p class="t-m-strong">Emergency, Bois-Cerf</p><a class="link" href="#">Contact</a></li>
+        <li><span class="source">Physiotherapist, jaw</span><p class="t-m-strong">Marc Dubois</p><a class="link" href="#">Contact</a></li>
+        <li><span class="source">Occupational therapist, right wrist</span><p class="t-m-strong">Sara Meier</p><a class="link" href="#">Contact</a></li>
+      </ul>
+      <div class="team-foot">
+        <span class="source"><span>About ten carers in total, <a class="link" href="#">see all</a></span></span>
+        <span class="source">Record confirmed up to date by the patient on 3 Nov</span>
+      </div>
+    </section>
+
+    <div class="detail-panel two" style="--band:var(--pink)" id="d-docs" hidden>
+      <section class="card" aria-labelledby="cov-title">
+        <h3 class="card-title" id="cov-title">Patient and coverage</h3>
+        <dl class="kv">
+          <dt>Address</dt><dd>Rue d’Italie 14, Vevey</dd>
+          <dt>Case</dt><dd><b class="t-m-strong">Accident</b>, corrected by the patient</dd>
+          <dt>Claim no.</dt><dd>Provided</dd>
+          <dt>Employer</dt><dd>Atelier Rossi Architectes</dd>
+          <dt>Activity</dt><dd>Architectural draughtswoman, 60 %, mostly seated, site visits</dd>
+          <dt>Insurance</dt><dd>Accident insurer, supplementary cover given</dd>
+        </dl>
+        <div style="display:grid;gap:10px;padding-top:18px;border-top:1px solid var(--rule)">
+          <p class="source">Documents attached · 5</p>
+          <div class="doc-tags">
+            <span class="tag">Prescription</span><span class="tag">Insurance card</span><span class="tag">X‑ray</span><span class="tag">Privacy notice signed</span><span class="tag">GP consent</span>
+          </div>
+        </div>
+        <span class="source">Source: patient, preparation of 3 Nov, documents scanned by her</span>
+      </section>
+      <section class="card" aria-labelledby="rx-title">
+        <div class="card-head" style="margin:0">
+          <h3 class="card-title" id="rx-title">Prescription</h3>
+          <span class="tag tag--green">Valid</span>
+        </div>
+        <p>Emergency, Clinique Bois-Cerf. Mid-foot sprain, 9 sessions (position 7301).</p>
+        <span class="source"><span>Scanned by the patient, read automatically. <a class="link" href="#">See the original</a></span></span>
+      </section>
+    </div>
+
+    <p class="foot">Sample patient. All names, dates and documents are invented.</p>
+  </main>
+</div>
+<script>
+  (function () {
+    var tiles = document.querySelectorAll('.tile');
+    tiles.forEach(function (tile) {
+      tile.addEventListener('click', function () {
+        var open = tile.getAttribute('aria-expanded') === 'true';
+        tiles.forEach(function (t) {
+          t.setAttribute('aria-expanded', 'false');
+          document.getElementById(t.getAttribute('aria-controls')).hidden = true;
+        });
+        if (!open) {
+          tile.setAttribute('aria-expanded', 'true');
+          document.getElementById(tile.getAttribute('aria-controls')).hidden = false;
+        }
+      });
+    });
+  })();
+</script>
+<script src="../design/app.js"></script>
+</body>
+</html>

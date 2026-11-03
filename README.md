@@ -4,22 +4,26 @@ UI and visual design work for the Apiona web portal, which brings practitioners 
 
 The current focus is the pre-consultation experience: helping a practitioner understand a patient's medical history before the first visit.
 
-Focus scenario: a patient with SEDH (hypermobile Ehlers-Danlos syndrome) before their first visit with a psychotherapist.
+Focus scenario: a physiotherapist's first visit with Camille, referred for a mid-foot sprain, who has SEDH (hypermobile Ehlers-Danlos syndrome). The design question: how does the physiotherapist understand her whole medical history in a short time?
 
 ## Folders
 
+- `ui/` — the portal screens, one per UX frame, in English
+  - `patient-summary.html` — Consultation tab: the patient summary, built for a one-minute read
+
 - `design/` — the design system
   - `tokens.css` — colours (cream, black, white, blue first; yellow, pink and green as markers) and type (Helvetica Neue)
+  - `components.css` — shared pieces: collapsible sidebar, patient header, tabs, card board, tags, markers, tables
+  - `icons.js` — the icon set (one line style); `app.js` — the sidebar collapse and expand
+  - `illustrations/` — body silhouettes, female and male, from the stock vector file (check its licence before publishing)
   - `specimen.html` — a page showing the logo, palette, type and record colours together
   - `logo/` — Apiona logo and icon
     - `apiona-logo.svg`, `apiona-icon.svg` — black, or any colour via CSS
     - `colours/` — logo and icon in black, white, blue, yellow, pink and green
     - Rules: coloured logos on black; black logo on colour; flat coloured icon on cream from 48 px up, black below that
 
-Planned as we go:
-
-- `references/` — mood board and visual references
-- `frames/` — UX frames from the team
+- `references/` — visual references and what we take from each (images stay local)
+- `frames/` — the UX team's wireframes, mapped to the flow, with a French → English glossary (wireframe files stay local)
 
 ## Viewing the pages
 

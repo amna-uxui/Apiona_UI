@@ -1,5 +1,5 @@
 /*
-  Living Record design tokens.
+  Apiona design tokens.
   Every page links this file and takes its colours and type from here.
 
   Typeface: Helvetica Neue, the version installed with macOS.
@@ -7,35 +7,23 @@
   On Windows and Android it falls back to Arial or the system sans.
 */
 
-/* Condensed styles have to be reached by their installed names. */
-@font-face {
-  font-family: "HN Condensed";
-  src: local("HelveticaNeue-CondensedBold"), local("Helvetica Neue Condensed Bold");
-  font-weight: 700;
-}
-@font-face {
-  font-family: "HN Condensed";
-  src: local("HelveticaNeue-CondensedBlack"), local("Helvetica Neue Condensed Black");
-  font-weight: 900;
-}
-
 :root {
   /* ---------- Colour: brand palette (exact values from the brief) ---------- */
   --cream: #FDF4E6;   /* page background */
   --black: #000000;
   --white: #FFFFFF;
   --blue: #B1CCEE;    /* primary */
-  --yellow: #FCD74E;  /* secondary, sparing */
-  --pink: #FFB5DE;    /* secondary, sparing */
-  --green: #97AD58;   /* secondary, sparing */
+  --yellow: #FCD74E;
+  --pink: #FFB5DE;
+  --green: #97AD58;
 
   /*
-    Mix: cream ~60% of a screen, white ~20%, black type ~10%, blue ~8%,
-    yellow + pink + green together ~2%. The secondaries are markers, never large areas.
+    Colour is a surface, never text: whole cards in a colour, black text on top.
+    Blue is the biggest coloured area on a screen. Yellow, pink and green each get
+    at most one card per screen, plus small tags. Charts and marks on colour are black.
   */
 
-  /* Blue ramp, same hue as --blue. The brand blue is a light tint, so text, links
-     and lines in blue use the darker steps (contrast on cream in brackets). */
+  /* Blue ramp, same hue as --blue. For text, links and lines in blue (contrast on cream). */
   --blue-50: #F2F7FF;
   --blue-100: #E3ECF8;
   --blue-200: #CADDF5;
@@ -45,93 +33,55 @@
   --blue-700: #2A5486;  /* text on blue tints (7.1:1) */
   --blue-900: #173960;  /* deep blue (10.8:1) */
 
-  /* Text partners for the secondaries: use these when the colour itself must be text */
-  --yellow-ink: #665405;
-  --pink-ink: #7E3963;
-  --green-ink: #465412;
-
-  /* Warm greys, tinted toward the cream so they don't look dead */
+  /* Warm greys, tinted toward the cream */
   --grey-100: #E2DDD5;  /* hairlines */
   --grey-300: #C8C3BC;  /* stronger borders */
-  --grey-500: #8A857E;  /* placeholder, decorative (3.4:1, not for small text) */
-  --grey-600: #615D56;  /* secondary text (6.0:1) */
-  --grey-800: #46423B;
+  --grey-600: #514D47;  /* secondary text (8:1 on cream) */
 
-  /* ---------- Colour: roles (use these in components) ---------- */
+  /* ---------- Colour: roles ---------- */
   --bg: var(--cream);
   --surface: var(--white);
   --text: var(--black);
-  --text-2: var(--grey-600);
-  --text-3: var(--grey-500);
+  --text-2: var(--grey-600);   /* the only secondary text colour */
   --rule: var(--grey-100);
   --rule-strong: var(--grey-300);
-  --action: var(--black);          /* primary buttons: black with white text */
+  --action: var(--black);      /* primary buttons: black with white text */
   --on-action: var(--white);
-  --accent: var(--blue);           /* selection, active tab, highlights; black text on top (12.7:1) */
-  --accent-soft: var(--blue-100);
+  --accent: var(--blue);       /* selection and active states */
   --link: var(--blue-600);
   --focus: var(--blue-600);
 
-  /* Record roles: the voices and states in a patient's history */
-  --voice-patient: var(--blue);      /* the patient's own words and diary */
-  --voice-clinician: var(--white);   /* what a clinician wrote; drawn with --rule-strong */
-  --flag: var(--yellow);             /* flagged by the brief, like a highlighter */
-  --dismissal: var(--pink);          /* visit ended in "stress", "anxiety" or "nothing found" */
-  --confirmed: var(--green);         /* confirmed finding or diagnosis */
-  --you: var(--black);               /* the practitioner's own notes */
+  /* Card colours in the patient record. They say what kind of content a card holds,
+     never a medical judgement: Apiona doesn't interpret. */
+  --overview: var(--blue);     /* the patient at a glance ("In brief") */
+  --goals: var(--green);       /* what the patient wants; goals; done or valid */
+  --highlight: var(--yellow);  /* highlighted by the practice's own rules */
+  --to-ask: var(--pink);       /* missing or waiting: to ask or follow up */
 
-  /* Families */
+  /* ---------- Type: Helvetica Neue only ---------- */
   --font-sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
-  --font-condensed: "HN Condensed", "Helvetica Neue", "Arial Narrow", Arial, sans-serif;
 
-  /* Weights, mapped to the installed Helvetica Neue styles */
-  --weight-ultralight: 100;
-  --weight-thin: 200;
-  --weight-light: 300;
+  /* Two weights only. Hierarchy comes from size, not from more weights. */
   --weight-regular: 400;
   --weight-medium: 500;
-  --weight-bold: 700;
-  --weight-black: 900; /* Condensed only */
 
-  /* Size scale (16px body, roughly 1.25 steps) */
-  --size-caption: 12px;
-  --size-small: 14px;
-  --size-body: 16px;
-  --size-lead: 20px;
-  --size-h3: 24px;
-  --size-h2: 32px;
-  --size-h1: 44px;
-  --size-display: 64px;
+  /* Five sizes only */
+  --size-s: 14px;    /* sources, dates, table headers: the smallest size, never below 14 */
+  --size-m: 16px;    /* body */
+  --size-l: 20px;    /* card titles, quotes, key sentences */
+  --size-xl: 32px;   /* page title, the "In brief" sentence */
+  --size-xxl: 56px;  /* big figures */
 
-  /* Line height */
-  --leading-tight: 1.08;
-  --leading-snug: 1.3;
-  --leading-body: 1.5;
-
-  /* Tracking: Helvetica Neue gets tighter as it gets bigger */
-  --tracking-display: -0.025em;
-  --tracking-heading: -0.015em;
-  --tracking-body: 0;
-  --tracking-label: 0.06em; /* small uppercase labels */
+  --leading-tight: 1.15;
+  --leading-body: 1.45;
+  --tracking-tight: -0.02em;  /* only for --size-xl and up */
 }
 
-/*
-  Roles. Use these classes (or copy their declarations) instead of picking sizes ad hoc.
-*/
-.t-display { font: var(--weight-light) var(--size-display)/var(--leading-tight) var(--font-sans); letter-spacing: var(--tracking-display); }
-.t-h1      { font: var(--weight-light) var(--size-h1)/var(--leading-tight) var(--font-sans); letter-spacing: var(--tracking-heading); }
-.t-h2      { font: var(--weight-regular) var(--size-h2)/var(--leading-snug) var(--font-sans); letter-spacing: var(--tracking-heading); }
-.t-h3      { font: var(--weight-medium) var(--size-h3)/var(--leading-snug) var(--font-sans); letter-spacing: var(--tracking-heading); }
-.t-lead    { font: var(--weight-light) var(--size-lead)/var(--leading-body) var(--font-sans); }
-.t-body    { font: var(--weight-regular) var(--size-body)/var(--leading-body) var(--font-sans); }
-.t-small   { font: var(--weight-regular) var(--size-small)/var(--leading-body) var(--font-sans); }
-.t-label   { font: var(--weight-medium) var(--size-caption)/var(--leading-snug) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
-.t-figure  { font: var(--weight-bold) var(--size-h1)/1 var(--font-condensed); font-variant-numeric: tabular-nums; }
-
-/*
-  The three voices in a patient's record, told apart by type before colour is added:
-  the patient's own words, what a clinician wrote, and what the brief flagged.
-*/
-.voice-patient   { font: italic var(--weight-light) var(--size-lead)/var(--leading-body) var(--font-sans); }
-.voice-clinician { font: var(--weight-regular) var(--size-body)/var(--leading-body) var(--font-sans); }
-.voice-brief     { font: var(--weight-medium) var(--size-small)/var(--leading-body) var(--font-sans); }
+/* Type roles. Use these instead of picking sizes ad hoc. No italics, no uppercase labels. */
+.t-xl     { font: var(--weight-medium) var(--size-xl)/var(--leading-tight) var(--font-sans); letter-spacing: var(--tracking-tight); }
+.t-l      { font: var(--weight-medium) var(--size-l)/1.3 var(--font-sans); }
+.t-quote  { font: var(--weight-regular) var(--size-l)/1.35 var(--font-sans); }
+.t-m      { font: var(--weight-regular) var(--size-m)/var(--leading-body) var(--font-sans); }
+.t-m-strong { font: var(--weight-medium) var(--size-m)/var(--leading-body) var(--font-sans); }
+.t-s      { font: var(--weight-regular) var(--size-s)/var(--leading-body) var(--font-sans); }
+.t-figure { font: var(--weight-medium) var(--size-xxl)/1 var(--font-sans); letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums; }

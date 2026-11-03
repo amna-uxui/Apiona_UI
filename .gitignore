@@ -18,5 +18,17 @@ build/
 .env.*
 *.log
 
+# Reference images are other people's work and the repo is public:
+# keep them on this Mac, share only the links and notes
+references/*
+!references/README.md
+
+# The team's wireframes are internal product work: local only unless we decide otherwise
+frames/*
+!frames/README.md
+
 # Personal Claude Code settings
 .claude/settings.local.json
+
+# Photo of a real person: keep it on this Mac only
+ui/assets/practitioner.*
