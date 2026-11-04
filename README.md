@@ -32,7 +32,7 @@ We moved away from a text-heavy dashboard. The patient's record is shown as a sm
     - `colours/apiona-logo-teal.svg`, `colours/apiona-icon-teal.svg` — the current logo and its icon, used in the prototype's menu
     - `apiona-logo.svg`, `apiona-icon.svg` and the other colours — earlier versions
 
-- `ui/assets/` — the patient photo, kept on this Mac only (not in git: it shows a real person)
+- `ui/assets/` — the patient and practitioner photos used by the prototype (both people agreed to them being public)
 - `references/` — visual references and what we take from each (images stay local)
 - `frames/` — the UX team's wireframes, mapped to the flow, with a French → English glossary (wireframe files stay local)
 
@@ -58,4 +58,4 @@ python3 -m http.server 8765
 
 Then open http://localhost:8765/experiments/01-network/ (desktop width). All patient data shown is invented.
 
-Online (GitHub Pages, from `main`): https://amna-uxui.github.io/Apiona_UI/ — the root page opens the prototype. Online, the private photos show as initials, and the font falls back to Helvetica Neue (ABC Areal is only installed on this Mac).
+Online (GitHub Pages, from `main`): https://amna-uxui.github.io/Apiona_UI/ — the root page opens the prototype. Online, the font falls back to Helvetica Neue (ABC Areal is only installed on this Mac).
