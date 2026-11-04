@@ -1047,6 +1047,34 @@
   }
 
   // the web from the home screen: thin lines from the chosen label to each fact from the record
+  // documents attached to the facts of an area: one node per document, however many facts point to it
+  function docNodes(a) {
+    const ids = [...new Set(a.record.map((x) => x.doc).filter(Boolean))];
+    return ids.map((id) => {
+      const M = byId.get(id).media, im = M.images[0];
+      return `<button class="as-doc" type="button" data-doc="${id}" aria-label="View ${M.caption}">
+        <span class="as-doc-page"><img src="${im.src}" alt=""></span><span class="as-doc-cap">GP report</span></button>`;
+    }).join("");
+  }
+
+  // a document, large in the middle of the screen; click anywhere or Esc to put it back
+  function openDoc(id, from) {
+    const M = byId.get(id).media;
+    const view = document.createElement("div");
+    view.className = "doc-view";
+    view.innerHTML = `<div class="doc-pages">${M.images.map((im) => `<img src="${im.src}" alt="${im.alt}">`).join("")}</div>
+      <p class="doc-cap"><span>${M.caption}</span>${M.file ? `<a href="${M.file.href}" target="_blank" rel="noopener">${M.file.label} ↗</a>` : ""}<span class="doc-hint">click anywhere to put it back</span></p>`;
+    const r = from.getBoundingClientRect();
+    view.style.setProperty("--ox", `${r.left + r.width / 2}px`);
+    view.style.setProperty("--oy", `${r.top + r.height / 2}px`);
+    document.body.appendChild(view);
+    const close = () => { view.classList.remove("is-in"); document.removeEventListener("keydown", onKey, true); setTimeout(() => view.remove(), 400); };
+    const onKey = (e) => { if (e.key === "Escape") { e.stopImmediatePropagation(); close(); } };
+    view.addEventListener("click", (e) => { if (!e.target.closest("a")) close(); });
+    document.addEventListener("keydown", onKey, true);
+    requestAnimationFrame(() => requestAnimationFrame(() => view.classList.add("is-in")));
+  }
+
   // the facts float a little, like the nodes on the home screen, and lean towards the pointer;
   // soft curves tie them to the chosen label
   const web = { lay: null, svg: null, a: null, facts: [], ptr: null, raf: 0 };
@@ -1069,11 +1097,28 @@
     const L = lay.getBoundingClientRect(), P = pill.getBoundingClientRect();
     web.lay = lay; web.svg = svg;
     web.a = { x: P.right - L.left, y: P.top + P.height / 2 - L.top };
+    const body = (el, x, y, i) => ({ el, i, bx: x, by: y, ox: 0, oy: 0, vx: 0, vy: 0, seed: i * 1.7 + Math.random() });
     web.facts = els.map((el, i) => {
       const r = el.querySelector(".as-mark").getBoundingClientRect();
-      return { el, i, bx: r.left - L.left - 6, by: r.top + r.height / 2 - L.top, ox: 0, oy: 0, vx: 0, vy: 0, seed: i * 1.7 + Math.random() };
+      const f = body(el, r.left - L.left - 6, r.top + r.height / 2 - L.top, i);
+      const t = el.querySelector(".src-t").getBoundingClientRect();
+      f.end = { x: t.right - L.left + 6, y: t.top + t.height / 2 - L.top };   // where a document link leaves the fact
+      return f;
     });
+    // documents sit level with the facts that point to them, and float too
+    web.docs = [...lay.querySelectorAll(".as-doc")].map((el, i) => {
+      const from = web.facts.filter((f) => f.el.dataset.doc === el.dataset.doc);
+      el.style.transform = "";
+      el.style.top = `${from.reduce((t, f) => t + f.end.y, 0) / from.length - lay.querySelector("#as-panel").getBoundingClientRect().top + L.top - el.offsetHeight / 2}px`;
+      const r = el.getBoundingClientRect();
+      const d = body(el, r.left - L.left, r.top + r.height / 2 - L.top, i + 5);
+      d.from = from;
+      if (!el.dataset.wired) { el.dataset.wired = 1; el.addEventListener("click", () => openDoc(el.dataset.doc, el)); }
+      return d;
+    });
+    web.links = web.docs.flatMap((d) => d.from.map((f) => ({ f, d })));
     svg.innerHTML = web.facts.map((f) => `<path pathLength="1" style="--i:${f.i}"/><circle r="2" style="--i:${f.i}"/>`).join("")
+      + web.links.map((l, k) => `<path class="to-doc" pathLength="1" style="--i:${web.facts.length + k}"/>`).join("")
       + `<circle class="from" cx="${web.a.x}" cy="${web.a.y}" r="2.5"/>`;
     drawWeb(performance.now());
     svg.classList.toggle("is-drawn", !animate);
@@ -1083,7 +1128,14 @@
 
   function drawWeb(t) {
     const { a, svg } = web;
-    const paths = svg.querySelectorAll("path"), dots = svg.querySelectorAll("circle:not(.from)");
+    const paths = svg.querySelectorAll("path:not(.to-doc)"), dots = svg.querySelectorAll("circle:not(.from)");
+    svg.querySelectorAll("path.to-doc").forEach((p, k) => {
+      const { f, d } = web.links[k];
+      const s0 = { x: f.end.x + f.ox, y: f.end.y + f.oy }, e = { x: d.bx + d.ox - 4, y: d.by + d.oy };
+      const dx = e.x - s0.x, sway = Math.sin(t / 2100 + d.seed + k) * 6;
+      p.setAttribute("d", `M${s0.x},${s0.y} C${s0.x + dx * 0.5},${s0.y + sway} ${e.x - dx * 0.5},${e.y - sway} ${e.x},${e.y}`);
+    });
+    web.docs.forEach((d) => { d.el.style.transform = `translate(${d.ox.toFixed(2)}px, ${d.oy.toFixed(2)}px)`; });
     web.facts.forEach((f, k) => {
       const b = { x: f.bx + f.ox, y: f.by + f.oy };
       const dx = b.x - a.x, sway = Math.sin(t / 1900 + f.seed) * 10;
@@ -1096,7 +1148,7 @@
   function floatWeb(t) {
     web.raf = 0;
     if (!web.lay || !web.lay.isConnected || !web.lay.offsetWidth || !web.facts.length) return;   // restarts on the next linkFacts
-    web.facts.forEach((f) => {
+    web.facts.concat(web.docs || []).forEach((f) => {
       // a slow drift around its place, plus a lean towards the pointer when it is near
       let tx = Math.sin(t / 2300 + f.seed) * 3, ty = Math.cos(t / 1700 + f.seed * 1.3) * 3.5;
       if (web.ptr) {
@@ -1168,7 +1220,8 @@
     panel.innerHTML = `
       <div class="as-record">
           <h4 class="as-area-name">${a.label}</h4>
-          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
+          ${a.record.length ? a.record.map((x) => `<p class="as-fact"${x.doc ? ` data-doc="${x.doc}"` : ""}><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src"><span class="src-t">${x.src}</span></span></span></p>`).join("")
+            + docNodes(a)
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
       </div>`;
     const work = $("#as-work");

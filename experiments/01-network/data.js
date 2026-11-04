@@ -286,7 +286,7 @@ window.RECORD = {
     areas: [
       { id: "joints", label: "Joints", zones: [[40, 398, 64, 72]],  sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
         record: [
-          { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached" },
+          { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached", doc: "heds" },
           { text: "Several ankle sprains · left shoulder stabilised, 2021", src: "Her history" },
         ],
         tests: [{ test: "Ankle dorsiflexion", side: "Both sides" }, { test: "Mid-foot stability", side: "Affected", ref: "Healthy side" }] },
@@ -303,7 +303,7 @@ window.RECORD = {
         record: [
           { text: "Frequent dizziness (chronic migraines)", src: "Neurology clinic · by the patient" },
           { text: "Cerebral cavernoma · “history of bleeding episodes”", src: "Neurosurgery · report attached" },
-          { text: "Proprioception problems (Ehlers-Danlos)", src: "GP · report attached" },
+          { text: "Proprioception problems (Ehlers-Danlos)", src: "GP · report attached", doc: "heds" },
         ],
         tests: [{ test: "Two-legged stance", side: "Both sides" }, { test: "One-legged stance", side: "Affected", ref: "Healthy side" }] },
     ],
