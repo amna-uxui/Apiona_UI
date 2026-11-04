@@ -766,18 +766,29 @@
   let consulting = false, clockTimer = null, startedAt = 0, hideTimer = null;
 
   function buildConsult() {
-    $("#c-sections").innerHTML = C.steps.map((st, i) => `
+    const notesStep = C.steps.find((x) => x.id === "notes");
+    const today = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long" });
+    $("#c-notes").innerHTML = `
+      <p class="c-notes-date"><span class="tag tag-session">${today} · session 1</span></p>
+      <ol class="jots" aria-label="Notes"></ol>
+      <div class="dict-list" data-key="notes"></div>
+      <textarea class="jot-input" rows="1" aria-label="Write a note" placeholder="Write a note…"></textarea>
+      <textarea data-sec="notes" hidden aria-hidden="true">${notesStep.text || ""}</textarea>`;
+    wireJots();
+    $("#c-sections").innerHTML = C.steps.filter((st) => st.id !== "notes").map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
           <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
-        <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>`
+        <div class="c-sec-body">${st.id === "reason" ? `<div class="rh" id="rh"></div><textarea data-sec="reason" hidden aria-hidden="true"></textarea>`
+          : st.id === "assessment" ? `<div class="assess" id="assess"></div>`
           : st.id === "goals" ? `<div class="goals" id="goals"></div>`
-          : `<textarea rows="${st.text ? 7 : 3}" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
+          : `<textarea class="c-grow" rows="3" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
              <div class="dict-list" data-key="${st.id}"></div>`}</div>
       </article>`).join("");
 
+    buildReason();
     buildAssessment();
     buildGoals();
     buildAsk();
@@ -787,7 +798,7 @@
       const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
       if (chip) chip.classList.toggle("is-open", on);
       if (on && sec.id === "cs-assessment") requestAnimationFrame(sizePills);
-      if (on) requestAnimationFrame(() => sec.querySelectorAll(".goal textarea").forEach((f) => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
+      if (on) requestAnimationFrame(() => sec.querySelectorAll(".goal textarea, textarea.c-grow").forEach((f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; }));
     };
     consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
     consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
@@ -796,13 +807,15 @@
       open(sec, true);
       sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     }));
+    // the section texts grow with what is written: no inner scrollbar
+    consult.querySelectorAll("textarea.c-grow").forEach((f) => f.addEventListener("input", () => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
     // saving status: every change is saved a moment later, and says so
     const save = $("#c-save");
     let saveTimer = null;
     const markSaved = () => {
       const now = new Date();
       save.classList.remove("is-saving");
-      save.querySelector("span").textContent = `Saved ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      save.querySelector("span").textContent = `All changes saved · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     };
     const markChanged = () => {
       save.classList.add("is-saving");
@@ -887,13 +900,13 @@
       const a = C.areas.find((x) => x.id === areaId);
       return { key: `assessment:${areaId}`, label: `Assessment › ${a.label}` };
     }
-    const id = open.find((x) => x !== "reason") || open[0] || "notes";
+    const id = open.find((x) => x !== "reason") || "notes";   // notes are always there
     return { key: id, label: C.steps.find((x) => x.id === id).label };
   }
 
   function listFor(key) {
     if (key.startsWith("assessment:")) return key === `assessment:${areaId}` ? $("#as-panel .dict-list") : null;
-    return consult.querySelector(`.dict-list[data-key="${key}"]`);
+    return document.querySelector(`.dict-list[data-key="${key}"]`);
   }
 
   function renderDictated(el, key) {
@@ -913,8 +926,10 @@
           const a = C.areas.find((x) => `assessment:${x.id}` === key);
           a.notes = (a.notes ? a.notes.trim() + " " : "") + text;
           const ta = $("#as-panel .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
+        } else if (key === "notes") {
+          addJot(text);
         } else {
-          const ta = consult.querySelector(`textarea[data-sec="${key}"]`);
+          const ta = document.querySelector(`textarea[data-sec="${key}"]`);
           if (ta) ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + text;
         }
         renderDictated(el, key);
@@ -956,8 +971,8 @@
     document.body.classList.toggle("is-viewing", on);
     if (!on) { box.classList.remove("is-in"); setTimeout(() => { if (!reportOpen) box.hidden = true; }, 400); return; }
     if (dictating) setDictation(false);
-    const val = (id) => (consult.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
-    const para = (t) => (t.trim() ? `<p>${t.trim()}</p>` : `<p class="r-empty">Not written yet.</p>`);
+    const val = (id) => (document.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
+    const para = (t) => (t.trim() ? t.trim().split(/\n\s*\n/).map((x) => `<p>${x.trim()}</p>`).join("") : `<p class="r-empty">Not written yet.</p>`);
     const areas = C.areas.map((a) => {
       const tests = a.tests.filter((t) => t.test && t.result);   // only tests with a result go into the report
       if (!tests.length && !a.notes) return "";
@@ -1047,6 +1062,74 @@
   }
 
   // the web from the home screen: thin lines from the chosen label to each fact from the record
+  /* ---------- Notes as timed jottings: Enter files a note with the time in the session ---------- */
+  const jots = [];
+  const sessionTime = () => {
+    const t = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
+    return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  };
+  function syncNotes() {
+    const ta = $('#c-notes textarea[data-sec="notes"]');
+    ta.value = jots.map((j) => `${j.time}  ${j.text}`).join("\n");
+    ta.dispatchEvent(new Event("input", { bubbles: true }));   // the saving status follows
+  }
+  function renderJots(fresh) {
+    const list = $("#c-notes .jots");
+    list.innerHTML = jots.map((j, i) => `
+      <li class="jot${fresh && i === jots.length - 1 ? " is-new" : ""}" data-i="${i}">
+        <time>${j.time}</time>
+        <span class="jot-text" contenteditable="plaintext-only" spellcheck="true">${j.text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</span>
+        <button type="button" class="jot-del" aria-label="Remove this note">×</button>
+      </li>`).join("");
+    list.querySelectorAll(".jot").forEach((li) => {
+      const j = jots[+li.dataset.i];
+      li.querySelector(".jot-text").addEventListener("input", (e) => { j.text = e.target.textContent; syncNotes(); });
+      li.querySelector(".jot-del").addEventListener("click", () => { jots.splice(+li.dataset.i, 1); renderJots(); syncNotes(); });
+    });
+    list.scrollTop = list.scrollHeight;
+  }
+  function addJot(text) {
+    text = text.trim();
+    if (!text) return;
+    jots.push({ time: sessionTime(), text });
+    renderJots(true); syncNotes();
+  }
+  function wireJots() {
+    const input = $("#c-notes .jot-input");
+    const fit = () => { input.style.height = "auto"; input.style.height = input.scrollHeight + "px"; };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addJot(input.value); input.value = ""; fit(); }
+    });
+    input.addEventListener("input", fit);
+  }
+
+  /* ---------- Reason and history: lines to go through with her, confirm or correct ---------- */
+  function buildReason() {
+    const rows = C.steps.find((x) => x.id === "reason").rows;
+    const box = $("#rh"), ta = $('textarea[data-sec="reason"]');
+    const sync = () => {
+      ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));   // the saving status follows
+    };
+    box.innerHTML = rows.map((r, i) => `
+      <div class="rh-row" data-i="${i}">
+        <span class="rh-label">${r.label}</span>
+        <span class="rh-body"><span class="rh-text" contenteditable="plaintext-only" spellcheck="true" aria-label="${r.label}">${r.text}</span>
+          <span class="rh-src">${r.src}<span class="rh-today"> · corrected today</span></span></span>
+        <button type="button" class="rh-ok" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg><span>Confirm</span></button>
+      </div>`).join("");
+    box.querySelectorAll(".rh-row").forEach((row) => {
+      const r = rows[+row.dataset.i], text = row.querySelector(".rh-text"), ok = row.querySelector(".rh-ok");
+      text.addEventListener("input", () => { r.text = text.textContent; row.classList.add("is-edited"); sync(); });
+      ok.addEventListener("click", () => {
+        const on = !row.classList.contains("is-ok");
+        row.classList.toggle("is-ok", on); ok.setAttribute("aria-pressed", on);
+        ok.querySelector("span").textContent = on ? "Confirmed" : "Confirm";
+      });
+    });
+    ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
+  }
+
   // documents attached to the facts of an area: one node per document, however many facts point to it
   function docNodes(a) {
     const ids = [...new Set(a.record.map((x) => x.doc).filter(Boolean))];
@@ -1299,7 +1382,7 @@
     if (on) {
       consult.hidden = false;
       consult.scrollTop = 0;
-      requestAnimationFrame(() => requestAnimationFrame(() => consult.classList.add("is-in")));
+      requestAnimationFrame(() => requestAnimationFrame(() => { consult.classList.add("is-in"); }));
       startedAt = Date.now(); tickClock(); clockTimer = setInterval(tickClock, 1000);
     } else {
       if (dictating) setDictation(false);

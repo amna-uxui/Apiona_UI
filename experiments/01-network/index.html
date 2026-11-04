@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=consult-42">
+  <link rel="stylesheet" href="style.css?v=rh-17">
 </head>
 <body>
   <main class="stage">
@@ -100,7 +100,6 @@
           <span class="c-time-text"><b id="c-now">--:--</b><span><span id="c-clock">00:00</span> in session</span></span>
         </div>
         <div class="c-tools">
-          <p class="c-save" id="c-save" role="status" aria-live="polite"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg><span>Saved</span></p>
           <div class="seg" role="radiogroup" aria-label="Attendance">
             <button role="radio" aria-checked="true" class="is-on is-ok">Present</button>
             <button role="radio" aria-checked="false">Absent, billable</button>
@@ -110,6 +109,7 @@
         </div>
       </header>
 
+      <div class="c-main">
       <div class="c-type reveal" style="--d:1">
         <div class="seg" role="radiogroup" aria-label="Assessment type">
           <button role="radio" aria-checked="true" class="is-on">Initial assessment</button>
@@ -131,10 +131,17 @@
         <span class="dict-where">the text is filed in “<span id="dict-target">Assessment › Balance</span>”</span>
         <button type="button" id="dict-stop">Stop</button>
       </div>
+      </div>
+
+      <!-- your notes, where the index was: next to everything, always there while you scroll -->
+      <aside class="c-notes reveal" style="--d:2" id="c-notes" aria-label="Notes"></aside>
     </section>
 
     <!-- the report, assembled from the sections when you finish -->
     <div class="report" id="report" role="dialog" aria-modal="true" aria-label="Initial assessment report" hidden></div>
+
+    <!-- during the consultation: is everything saved? right under the button that turns it into a report -->
+    <p class="c-save" id="c-save" role="status" aria-live="polite"><i class="c-save-dot" aria-hidden="true"></i><span>All changes saved</span></p>
 
     <button class="start" type="button"><span>Start consultation</span><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
 
@@ -154,8 +161,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=consult-42"></script>
-  <script src="data.js?v=consult-42"></script>
-  <script src="app.js?v=consult-42"></script>
+  <script src="../../design/icons.js?v=rh-17"></script>
+  <script src="data.js?v=rh-17"></script>
+  <script src="app.js?v=rh-17"></script>
 </body>
 </html>
