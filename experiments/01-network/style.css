@@ -1001,3 +1001,12 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-body { width: 210px; }
 .as-tests { font-size: 14.5px; }
 .as-tests select { padding-right: 0; }
+/* no tabs: the body chooses the area; its name heads the panel */
+.as-layout { margin-top: 8px; }
+.as-area-name { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+/* table cells start exactly under their column title */
+.as-tests input, .as-tests select { padding-left: 0; }
+.as-tests select {
+  appearance: none; -webkit-appearance: none; padding-right: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%2355554F' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 2px center / 12px;
+}

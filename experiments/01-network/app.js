@@ -1027,7 +1027,6 @@
 
   function selectArea(id) {
     areaId = id;
-    document.querySelectorAll("#assess .as-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.area === id));
     renderArea();
   }
 
@@ -1047,19 +1046,10 @@
   function buildAssessment() {
     const box = $("#assess");
     box.innerHTML = `
-      <div class="as-tabs" role="tablist">${C.areas.map((a) => `
-        <button role="tab" type="button" class="as-tab" data-area="${a.id}" aria-selected="${a.id === areaId}">
-          <span class="as-tab-name">${a.label}</span></button>`).join("")}
-      </div>
       <div class="as-layout">
         <figure class="as-figure" id="as-figure"></figure>
         <div class="as-panel" id="as-panel"></div>
       </div>`;
-    box.querySelectorAll(".as-tab").forEach((t) => {
-      t.addEventListener("click", () => selectArea(t.dataset.area));
-      t.addEventListener("mouseenter", () => hoverArea(t.dataset.area, true));
-      t.addEventListener("mouseleave", () => hoverArea(t.dataset.area, false));
-    });
     renderArea();
   }
 
@@ -1069,6 +1059,7 @@
     panel.classList.remove("is-in");
     panel.innerHTML = `
       <div class="as-record">
+          <h4 class="as-area-name">${a.label}</h4>
           <p class="as-record-head">From the record for this area</p>
           ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
             + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
