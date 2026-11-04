@@ -1000,7 +1000,7 @@
     }).join("");
     return `<svg class="as-body" viewBox="0 -10 300 471" aria-label="Choose what to assess on the body">
       <defs><clipPath id="as-clip">${shapes}</clipPath></defs>
-      <g class="sil">${shapes}</g>${zones}${ground}<g class="pain">${pains}</g>${spots}
+      <g class="sil">${shapes}</g>${zones}${ground}${spots}
     </svg>`;
   }
 
@@ -1049,7 +1049,7 @@
     box.innerHTML = `
       <div class="as-tabs" role="tablist">${C.areas.map((a) => `
         <button role="tab" type="button" class="as-tab" data-area="${a.id}" aria-selected="${a.id === areaId}">
-          <span class="as-tab-name">${a.label}</span><span class="as-tab-sub">${a.sub}</span></button>`).join("")}
+          <span class="as-tab-name">${a.label}</span></button>`).join("")}
       </div>
       <div class="as-layout">
         <figure class="as-figure" id="as-figure"></figure>
@@ -1068,15 +1068,14 @@
     const panel = $("#as-panel");
     panel.classList.remove("is-in");
     panel.innerHTML = `
-      <p class="as-what">${a.label} · ${a.sub}</p>
       <div class="as-record">
           <p class="as-record-head">From the record for this area</p>
-          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><span class="hl">${x.text}</span><span class="src">${x.src}</span></p>`).join("")
+          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
             + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
       </div>
       <table class="as-tests">
-        <colgroup><col style="width:32%"><col style="width:23%"><col style="width:18%"><col style="width:21%"><col style="width:6%"></colgroup>
+        <colgroup><col style="width:34%"><col style="width:22%"><col style="width:14%"><col style="width:24%"><col style="width:6%"></colgroup>
         <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
         <tbody>${a.tests.map((t, i) => `
           <tr data-i="${i}">

@@ -981,3 +981,23 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .dict-tag { font-size: 13px; }
 .dictated button { font-size: 13.5px; }
 .dict-bar { font-size: 15px; }
+
+
+/* ---------- Assessment, calmer: one thing at a time ---------- */
+.as-tab { padding: 10px 10px 12px 0; }
+.as-layout { gap: 34px; }
+.as-record { background: none; padding: 0; border-radius: 0; margin-bottom: 26px; }
+.as-record-head { font-size: 13.5px; font-weight: 400; color: var(--grey); margin-bottom: 10px; }
+.as-fact { display: grid; grid-template-columns: 10px 1fr; gap: 12px; align-items: start; margin: 0 0 12px; }
+.as-mark { width: 10px; height: 10px; margin-top: 6px; border-radius: 2px; background: var(--know); }
+.as-fact-text { font-size: 15.5px; line-height: 1.45; }
+.as-fact .src { display: block; font-size: 13px; color: var(--grey); margin-top: 1px; }
+.as-rule { margin: 4px 0 0 22px; font-size: 13px; }
+.as-none { font-size: 14px; }
+.as-tests { margin-top: 4px; }
+.as-add { margin: 14px 0 22px; }
+.as-body .spot .lead { stroke: #EAEAE5; }
+.as-layout { grid-template-columns: 210px 1fr; gap: 28px; }
+.as-body { width: 210px; }
+.as-tests { font-size: 14.5px; }
+.as-tests select { padding-right: 0; }
