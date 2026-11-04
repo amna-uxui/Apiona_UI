@@ -14,6 +14,7 @@ We moved away from a text-heavy dashboard. The patient's record is shown as a sm
 
 - `experiments/` — interactive prototypes, numbered; each one tests one idea
   - `01-network/` — the patient summary as a network (first page only)
+    - Left menu: plain text on white, full height, folds to icons from a handle on its edge. Schedule, Patients (Camille: Summary, Consultation, Follow-up, Documents), Billing. Only the Summary is built so far
     - Overview: Camille and her 5 sections; each section's subtitle already says what is inside
     - Click a section or an item: the network re-arranges around it on springs, with its path back to Camille and dotted lines to related records
     - Nodes lean toward the cursor (magnetic pull); a refresh always returns to the overview
@@ -26,8 +27,9 @@ We moved away from a text-heavy dashboard. The patient's record is shown as a sm
   - `components.css`, `app.js`, `specimen.html` — pieces of the earlier dashboard, kept for reference
   - `icons.js` — the icon set (one line style), used by the prototype's index
   - `illustrations/` — body silhouettes, female and male, from the stock vector file (check its licence before publishing)
+  - `media/` — foot X-rays (dorsoplantar and oblique) by Mikael Häggström, M.D., CC0 1.0, from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:X-ray_of_normal_right_foot_by_oblique_projection.jpg); resized to 900 px tall. Shown as a pile of prints when the X-ray is opened in the prototype
   - `logo/` — Apiona logo and icon
-    - `colours/apiona-logo-teal.svg` — the current logo, used in the prototype header
+    - `colours/apiona-logo-teal.svg`, `colours/apiona-icon-teal.svg` — the current logo and its icon, used in the prototype's menu
     - `apiona-logo.svg`, `apiona-icon.svg` and the other colours — earlier versions
 
 - `ui/assets/` — the patient photo, kept on this Mac only (not in git: it shows a real person)
@@ -55,3 +57,5 @@ python3 -m http.server 8765
 ```
 
 Then open http://localhost:8765/experiments/01-network/ (desktop width). All patient data shown is invented.
+
+Online (GitHub Pages, from `main`): https://amna-uxui.github.io/Apiona_UI/ — the root page opens the prototype. Online, the private photos show as initials, and the font falls back to Helvetica Neue (ABC Areal is only installed on this Mac).

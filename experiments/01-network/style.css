@@ -23,6 +23,8 @@
 
   --font: "Areal", "ABC Areal", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --side: 400px;
+  --rail-w: 208px;      /* the left menu, expanded */
+  --rail-space: 208px;  /* what it takes from the page */
   --ease: cubic-bezier(.65, 0, .35, 1);
 }
 
@@ -50,8 +52,9 @@ p, h1, h2, h3 { margin: 0; }
 /* ---------- Brief: top left, always visible ---------- */
 
 .brief {
-  position: absolute; top: 28px; left: 36px; z-index: 3;
-  width: min(560px, calc(100vw - var(--side) - 120px));
+  position: absolute; top: 40px; left: calc(var(--rail-space) + 44px); z-index: 3;
+  width: min(560px, calc(100vw - var(--side) - var(--rail-space) - 220px));
+  transition: left .45s var(--ease);
   pointer-events: none;
 }
 .brief > * { pointer-events: auto; }
@@ -61,7 +64,6 @@ p, h1, h2, h3 { margin: 0; }
   inset: -28px -60px -36px -36px;
   background: linear-gradient(to bottom, var(--bg) 78%, rgb(255 255 255 / 0));
 }
-.logo { height: 24px; display: block; margin-bottom: 28px; }
 .who { display: flex; align-items: center; gap: 14px; }
 .who-text { display: flex; flex-direction: column; gap: 3px; }   /* name, then age and sex under it */
 .photo { position: relative; flex: none; width: 56px; height: 56px; }
@@ -88,20 +90,23 @@ p, h1, h2, h3 { margin: 0; }
 .note { margin-top: 6px; font-size: 12px; color: var(--grey); }
 
 .start {
-  position: absolute; top: 28px; right: calc(var(--side) + 44px); z-index: 3;
+  position: absolute; top: 28px; right: 20px; z-index: 6;   /* top-right corner, above the index */
   display: inline-flex; align-items: center; gap: 10px;
-  background: var(--ink); color: var(--white); border: 0; border-radius: 6px;
+  background: var(--voice); color: var(--ink); border: 0; border-radius: 6px;   /* green: go */
   padding: 10px 14px 10px 16px; font-weight: 500; cursor: pointer;
+  transition: background .2s;
 }
 .start .arrow { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
 .start:hover .arrow { transform: translateX(4px); }
+.start:hover { background: color-mix(in srgb, var(--voice) 88%, var(--ink)); }
 .start:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* ---------- Map ---------- */
 
 .map {
-  position: absolute; inset: 0 var(--side) 0 0;
+  position: absolute; inset: 0 var(--side) 0 var(--rail-space);
   overflow: hidden; cursor: grab; touch-action: none;
+  transition: left .45s var(--ease);
 }
 .map.dragging { cursor: grabbing; }
 .world { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
@@ -188,7 +193,7 @@ p, h1, h2, h3 { margin: 0; }
 /* ---------- Side: index and card ---------- */
 
 .side {
-  position: absolute; top: 20px; right: 20px; bottom: 20px; width: calc(var(--side) - 20px);
+  position: absolute; top: 96px; right: 20px; bottom: 20px; width: calc(var(--side) - 20px);   /* below Start consultation */
   display: flex; flex-direction: column; gap: 8px; z-index: 4;
 }
 .panel {
@@ -311,3 +316,159 @@ p, h1, h2, h3 { margin: 0; }
 /* her words: plain text, no icon, no highlight */
 .row.plain-quote { grid-template-columns: 1fr; }
 .row.plain-quote .r-title { font-size: 15px; line-height: 1.4; }
+
+/* ---------- Rail: the menu for the whole product ---------- */
+/* Deliberately unlike the index: no panel, no colour fill, full height, plain text. */
+
+body.rail-collapsed { --rail-w: 68px; --rail-space: 68px; }
+
+.rail {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 5;
+  width: var(--rail-w);
+  display: flex; flex-direction: column;
+  padding: 28px 0 24px;
+  background: var(--bg); border-right: 1px solid var(--rule);
+  transition: width .5s var(--ease);
+}
+.rail-logo { display: block; height: 22px; margin: 0 0 34px 24px; }
+.rail-logo img { display: block; height: 22px; transition: opacity .3s ease; }
+.rail-logo .logo-icon { display: none; width: 22px; }
+
+.rail-list { list-style: none; margin: 0; padding: 0 12px; display: grid; gap: 2px; overflow: hidden; }
+.rail-bottom { margin-top: auto; }
+
+.rail-item, .rail-patient {
+  display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 14px;
+  padding: 7px 12px; white-space: nowrap;
+  color: var(--ink); text-decoration: none; font-size: 14px;
+}
+.rail-item .i { width: 18px; height: 18px; justify-self: center; }
+.rail-item.is-soon { color: var(--grey); cursor: default; }
+a.rail-item:not(.is-soon):hover, .rail-patient:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.rail-item:focus-visible, .rail-patient:focus-visible, .page:focus-visible, .rail-handle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+
+/* Patients › Camille M. › her pages, drawn as a tree hanging from the Patients icon */
+.patient-tree {
+  position: relative; margin: 0 0 8px 33px; padding: 2px 0 2px;
+  border-left: 1px solid var(--rule);
+  transition: margin .5s var(--ease), border-color .3s;
+}
+.rail-patient {
+  position: relative; grid-template-columns: 22px 1fr; gap: 10px;
+  padding: 6px 8px 6px 14px; font-weight: 500;
+  transition: padding .5s var(--ease);
+}
+.rail-patient::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; border-top: 1px solid var(--rule); }   /* branch from the tree line */
+.mini-photo { width: 22px; height: 22px; border-radius: 50%; overflow: hidden; display: block; justify-self: center; }
+.mini-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* her pages sit one level deeper, aligned with her name, smaller and lighter */
+.pages { list-style: none; margin: 0; padding: 0 0 0 46px; display: grid; }
+.page {
+  position: relative; display: block; padding: 5px 0; white-space: nowrap;
+  font-size: 13.5px; color: var(--ink); text-decoration: none;
+}
+.page.is-soon { color: var(--grey); cursor: default; }
+.page.is-current { font-weight: 500; }
+.page.is-current::before {
+  content: ""; position: absolute; left: -15px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px;
+  border-radius: 50%; background: var(--you); box-shadow: 0 0 0 1px var(--ink);
+}
+
+.r-label, .pages { transition: opacity .25s ease; }
+
+/* the fold handle: a small round button on the menu's edge */
+.rail-handle {
+  position: absolute; top: 30px; right: -12px; width: 24px; height: 24px; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--rule); border-radius: 50%; color: var(--grey);
+  transition: color .2s, border-color .2s, transform .5s var(--ease);
+}
+.rail-handle svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.rail-handle:hover { color: var(--ink); border-color: var(--ink); }
+
+/* folded: icons and photos stay exactly where they were; text and Camille's pages fade away */
+body.rail-collapsed .r-label { opacity: 0; }
+body.rail-collapsed .pages { opacity: 0; pointer-events: none; height: 0; overflow: hidden; }
+body.rail-collapsed .patient-tree { margin-left: 0; border-color: transparent; }
+body.rail-collapsed .rail-patient { padding-left: 11px; }
+body.rail-collapsed .rail-patient::before { opacity: 0; }
+body.rail-collapsed .rail-logo .logo-full { display: none; }
+body.rail-collapsed .rail-logo .logo-icon { display: block; }
+body.rail-collapsed .rail-handle { transform: rotate(180deg); }
+
+
+/* ---------- Media: a pile of prints beside the network ---------- */
+.media {
+  position: absolute; z-index: 2; margin: 0;
+  top: 170px; right: calc(var(--side) + 24px); width: 250px;
+  pointer-events: none;
+}
+.media[hidden] { display: none; }
+.prints { position: relative; height: 340px; }
+.print {
+  position: absolute; top: 0; left: 0; transform-origin: 0 0; padding: 0; border: 0; background: #000; cursor: pointer;
+  width: 132px; border-radius: 3px; overflow: hidden; pointer-events: auto;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 12px 28px -12px rgb(0 0 0 / .35);
+  opacity: 0; transform: translate(0, 36px) rotate(0deg) scale(.96);
+  transition: transform .7s cubic-bezier(.34, 1.25, .64, 1), opacity .45s ease, box-shadow .3s;
+  transition-delay: calc(var(--i) * 130ms);
+}
+.print img { display: block; width: 100%; height: auto; }
+.print.p0 { --x: 0px;   --y: 0px;  --r: -2.5deg; z-index: 1; }
+.print.p1 { --x: 96px;  --y: 38px; --r: 2deg;    z-index: 2; }
+.media.is-in .print { opacity: 1; transform: translate(var(--x), var(--y)) rotate(var(--r)); }
+.media.is-in .print:hover, .media.is-in .print.is-front { z-index: 3; transform: translate(var(--x), calc(var(--y) - 8px)) rotate(0deg) scale(1.03); transition-delay: 0s; }
+.print:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.media figcaption {
+  display: grid; gap: 2px; margin-top: 14px; padding-left: 4px;
+  opacity: 0; transform: translateY(8px); transition: opacity .4s ease .35s, transform .5s var(--ease) .35s;
+}
+.media.is-in figcaption { opacity: 1; transform: none; }
+.media .cap { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--grey); }
+.media .cap-quote { font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .print, .media figcaption { transition: none; }
+}
+
+
+/* ---------- Viewing the X-rays ---------- */
+.veil { position: fixed; inset: 0; z-index: 4; display: none; cursor: zoom-out; }
+body.is-viewing .veil { display: block; }
+body.is-viewing .media { z-index: 5; }
+.print { cursor: zoom-in; }
+body.is-viewing .print { cursor: zoom-out; transition-delay: calc(var(--i) * 60ms); box-shadow: 0 2px 4px rgb(0 0 0 / .1), 0 30px 60px -20px rgb(0 0 0 / .45); }
+
+/* everything else steps away, softly */
+.map, .side, .brief, .start { transition: opacity .5s ease, filter .5s ease, transform .6s var(--ease); }
+body.is-viewing .map, body.is-viewing .side, body.is-viewing .brief, body.is-viewing .start {
+  opacity: 0; pointer-events: none; filter: blur(4px);
+}
+body.is-viewing .side { transform: translateX(24px); }
+body.is-viewing .brief { transform: translateY(-12px); }
+body.is-viewing .media figcaption { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .map, .side, .brief, .start { transition: none; }
+}
+
+/* while viewing, the record's sentence sits under the images */
+.view-cap {
+  position: fixed; left: var(--rail-space); right: 0; bottom: 6vh; margin: 0; text-align: center;
+  display: grid; gap: 4px; justify-items: center; pointer-events: none;
+  opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .5s var(--ease);
+}
+body.is-viewing .view-cap { opacity: 1; transform: none; transition-delay: .35s; }
+.view-cap .cap { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--grey); }
+.view-cap .cap-quote { font-size: 16px; }
+
+
+/* where a private photo is missing: initials on the blue that means "you / today" */
+.no-photo { display: grid !important; place-items: center; background: var(--you); border-radius: 50%; }
+.no-photo .initials { font-weight: 500; color: var(--ink); line-height: 1; }
+.photo.no-photo { width: 56px; height: 56px; }
+.photo.no-photo .initials { font-size: 18px; letter-spacing: .02em; }
+.mini-photo.no-photo .initials { font-size: 8.5px; }
+.photo.no-photo .new { z-index: 1; }

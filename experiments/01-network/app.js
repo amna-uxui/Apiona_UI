@@ -113,12 +113,18 @@
     L[c.id] = { x: 0, y: 0 };
     if (parent) {
       L[parent.id] = polar(a + 180, 220, 150);
-      L.camille = polar(a + 180, 440, 300);
+      // Camille steps back at an angle rather than in a straight line: the path stays readable
+      // and the view stays narrow enough for the map when the left menu is open
+      const p = L[parent.id];
+      const bends = [a + 180 + 58, a + 180 - 58].map((d) => { const o = polar(d, 210, 150); return { x: p.x + o.x, y: p.y + o.y }; });
+      L.camille = bends[0].y >= bends[1].y ? bends[0] : bends[1];   // prefer below, away from the header
     } else {
       L.camille = polar(a + 180, 260, 180);
     }
     const front = [...related.get(c.id)].filter((id) => !(id in L));
-    Object.assign(L, fan(front, a, 270, 190, 42, 220));
+    // the fan in front tightens a little when the map is narrow (left menu open)
+    const room = Math.min(1, Math.max(0.78, (map.clientWidth - 140) / 900));
+    Object.assign(L, fan(front, a, 270 * room, 190, 42 / room, 240));   // closer in, so wider apart
     return { L, focus: c.id, angle: a };
   }
 
@@ -132,8 +138,9 @@
     const m = map.getBoundingClientRect();
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
+    const room = m.width - (mediaShown() ? MEDIA_W : 0);   // the prints take the right of the map
     return {
-      x: m.width / 2 - (Math.min(...xs) + Math.max(...xs)) / 2,
+      x: room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2,
       y: (top + bottom) / 2 - (Math.min(...ys) + Math.max(...ys) + 40) / 2,   // labels hang below
     };
   }
@@ -295,6 +302,7 @@
     state.current = id;
     if (id) state.visited.add(id);
     renderIndexState();
+    renderMedia();
     apply(instant);
   }
 
@@ -464,6 +472,100 @@
   function hintRow(id, on) {
     indexBody.querySelectorAll(`.row[data-id="${id}"]:not([data-doc]), .marker[data-for="${id}"]`).forEach((r) => r.classList.toggle("is-hover", on));
   }
+
+  /* ---------------- media: a pile of prints ---------------- */
+
+  // Like the reference: when a record has images, they arrive as overlapping prints beside the network,
+  // one after another, and leave when you move on. Hover or click brings a print to the front.
+  const media = $("#media");
+  const MEDIA_W = 290;
+  const mediaShown = () => !!(state.current && byId.get(state.current).media);
+  let mediaTimer = null;
+
+  function renderMedia() {
+    const n = state.current && byId.get(state.current);
+    clearTimeout(mediaTimer);
+    if (viewing) setViewing(false);
+    if (!n || !n.media) {
+      media.classList.remove("is-in");
+      mediaTimer = setTimeout(() => { media.hidden = true; media.innerHTML = ""; }, 350);
+      return;
+    }
+    const M = n.media;
+    media.innerHTML = `
+      <div class="prints">${M.images.map((im, i) => `
+        <button class="print p${i}" style="--i:${i}" type="button" aria-label="${im.alt}"><img src="${im.src}" alt=""></button>`).join("")}
+      </div>
+      <figcaption><span class="cap">${M.caption}</span><span class="cap-quote">“${M.quote}”</span></figcaption>
+      <p class="view-cap"><span class="cap">${M.caption}</span><span class="cap-quote">“${M.quote}” · click anywhere to put them back</span></p>`;
+    media.hidden = false;
+    media.style.top = `${$(".brief").getBoundingClientRect().bottom + 28}px`;   // always below the header
+    media.querySelectorAll(".print").forEach((p) => p.addEventListener("click", () => setViewing(!viewing)));
+    requestAnimationFrame(() => requestAnimationFrame(() => media.classList.add("is-in")));
+  }
+
+  /* Viewing: the prints glide to the middle of the screen, side by side and upright, while the network,
+     the index and the header fade away. Click anything, or press Esc, and they go back to the pile. */
+  let viewing = false;
+  const veil = $("#veil");
+
+  function setViewing(on) {
+    const prints = [...media.querySelectorAll(".print")];
+    if (!prints.length) return;
+    viewing = on;
+    document.body.classList.toggle("is-viewing", on);
+    if (!on) { prints.forEach((p) => p.style.transform = ""); return; }
+
+    // where the prints are now (their untransformed origin) and where they should go
+    const base = media.querySelector(".prints").getBoundingClientRect();
+    const left = $("#rail").getBoundingClientRect().right;
+    const areaW = innerWidth - left, areaH = innerHeight;
+    const gap = 36;
+    const H = Math.min(areaH * 0.72, 680);
+    const sizes = prints.map((p) => { const img = p.querySelector("img"); return { w: H * (img.naturalWidth / img.naturalHeight || 0.45), h: H }; });
+    const total = sizes.reduce((t, z) => t + z.w, 0) + gap * (sizes.length - 1);
+    let x = left + (areaW - total) / 2;
+    const y = (areaH - H) / 2 - 18;
+    prints.forEach((p, i) => {
+      const scale = sizes[i].w / p.offsetWidth;
+      p.style.transform = `translate(${x - base.left}px, ${y - base.top}px) scale(${scale})`;
+      x += sizes[i].w + gap;
+    });
+  }
+  veil.addEventListener("click", () => setViewing(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && viewing) { e.stopImmediatePropagation(); setViewing(false); } }, true);
+  window.addEventListener("resize", () => { if (viewing) setViewing(true); });
+
+  /* ---------------- photos ---------------- */
+
+  // The real photos stay on this Mac (not in git). Wherever one is missing, as on the public link,
+  // a circle with initials takes its place instead of a broken image.
+  function photoFallback(img) {
+    const holder = img.parentElement;
+    const initials = img.dataset.initials || "";
+    holder.classList.add("no-photo");
+    holder.insertAdjacentHTML("beforeend", `<span class="initials" aria-hidden="true">${initials}</span>`);
+    img.remove();
+  }
+  document.querySelectorAll("img[data-initials]").forEach((img) => {
+    if (img.complete && img.naturalWidth === 0) photoFallback(img);
+    else img.addEventListener("error", () => photoFallback(img), { once: true });
+  });
+
+  /* ---------------- rail ---------------- */
+
+  // The left menu folds to icons. The choice is remembered on this browser only.
+  const railToggle = $("#rail-toggle");
+  function setRail(collapsed) {
+    document.body.classList.toggle("rail-collapsed", collapsed);
+    railToggle.setAttribute("aria-expanded", !collapsed);
+    railToggle.title = collapsed ? "Open the menu" : "Collapse the menu";
+    try { localStorage.setItem("apiona-rail", collapsed ? "collapsed" : "open"); } catch (e) {}
+  }
+  railToggle.addEventListener("click", () => setRail(!document.body.classList.contains("rail-collapsed")));
+  // once the map has finished resizing, the network glides back to the middle of the new space
+  map.addEventListener("transitionend", (e) => { if (e.propertyName === "left") apply(); });
+  try { if (localStorage.getItem("apiona-rail") === "collapsed") setRail(true); } catch (e) {}
 
   /* ---------------- start ---------------- */
 
