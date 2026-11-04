@@ -333,7 +333,15 @@ window.RECORD = {
     steps: [
       { id: "reason", n: 1, label: "Reason and history", state: "review",
         note: "Pre-filled from the preparation · to review",
-        text: "28-year-old patient referred by the emergency department of Clinique Bois-Cerf for a mid-foot sprain after a fall on the stairs. X-ray: no fracture. Reason: foot still swollen, limping, pain when walking. Priority: less pain, at night and at the desk. Other pain: right knee (compensation), right wrist (crutches). Documented diagnoses: hypermobile Ehlers-Danlos syndrome, chronic migraines with dizziness, left parietal cavernoma, asthma, extensor tendinopathy of the fingers of the right wrist. Several ankle sprains in the past. Arthroscopic stabilisation of the left shoulder in 2021." },
+        // reviewed with her in the first minutes: the record's words, line by line, each with its source
+        rows: [
+          { label: "Referral", text: "Emergency, Clinique Bois-Cerf · fall on the stairs · X-ray: no fracture", src: "Emergency prescription · X-ray report" },
+          { label: "Reason", text: "Foot still swollen, limping, pain when walking", src: "Patient · preparation" },
+          { label: "Priority", text: "Less pain, at night and at the desk", src: "Her words · preparation" },
+          { label: "Other pain", text: "Right knee (compensation), right wrist (crutches)", src: "Patient · hand centre" },
+          { label: "Diagnoses", text: "Hypermobile Ehlers-Danlos · chronic migraines with dizziness · left parietal cavernoma · asthma · extensor tendinopathy of the fingers, right wrist", src: "GP · neurology · neurosurgery · pulmonologist" },
+          { label: "History", text: "Several ankle sprains · arthroscopic stabilisation of the left shoulder, 2021", src: "Patient · X-ray report" },
+        ] },
       { id: "assessment", n: 2, label: "Assessment", state: "empty", note: "Joints · muscles · function · balance" },
       { id: "goals", n: 3, label: "Goals and methods", state: "review", note: "Example filled in · to review" },
       { id: "notes", n: 4, label: "Notes", state: "empty" },
