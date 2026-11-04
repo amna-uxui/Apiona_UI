@@ -30,6 +30,6 @@ frames/*
 # Personal Claude Code settings
 .claude/settings.local.json
 
-# Photo of a real person: keep it on this Mac only
-ui/assets/practitioner.*
-ui/assets/patient.*
+# Photos: the two used by the prototype are public (both people agreed, 2026-11-04).
+# The original high-resolution copy stays on this Mac only.
+ui/assets/patient.webp
