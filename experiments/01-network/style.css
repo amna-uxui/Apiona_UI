@@ -1229,3 +1229,64 @@ textarea.c-grow { overflow: hidden; resize: none; field-sizing: content; min-hei
 .rh-ok:hover { border-color: var(--ink); color: var(--ink); }
 .rh-row.is-ok .rh-ok { background: var(--voice); border-color: var(--voice); color: var(--ink); }
 .rh-row:last-child { border-bottom: 0; }
+
+/* no ghost labels: a node that leaves hides its words straight away */
+.node > :not(.shape) { transition: opacity .2s ease; }
+.node.is-leaving > :not(.shape) { opacity: 0; transition-duration: .08s; }
+
+/* report: what still needs a look before signing */
+.r-review { pointer-events: auto; width: min(680px, 90%); box-sizing: border-box; margin-bottom: 14px; padding: 16px 20px; background: var(--white);
+  border: 1px solid var(--rule); border-radius: 8px; opacity: 0; transform: translateY(20px); transition: opacity .4s ease, transform .6s var(--ease); }
+.report.is-in .r-review { opacity: 1; transform: none; }
+.r-review-head { margin: 0 0 8px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.r-review ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.r-review li button { width: 100%; display: grid; grid-template-columns: 9px 1fr auto; gap: 10px; align-items: center; padding: 7px 0; border: 0;
+  border-top: 1px solid var(--rule); background: none; font: inherit; font-size: 14px; color: var(--ink); text-align: left; cursor: pointer; }
+.r-review li button i { width: 8px; height: 8px; border-radius: 50%; background: var(--missing); }
+.r-review li button span { color: var(--grey); transition: transform .25s var(--ease); }
+.r-review li button:hover span { color: var(--ink); transform: translateX(3px); }
+.r-review.is-done .r-review-head { margin: 0; }
+.r-review.is-done i { width: 9px; height: 9px; border-radius: 50%; background: var(--voice); }
+.r-sign-btn.is-warn { background: var(--missing); }
+
+/* unfinished places: grey, a not-allowed cursor, nothing to click */
+.rail-item.is-soon, .page.is-soon { cursor: not-allowed; }
+.rail-item.is-soon .i { opacity: .55; }
+a.rail-item.is-soon:hover, .page.is-soon:hover { text-decoration: none; }
+/* the record facts beside the body: larger, easier to read during the session */
+.as-area-name { font-size: 21px; }
+.as-fact-text { font-size: 17px; line-height: 1.45; }
+.as-fact .src { font-size: 14.5px; margin-top: 2px; }
+.as-mark { margin-top: 7px; }
+.as-fact { margin-bottom: 14px; }
+.as-doc-cap { font-size: 13.5px; }
+.as-fact .as-fact-text { display: block; font-size: 17px; line-height: 1.45; color: var(--ink); }
+.as-fact .src .src-t { font-size: inherit; color: inherit; }
+
+/* ---------- Readability pass: no tiny capitals ---------- */
+.tag, .photo .new, .panel-head span, .sec-head .sec-name, .sub-head, .step .when, .media .cap, .view-cap .cap, .eyebrow {
+  font-size: 12.5px; letter-spacing: .07em; }
+.photo .new { line-height: 17px; }
+.tag { padding: 2px 7px 1px; }
+/* the sources in the index are read, not scanned: sentence case */
+.row .r-sub { font-size: 13px; text-transform: none; letter-spacing: 0; margin-top: 2px; }
+.c-notes-date .tag { font-size: 12.5px; }
+
+/* ---------- Consultation header: stays in view, condensed to one line once you scroll ---------- */
+.consult > .c-bar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: 0;
+  transition: padding .3s var(--ease), box-shadow .3s ease; }
+.c-bar .c-title h2 { transition: font-size .3s var(--ease); }
+.consult.is-stuck > .c-bar { flex-wrap: nowrap; padding-top: 14px; padding-bottom: 12px; }
+.consult.is-stuck .c-title h2 { font-size: 17px; }
+.consult.is-stuck .c-title p, .consult.is-stuck .c-tools .seg { display: none; }
+.consult.is-stuck .c-time { order: 4; margin-left: auto; }
+.consult.is-stuck .c-tools { order: 5; flex-basis: auto; }
+.consult.is-stuck .c-title, .consult.is-stuck .c-back { animation: c-settle .3s var(--ease); }
+@keyframes c-settle { from { opacity: .4; } to { opacity: 1; } }
+/* the notes stay clear of the button and the saving status above them */
+.c-notes { top: 104px !important; height: calc(100vh - 214px); }
+.consult > .c-bar { top: -26px; }
+.consult.is-stuck > .c-bar { padding-top: 26px; }
+/* one continuous divider: drawn along the main column, so it always meets the line under the header */
+.c-notes { border-left: 0; }
+.consult > .c-main { border-right: 1px solid var(--rule); align-self: stretch; }

@@ -178,6 +178,7 @@
       const show = n.id in L;
       const wasShown = n.t.o > 0;
       n.el.classList.toggle("is-current", n.id === state.current);
+      n.el.classList.toggle("is-leaving", !show);   // its words go at once; only the shape folds away
       n.el.tabIndex = show ? 0 : -1;
       n.el.setAttribute("aria-hidden", show ? "false" : "true");
 
@@ -279,7 +280,7 @@
     const c = state.current && byId.get(state.current);
     const path = c && c.kind === "item" ? new Set([c.id, c.parent]) : null;
     R.nodes.forEach((n) => {
-      if (!n.parent || n.p.o <= 0.01) return;
+      if (!n.parent || n.p.o <= 0.01 || n.t.o === 0) return;   // a leaving node loses its line at once
       if (path && !path.has(n.id) && n.t.o > 0) return;
       const p = byId.get(n.parent);
       if (p.p.o <= 0.01) return;
@@ -809,10 +810,17 @@
     }));
     // the section texts grow with what is written: no inner scrollbar
     consult.querySelectorAll("textarea.c-grow").forEach((f) => f.addEventListener("input", () => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
+    // the header condenses once you scroll (a little slack both ways, so it doesn't flicker at the edge)
+    consult.addEventListener("scroll", () => {
+      const y = consult.scrollTop, stuck = consult.classList.contains("is-stuck");
+      if (!stuck && y > 70) consult.classList.add("is-stuck");
+      else if (stuck && y < 12) consult.classList.remove("is-stuck");
+    }, { passive: true });
     // saving status: every change is saved a moment later, and says so
     const save = $("#c-save");
     let saveTimer = null;
     const markSaved = () => {
+      saveConsult();
       const now = new Date();
       save.classList.remove("is-saving");
       save.querySelector("span").textContent = `All changes saved · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -825,7 +833,7 @@
     };
     consult.addEventListener("input", markChanged);
     consult.addEventListener("change", markChanged);
-    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no")) markChanged(); });
+    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no, .dict-move, .rh-ok, .jot-del")) markChanged(); });
     markSaved();
     // segmented choices: one on at a time
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
@@ -875,7 +883,7 @@
       // the text wraps: each field grows to show all of it
       const fit = (f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; };
       row.querySelectorAll("[data-k]").forEach((f) => {
-        f.addEventListener("input", () => { g[f.dataset.k] = f.value; fit(f); });
+        f.addEventListener("input", () => { g[f.dataset.k] = f.value; C.goalsReviewed = true; fit(f); });
         f.addEventListener("focus", () => fit(f));
         requestAnimationFrame(() => fit(f));
       });
@@ -905,7 +913,7 @@
   }
 
   function listFor(key) {
-    if (key.startsWith("assessment:")) return key === `assessment:${areaId}` ? $("#as-panel .dict-list") : null;
+    if (key.startsWith("assessment:")) return key === `assessment:${areaId}` ? $("#as-work .dict-list") : null;
     return document.querySelector(`.dict-list[data-key="${key}"]`);
   }
 
@@ -925,7 +933,7 @@
         if (key.startsWith("assessment:")) {
           const a = C.areas.find((x) => `assessment:${x.id}` === key);
           a.notes = (a.notes ? a.notes.trim() + " " : "") + text;
-          const ta = $("#as-panel .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
+          const ta = $("#as-work .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
         } else if (key === "notes") {
           addJot(text);
         } else {
@@ -980,12 +988,36 @@
     }).join("");
     const type = consult.querySelector('.c-type .seg .is-on').textContent.trim();
     const date = consult.querySelector('.c-date-field input').value;
+
+    // what still needs a look before signing; each item takes you back to its place
+    const goTo = (secId, then) => () => {
+      openReport(false);
+      const sec = secId && document.getElementById(`cs-${secId}`);
+      if (sec && !sec.classList.contains("is-open")) sec.querySelector(".c-sec-head").click();
+      setTimeout(() => { if (then) then(); else if (sec) sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }, 80);
+    };
+    const reasonRows = C.steps.find((x) => x.id === "reason").rows || [];
+    const unconfirmed = reasonRows.filter((r) => !r.ok).length;
+    const emptyAreas = C.areas.filter((a) => !a.tests.some((t) => t.result) && !a.notes);
+    const todo = [
+      !date && { text: "Assessment date not set", go: goTo(null, () => { const f = consult.querySelector(".c-date-field input"); f.scrollIntoView({ block: "center" }); f.focus(); }) },
+      ...C.ask.filter((q) => !q.answer).map((q) => ({ text: `${q.label} not asked yet`, go: goTo(null, () => $("#c-ask").scrollIntoView({ block: "center" })) })),
+      unconfirmed && { text: `Reason and history · ${unconfirmed} of ${reasonRows.length} lines not confirmed with her`, go: goTo("reason") },
+      ...emptyAreas.map((a) => ({ text: `Assessment · no results for ${a.label.toLowerCase()}`, go: goTo("assessment", () => { selectArea(a.id); $("#cs-assessment").scrollIntoView({ behavior: "smooth", block: "start" }); }) })),
+      !C.goalsReviewed && { text: "Goals and methods · still the example, not reviewed", go: goTo("goals") },
+      !val("conclusion").trim() && { text: "Conclusion not written", go: goTo("conclusion") },
+      !val("recommendations").trim() && { text: "Recommendations not written", go: goTo("recommendations") },
+    ].filter(Boolean);
     const asked = C.ask.filter((q) => q.answer).map((q) => `<li>${q.label}: ${q.answer} <span class="r-by">Physio, in session</span></li>`).join("");
     box.innerHTML = `
+      ${todo.length ? `<aside class="r-review" aria-label="Still to review">
+        <p class="r-review-head">Still to review before signing</p>
+        <ul>${todo.map((t, i) => `<li><button type="button" data-i="${i}"><i aria-hidden="true"></i>${t.text}<span aria-hidden="true">→</span></button></li>`).join("")}</ul>
+      </aside>` : `<aside class="r-review is-done"><p class="r-review-head"><i aria-hidden="true"></i>Everything reviewed · ready to sign</p></aside>`}
       <article class="paper">
         <p class="r-kicker">Apiona · ${type}</p>
         <h2>Camille M. · 28 · female</h2>
-        <p class="r-meta">Session 1 of 9 · Accident · mid-foot sprain · ${date ? date.split("-").reverse().join(".") : "[assessment date]"} · prescribed by the emergency department, Clinique Bois-Cerf</p>
+        <p class="r-meta">Session 1 of 9 · Accident · mid-foot sprain · ${date ? date.split("-").reverse().join(".") : "assessment date not set"} · prescribed by the emergency department, Clinique Bois-Cerf</p>
         <h3>1 · Reason and history</h3>${para(val("reason"))}
         ${asked ? `<h4>Completed in session</h4><ul>${asked}</ul>` : ""}
         <h3>2 · Assessment</h3>${areas || `<p class="r-empty">No results entered yet.</p>`}
@@ -993,19 +1025,27 @@
         <h3>4 · Notes</h3>${para(val("notes"))}
         <h3>5 · Conclusion</h3>${para(val("conclusion"))}
         <h3>6 · Recommendations</h3>${para(val("recommendations"))}
-        <p class="r-sign">[Physiotherapist] · draft, not signed</p>
+        <p class="r-sign">Lena Keller, physiotherapist · draft, not signed</p>
       </article>
       <div class="report-actions">
         <button type="button" class="r-back-btn">Back to the consultation</button>
-        <button type="button" class="r-sign-btn">Sign and send to Dr [Name], GP</button>
+        <button type="button" class="r-sign-btn">Sign and send to Dr Marc Favre, GP</button>
       </div>`;
     box.hidden = false;
     requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
     box.querySelector(".r-back-btn").addEventListener("click", () => openReport(false));
+    box.querySelectorAll(".r-review li button").forEach((b) => b.addEventListener("click", () => todo[+b.dataset.i].go()));
     box.querySelector(".r-sign-btn").addEventListener("click", (e) => {
+      // with things left to review, the first click says so; a second click signs anyway
+      if (todo.length && !e.target.dataset.sure) {
+        e.target.dataset.sure = "1";
+        e.target.textContent = `${todo.length} still to review · click again to sign anyway`;
+        e.target.classList.add("is-warn");
+        return;
+      }
       e.target.textContent = "Signed · ready to send (prototype)";
       e.target.disabled = true;
-      box.querySelector(".r-sign").textContent = "[Physiotherapist] · signed";
+      box.querySelector(".r-sign").textContent = "Lena Keller, physiotherapist · signed";
     });
   }
 
@@ -1062,6 +1102,51 @@
   }
 
   // the web from the home screen: thin lines from the chosen label to each fact from the record
+  /* ---------- Keeping the consultation: "All changes saved" is true — it lives in this browser until ?fresh ---------- */
+  const STORE = "apiona-consultation-v1";
+  let stored = null;
+  function saveConsult() {
+    const segIndex = (sel) => [...consult.querySelectorAll(`${sel} button`)].findIndex((b) => b.classList.contains("is-on"));
+    const text = (id) => (document.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
+    const data = {
+      date: consult.querySelector(".c-date-field input").value,
+      type: segIndex(".c-type .seg"), attendance: segIndex(".c-tools .seg"),
+      areas: C.areas.map((a) => ({ tests: a.tests, notes: a.notes || "" })),
+      goals: C.goals, goalsReviewed: !!C.goalsReviewed,
+      ask: C.ask.map((q) => q.answer || ""),
+      reason: (C.steps.find((x) => x.id === "reason").rows || []).map((r) => ({ text: r.text, ok: !!r.ok, edited: !!r.edited })),
+      jots, conclusion: text("conclusion"), recommendations: text("recommendations"),
+    };
+    try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
+  }
+  // data first (before the page is built from it) …
+  function restoreConsult() {
+    try {
+      if (new URLSearchParams(location.search).has("fresh")) { localStorage.removeItem(STORE); return; }
+      stored = JSON.parse(localStorage.getItem(STORE) || "null");
+    } catch (e) { stored = null; }
+    if (!stored) return;
+    stored.areas?.forEach((x, i) => { if (C.areas[i]) { C.areas[i].tests = x.tests; C.areas[i].notes = x.notes; } });
+    if (stored.goals) { C.goals.splice(0, C.goals.length, ...stored.goals); C.goalsReviewed = stored.goalsReviewed; }
+    stored.ask?.forEach((a, i) => { if (C.ask[i] && a) C.ask[i].answer = a; });
+    const rows = C.steps.find((x) => x.id === "reason").rows || [];
+    stored.reason?.forEach((x, i) => { if (rows[i]) Object.assign(rows[i], x); });
+    if (stored.jots) jots.push(...stored.jots);
+  }
+  // … then the fields that only exist on the page
+  function restoreConsultFields() {
+    if (!stored) return;
+    const pick = (sel, i) => { const b = consult.querySelectorAll(`${sel} button`)[i]; if (b && i >= 0) b.click(); };
+    if (stored.date) consult.querySelector(".c-date-field input").value = stored.date;
+    pick(".c-type .seg", stored.type); pick(".c-tools .seg", stored.attendance);
+    ["conclusion", "recommendations"].forEach((id) => { const f = document.querySelector(`textarea[data-sec="${id}"]`); if (f && stored[id]) f.value = stored[id]; });
+    if (jots.length) renderJots();
+    const ta = document.querySelector('textarea[data-sec="reason"]'), rows = C.steps.find((x) => x.id === "reason").rows || [];
+    if (ta) ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
+    const n = $('#c-notes textarea[data-sec="notes"]'); if (n) n.value = jots.map((j) => `${j.time}  ${j.text}`).join("\n");
+    saveConsult();   // the page saved itself while it was being built; store the restored version again
+  }
+
   /* ---------- Notes as timed jottings: Enter files a note with the time in the session ---------- */
   const jots = [];
   const sessionTime = () => {
@@ -1120,9 +1205,13 @@
       </div>`).join("");
     box.querySelectorAll(".rh-row").forEach((row) => {
       const r = rows[+row.dataset.i], text = row.querySelector(".rh-text"), ok = row.querySelector(".rh-ok");
-      text.addEventListener("input", () => { r.text = text.textContent; row.classList.add("is-edited"); sync(); });
+      row.classList.toggle("is-edited", !!r.edited);
+      row.classList.toggle("is-ok", !!r.ok); ok.setAttribute("aria-pressed", !!r.ok);
+      if (r.ok) ok.querySelector("span").textContent = "Confirmed";
+      text.addEventListener("input", () => { r.text = text.textContent; r.edited = true; row.classList.add("is-edited"); sync(); });
       ok.addEventListener("click", () => {
         const on = !row.classList.contains("is-ok");
+        r.ok = on;
         row.classList.toggle("is-ok", on); ok.setAttribute("aria-pressed", on);
         ok.querySelector("span").textContent = on ? "Confirmed" : "Confirm";
       });
@@ -1403,7 +1492,9 @@
     if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
   }
 
+  restoreConsult();
   buildConsult();
+  restoreConsultFields();
   startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); else openReport(true); });
   consult.querySelector(".c-dictate").addEventListener("click", () => setDictation(!dictating));
   $("#dict-stop").addEventListener("click", () => setDictation(false));

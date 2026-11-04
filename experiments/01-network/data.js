@@ -32,7 +32,7 @@ window.RECORD = {
   knowDocs: [
     { title: "Medical report · hypermobile Ehlers-Danlos", sub: "GP · attached", opens: "heds" },
   ],
-  prepared: { when: "[date]", event: "Prepares and sends her file" },
+  prepared: { when: "Sunday", event: "Prepares and sends her file" },
 
   nodes: [
     { id: "camille", kind: "person", label: "Camille M.", sub: "28 · female", x: 0, y: 0, open: true },
@@ -110,21 +110,21 @@ window.RECORD = {
       label: "“Above all, less pain.”", sub: "Her words · preparation", x: 150, y: -360,
       type: "Her words", title: "“Above all, less pain. I sleep badly and it hurts even sitting at my desk.”",
       quote: null,
-      facts: [["Source", "Patient’s words · preparation of [date]"]],
+      facts: [["Source", "Patient’s words · preparation of 1 November 2026"]],
       links: ["midfoot"],
     },
     {
       id: "howlong", icon: "history", kind: "item", parent: "wants", mark: "voice", source: "patient",
       label: "To know how long it will take", sub: "Expects from this visit", x: 360, y: -330,
       type: "Her expectation", title: "To know how long it will take",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: [],
     },
     {
       id: "exercises", icon: "home", kind: "item", parent: "wants", mark: "voice", source: "patient",
       label: "To leave with home exercises", sub: "Expects from this visit", x: 400, y: -220,
       type: "Her expectation", title: "To leave with home exercises",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: [],
     },
 
@@ -133,9 +133,9 @@ window.RECORD = {
     {
       id: "midfoot", spot: [76, 440], tone: "injury", kind: "item", parent: "hurts", source: "patient",
       label: "Mid-foot", sub: "Patient · preparation", x: 520, y: -70,
-      type: "Where it hurts", title: "Mid-foot [side]",
+      type: "Where it hurts", title: "Mid-foot, right",
       quote: "Swollen, limping, pain when walking, at night and sitting",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["heds", "fall", "lesspain"],
     },
     {
@@ -143,7 +143,7 @@ window.RECORD = {
       label: "Right knee", sub: "Patient · preparation", x: 560, y: 40,
       type: "Where it hurts", title: "Right knee",
       quote: "Since she started compensating",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["otherpain"],
     },
     {
@@ -151,7 +151,7 @@ window.RECORD = {
       label: "Right wrist", sub: "Patient · preparation", x: 500, y: 140,
       type: "Where it hurts", title: "Right wrist",
       quote: "From the crutches",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["otherpain"],
     },
 
@@ -169,7 +169,7 @@ window.RECORD = {
       id: "fall", when: "Saturday", event: "Misses a step on the stairs of her building", kind: "item", parent: "happened", source: "patient",
       label: "Saturday · the fall", sub: "Patient", x: 210, y: 440,
       type: "What happened", title: "Saturday · misses a step on the stairs of her building",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["midfoot", "emergency"],
     },
     {
@@ -191,14 +191,14 @@ window.RECORD = {
       id: "employer", when: "Monday", event: "The employer reports the accident", kind: "item", parent: "happened", source: "patient",
       label: "Monday · accident reported", sub: "Patient", x: 560, y: 400,
       type: "What happened", title: "Monday · the employer reports the accident",
-      facts: [["Source", "Patient · preparation of [date]"]],
+      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["coverage"],
     },
     {
       id: "today", when: "Today", event: "Session 1 of 9 · initial assessment", kind: "item", parent: "happened", mark: "today", source: "session",
       label: "Today · session 1 of 9", sub: "Initial assessment", x: 670, y: 310,
       type: "What happened", title: "Today · session 1 of 9",
-      facts: [["Before today", "[date] · prepares and sends her file"], ["Prescription", "9 sessions"]],
+      facts: [["Before today", "Sunday 1 November · prepares and sends her file"], ["Prescription", "9 sessions"]],
       links: ["prescription"],
     },
     /* 5 · To complete in session — missing or waiting */
@@ -251,7 +251,7 @@ window.RECORD = {
       label: "Documents · 2", sub: "Shared by the patient", x: -700, y: -250,
       type: "Documents", title: "Documents attached · 2",
       list: ["Foot X-ray", "Medical report · hypermobile Ehlers-Danlos (GP)"],
-      facts: [["Source", "Patient, preparation of [date] · documents scanned by her"]],
+      facts: [["Source", "Patient, preparation of 1 November 2026 · documents scanned by her"]],
       links: ["heds", "emergency"],
     },
     {
@@ -265,8 +265,8 @@ window.RECORD = {
       id: "careteam", icon: "users", kind: "item", source: "patient",
       label: "Care team · 4", sub: "About ten carers in total", x: 700, y: 170,
       type: "Care team", title: "Care team",
-      list: ["GP · coordination · Dr [Name] · will be informed (consent signed)", "Prescriber · Emergency, Bois-Cerf", "Physiotherapist · jaw · [Name]", "Occupational therapist · right wrist · [Name]"],
-      facts: [["Source", "Record confirmed up to date by the patient on [date]"]],
+      list: ["GP · coordination · Dr Marc Favre · will be informed (consent signed)", "Prescriber · Emergency, Bois-Cerf", "Physiotherapist · jaw · A. Rossi", "Occupational therapist · right wrist · S. Weber"],
+      facts: [["Source", "Record confirmed up to date by the patient on 1 November 2026"]],
       links: ["wrist"],
     },
     {
