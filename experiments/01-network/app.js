@@ -316,6 +316,7 @@
 
   // Her details open at the top of the index; her photo slides in behind the index, like the reference's images
   function setProfile(on) {
+    if (!on) setPortraitView(false);
     state.profile = on;
     byId.get("camille").el.classList.toggle("is-profile", on);
     $("#portrait").classList.toggle("is-in", on);
@@ -333,7 +334,7 @@
 
   function select(id, instant = false) {
     if (id && !byId.has(id)) id = null;
-    if (id && state.profile) { state.profile = false; byId.get("camille").el.classList.remove("is-profile"); $("#portrait").classList.remove("is-in"); }
+    if (id && state.profile) { setPortraitView(false); state.profile = false; byId.get("camille").el.classList.remove("is-profile"); $("#portrait").classList.remove("is-in"); }
     state.current = id;
     if (id) state.visited.add(id);
     renderIndexState();
@@ -616,8 +617,28 @@
       x += sizes[i].w + gap;
     });
   }
-  veil.addEventListener("click", () => setViewing(false));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && viewing) { e.stopImmediatePropagation(); setViewing(false); } }, true);
+  veil.addEventListener("click", () => { setViewing(false); setPortraitView(false); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && (viewing || portraitView)) { e.stopImmediatePropagation(); setViewing(false); setPortraitView(false); }
+  }, true);
+
+  /* Her photo works like the X-rays: click it and it glides to the middle, upright and large, while everything
+     else fades; click anywhere (or Esc) and it goes back behind the index. */
+  const portrait = $("#portrait");
+  let portraitView = false;
+  function setPortraitView(on) {
+    if (on === portraitView) return;
+    portraitView = on;
+    document.body.classList.toggle("is-viewing", on);
+    portrait.classList.toggle("is-viewing", on);
+    if (!on) { portrait.style.transform = ""; return; }
+    const left = $("#rail").getBoundingClientRect().right;
+    const H = Math.min(innerHeight * 0.72, 680), W = H * 0.8;
+    const x = left + (innerWidth - left - W) / 2, y = (innerHeight - H) / 2 - 18;
+    portrait.style.transform = `translate(${x - portrait.offsetLeft}px, ${y - portrait.offsetTop}px) scale(${W / portrait.offsetWidth})`;
+  }
+  portrait.addEventListener("click", () => setPortraitView(!portraitView));
+  window.addEventListener("resize", () => { if (portraitView) { portraitView = false; setPortraitView(true); } });
   window.addEventListener("resize", () => { if (viewing) setViewing(true); });
 
   /* ---------------- attach: drop a file onto the record ---------------- */
