@@ -317,10 +317,10 @@ window.RECORD = {
 
     // goals and methods: an example filled in by the physiotherapist (Apiona provides the fields, not the content)
     goals: [
-      { goal: "Reduce pain and swelling", methods: "Drainage, compression, gradual weight-bearing", link: "Linked to her priority · “less pain”" },
-      { goal: "Stabilise the mid-foot", methods: "Strengthening of the intrinsic foot muscles and peroneals" },
-      { goal: "Regain balance safely", methods: "Gradual proprioceptive rehabilitation, adapted to the dizziness" },
-      { goal: "Prevent recurrence", methods: "Education about hypermobility, home programme", link: "Answers her expectation · home exercises" },
+      { goal: "Reduce pain and swelling", methods: "Drainage, compression, gradual weight-bearing", example: true },
+      { goal: "Stabilise the mid-foot", methods: "Strengthening of the intrinsic foot muscles and peroneals", example: true },
+      { goal: "Regain balance safely", methods: "Gradual proprioceptive rehabilitation, adapted to the dizziness", example: true },
+      { goal: "Prevent recurrence", methods: "Education about hypermobility, home programme", example: true },
     ],
 
     // dictation, simulated for the prototype: sentences arrive one by one and wait to be approved
@@ -345,8 +345,8 @@ window.RECORD = {
       { id: "assessment", n: 2, label: "Assessment", state: "empty", note: "Joints · muscles · function · balance" },
       { id: "goals", n: 3, label: "Goals and methods", state: "review", note: "Example filled in · to review" },
       { id: "notes", n: 4, label: "Notes", state: "empty" },
-      { id: "conclusion", n: 5, label: "Conclusion", state: "empty" },
-      { id: "recommendations", n: 6, label: "Recommendations", state: "empty" },
+      { id: "conclusion", n: 5, label: "Conclusion", state: "empty", fields: ["Main findings", "Physiotherapy diagnosis", "Prognosis"] },
+      { id: "recommendations", n: 6, label: "Recommendations", state: "empty", fields: ["For her at home", "For the GP", "Next session"] },
     ],
   },
 };
