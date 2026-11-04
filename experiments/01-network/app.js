@@ -769,7 +769,7 @@
     $("#c-sections").innerHTML = C.steps.map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
-          <span class="c-n">${st.n}</span><span class="c-sec-title">${st.label}</span>
+          <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
         <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>`

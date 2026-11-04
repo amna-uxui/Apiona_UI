@@ -1122,3 +1122,17 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 /* clock and timer at the right end of the title row, above Dictate */
 .c-time { margin-left: auto; }
 .c-tools { flex-basis: 100%; justify-content: flex-end; margin-left: 0; }
+/* sections: a colour instead of a number, from the palette */
+.c-sec-head .c-dot { width: 12px; height: 12px; margin: 0 4px 0 2px; border-radius: 50%; background: var(--ink); position: relative; }
+.c-dot[data-sec="reason"] { background: var(--know); }          /* pre-filled from the preparation */
+.c-dot[data-sec="assessment"] { background: var(--alert); }     /* the body, where it hurts */
+.c-dot[data-sec="goals"] { background: var(--voice); }          /* what she wants */
+.c-dot[data-sec="notes"] { background: var(--you); }            /* your own notes */
+.c-dot[data-sec="conclusion"] { background: var(--missing); }   /* to complete in the session */
+.c-dot[data-sec="recommendations"] { background: #2D5A68; }     /* what she takes home */
+.c-dot .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+/* the open section breathes softly */
+.c-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; opacity: 0; }
+.c-sec.is-open .c-dot::after { animation: c-breathe 2.6s ease-out infinite; }
+@keyframes c-breathe { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .c-sec.is-open .c-dot::after { animation: none; } }
