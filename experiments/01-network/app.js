@@ -35,6 +35,7 @@
 
   $("#p-name").textContent = R.patient.name;
   $("#p-meta").textContent = R.patient.meta;
+  $("#p-occ").textContent = R.patient.occupation || "";
   $("#p-new").hidden = !R.patient.isNew;
   $("#p-new").title = "New patient";
   $("#p-brief").innerHTML = R.patient.brief.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
@@ -418,7 +419,16 @@
 
     complete: (items) => items.map((n) => row(n, `<i class="check"></i>`)).join(""),
 
-    sources: (items) => items.map((n) => row(n, icon(n.icon))).join(""),
+    // each source unfolds in place: the few lines the record holds about it
+    sources: (items) => items.map((n) => `
+      <div class="source">
+        ${row(n, icon(n.icon)).replace('class="row', 'class="row has-detail').replace("<button", `<button aria-expanded="false" aria-controls="detail-${n.id}"`)}
+        <div class="source-detail" id="detail-${n.id}" hidden>
+          ${n.title && n.title !== n.type && n.title !== n.label && !n.list ? `<p class="sd-line">${n.title}</p>` : ""}
+          ${n.list ? `<ul class="sd-list">${n.list.map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}
+          ${n.facts ? `<dl class="sd-facts">${n.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
+        </div>
+      </div>`).join(""),
   };
 
   function buildIndex() {
@@ -440,6 +450,11 @@
       const open = b.getAttribute("aria-expanded") !== "true";
       b.setAttribute("aria-expanded", open);
       document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
+    }));
+    indexBody.querySelectorAll(".row.has-detail").forEach((r) => r.addEventListener("click", () => {
+      const open = r.getAttribute("aria-expanded") !== "true";
+      r.setAttribute("aria-expanded", open);
+      document.getElementById(r.getAttribute("aria-controls")).hidden = !open;
     }));
     indexBody.querySelectorAll(".row").forEach((r) => {
       r.addEventListener("click", () => go(r.dataset.id));

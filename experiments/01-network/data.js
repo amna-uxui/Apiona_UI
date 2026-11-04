@@ -15,6 +15,7 @@ window.RECORD = {
   patient: {
     name: "Camille M.",
     meta: "28 · female",
+    occupation: "Architectural draughtswoman, 60% · mostly seated, site visits",   // from Patient and coverage
     isNew: true,   // shown as a "New" tag on her photo
     tags: [
       { text: "Initial assessment · session 1 of 9", tone: "session" },

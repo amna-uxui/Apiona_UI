@@ -570,3 +570,18 @@ body.is-viewing .prints.is-fan .print img { aspect-ratio: auto; }
   color: var(--map-grey); text-transform: none; letter-spacing: 0;   /* sentence case: easier to scan than capitals */
 }
 .map .kind-section .sub, .map .kind-person .sub { font-size: 13px; max-width: 250px; }
+
+
+/* ---------- Patient details ---------- */
+.occupation { display: block; font-size: 13px; color: var(--grey); margin-top: 1px; }
+
+/* Details and sources: each row unfolds in place */
+.source-detail { margin: 0 0 8px 28px; padding: 2px 0 6px; font-size: 13px; line-height: 1.45; }
+.source-detail[hidden] { display: none; }
+.sd-line { margin: 0 0 6px; }
+.sd-list { margin: 0 0 6px; padding-left: 16px; }
+.sd-list li { margin: 2px 0; }
+.sd-facts { display: grid; grid-template-columns: 86px 1fr; gap: 3px 10px; margin: 0; }
+.sd-facts dt { color: var(--grey); }
+.sd-facts dd { margin: 0; }
+.row.has-detail[aria-expanded="true"] .r-sub { color: var(--ink); }
