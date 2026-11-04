@@ -790,6 +790,7 @@
       const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
       if (chip) chip.classList.toggle("is-open", on);
       if (on && sec.id === "cs-assessment") requestAnimationFrame(sizePills);
+      if (on) requestAnimationFrame(() => sec.querySelectorAll(".goal textarea").forEach((f) => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
     };
     consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
     consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
@@ -835,23 +836,28 @@
       ${C.goals.map((g, i) => `
         <div class="goal" data-i="${i}">
           <span class="goal-n">${i + 1}</span>
-          <span class="goal-main"><input data-k="goal" value="${esc(g.goal)}" placeholder="Goal" aria-label="Goal ${i + 1}">
-            </span>
-          <input data-k="methods" value="${esc(g.methods)}" placeholder="Methods" aria-label="Methods for goal ${i + 1}">
+          <textarea data-k="goal" rows="1" placeholder="Goal" aria-label="Goal ${i + 1}">${esc(g.goal)}</textarea>
+          <textarea data-k="methods" rows="1" placeholder="Methods" aria-label="Methods for goal ${i + 1}">${esc(g.methods)}</textarea>
           <button class="as-del" type="button" aria-label="Remove this goal">×</button>
         </div>`).join("")}
       <button class="as-add" type="button">+ Add a goal and its methods</button>
       <div class="dict-list" data-key="goals"></div>`;
     box.querySelectorAll(".goal").forEach((row) => {
       const g = C.goals[+row.dataset.i];
-      row.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => { g[f.dataset.k] = f.value; }));
+      // the text wraps: each field grows to show all of it
+      const fit = (f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; };
+      row.querySelectorAll("[data-k]").forEach((f) => {
+        f.addEventListener("input", () => { g[f.dataset.k] = f.value; fit(f); });
+        f.addEventListener("focus", () => fit(f));
+        requestAnimationFrame(() => fit(f));
+      });
       row.querySelector(".as-del").addEventListener("click", () => { C.goals.splice(+row.dataset.i, 1); buildGoals(); });
     });
     box.querySelector(".as-add").addEventListener("click", () => {
       C.goals.push({ goal: "", methods: "" });
       buildGoals();
       const rows = box.querySelectorAll(".goal");
-      rows[rows.length - 1].querySelector("input").focus();
+      rows[rows.length - 1].querySelector("textarea").focus();
     });
     renderDictated(box.querySelector(".dict-list"), "goals");
   }
@@ -1111,7 +1117,7 @@
       a.tests.push({ test: "", side: "Both sides" });
       renderArea();
       const rows = panel.querySelectorAll("tbody tr[data-i]");
-      rows[rows.length - 1].querySelector("input").focus();
+      rows[rows.length - 1].querySelector("textarea").focus();
     });
     panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
     renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);

@@ -1060,3 +1060,8 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-body .spot.is-on text { fill: var(--white); }
 .as-body .spot.is-hover:not(.is-on) .pill { fill: #F4F4F1; stroke: var(--ink); }
 .as-area-name { margin-bottom: 14px; }
+/* goals and methods wrap onto as many lines as they need */
+.goal textarea { width: 100%; border: 0; border-bottom: 1px dashed transparent; padding: 5px 2px; font: inherit; line-height: 1.4; color: var(--ink); background: none; resize: none; overflow: hidden; field-sizing: content; min-height: 0; }
+.goal textarea:focus { outline: none; border-bottom-color: var(--ink); }
+.goal-head, .goal { grid-template-columns: 22px 1fr 1.3fr 28px; }
+.goal .as-del { margin-top: 4px; }
