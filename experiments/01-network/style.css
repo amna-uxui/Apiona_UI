@@ -559,3 +559,14 @@ body.is-dropping .map { outline: 1.5px dashed var(--rule); outline-offset: -14px
 .media.from-folder { width: 320px; }
 .media.from-folder figcaption { padding-left: 70px; }
 body.is-viewing .prints.is-fan .print img { aspect-ratio: auto; }
+
+/* ---------- Readability on the map (only the map; the index is untouched) ---------- */
+.map { --map-grey: #55554F; }                      /* darker than the index grey, for text read at a distance */
+.map .label { max-width: 250px; padding: 2px 6px 3px; }
+.map .title { font-size: 15px; line-height: 1.3; }
+.map .kind-person .title { font-size: 17px; }
+.map .sub {
+  font-size: 13px; line-height: 1.35; margin-top: 2px;
+  color: var(--map-grey); text-transform: none; letter-spacing: 0;   /* sentence case: easier to scan than capitals */
+}
+.map .kind-section .sub, .map .kind-person .sub { font-size: 13px; max-width: 250px; }
