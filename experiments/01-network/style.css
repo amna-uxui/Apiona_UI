@@ -933,3 +933,51 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .c-ask-head { display: flex; align-items: center; gap: 8px; }
 .c-ask-head .i, .ask-label .i { width: 16px; height: 16px; flex: none; }
 .ask-label { display: inline-flex; align-items: center; gap: 9px; width: 190px; }
+
+
+/* ---------- Consultation: readability ---------- */
+/* larger text, a darker grey for secondary text, sentence case, more air between lines */
+.consult { --grey: #55554F; font-size: 15.5px; }
+.c-title h2 { font-size: 21px; }
+.c-title p { font-size: 14px; }
+.c-time-text b { font-size: 16px; }
+.c-time-text > span { font-size: 13.5px; }
+.seg button { font-size: 14px; padding: 7px 12px; }
+.c-dictate, .c-back { font-size: 14px; }
+.c-date { font-size: 14px; }
+.c-date-field input { font-size: 15px; }
+
+.c-ask-head { font-size: 15px; margin-bottom: 10px; }
+.ask { font-size: 15.5px; min-height: 36px; }
+.ask-missing { font-size: 14px; }
+.ask-add, .ask-input { font-size: 14px; }
+
+.c-step { font-size: 14px; padding: 5px 12px 5px 5px; }
+.c-n { width: 22px; height: 22px; font-size: 12px; }
+.c-sec-head { padding: 18px 0; }
+.c-sec-title { font-size: 17.5px; }
+.c-sec-note { font-size: 14px; }
+.c-sec textarea { font-size: 16px; line-height: 1.6; }
+
+.as-tab-name { font-size: 16px; }
+.as-tab-sub { font-size: 13px; }
+.as-what { font-size: 14px; }
+.as-record-head { font-size: 14px; }
+.as-fact { font-size: 15.5px; line-height: 1.45; margin-bottom: 8px; }
+.as-fact .src, .as-rule, .as-none { font-size: 13.5px; }
+.as-tests { font-size: 15px; }
+.as-tests th { font-size: 13.5px; }
+.as-tests input, .as-tests select { padding: 7px 2px; }
+.as-key { font-size: 13px; }
+.as-body .spot text { font-size: 16px; }
+.cmp-row { font-size: 13px; }
+.cmp-ratio { font-size: 13.5px; }
+.as-add { font-size: 14px; }
+
+.goal-head { font-size: 13.5px; }
+.goal { font-size: 15.5px; }
+.goal-link { font-size: 13.5px; }
+.dictated { font-size: 15.5px; }
+.dict-tag { font-size: 13px; }
+.dictated button { font-size: 13.5px; }
+.dict-bar { font-size: 15px; }

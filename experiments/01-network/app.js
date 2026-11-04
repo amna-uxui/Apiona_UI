@@ -809,7 +809,7 @@
   function buildAsk() {
     const box = $("#c-ask");
     const askIcon = { allergies: "alert", doses: "pill" };
-    box.innerHTML = `<p class="c-ask-head">${icon("question")}Ask during the session</p>
+    box.innerHTML = `<p class="c-ask-head">Ask during the session</p>
       <div class="c-ask-list">${C.ask.map((q) => `
         <div class="ask" data-q="${q.id}">
           <span class="ask-label">${icon(askIcon[q.id] || "info")}${q.label}</span>
