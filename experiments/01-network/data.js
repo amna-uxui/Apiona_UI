@@ -287,6 +287,29 @@ window.RECORD = {
 
   /* ---------- Consultation in progress (frame 2) ---------- */
   consultation: {
+    // Assessment by area. "From the record" is what the practice's rules highlight for that area, in the record's words.
+    // Apiona provides the fields (the tests, sides, results); the physiotherapist provides the content.
+    areas: [
+      { id: "joints", label: "Joints", sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
+        record: [
+          { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached" },
+          { text: "Several ankle sprains · left shoulder stabilised, 2021", src: "Her history" },
+        ],
+        tests: [{ test: "Ankle dorsiflexion", side: "Both sides" }, { test: "Mid-foot stability", side: "Affected", ref: "Healthy side" }] },
+      { id: "muscles", label: "Muscles", sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
+        tests: [{ test: "Peroneal strength", side: "Both sides" }, { test: "Calf raise", side: "Affected", ref: "Healthy side" }] },
+      { id: "function", label: "Function", sub: "Walking, limping, stairs", rule: "other pain",
+        record: [{ text: "Other pain · right knee (compensation), right wrist (crutches)", src: "Patient · hand centre" }],
+        tests: [{ test: "Walking, 10 metres", side: "—" }, { test: "Stairs", side: "—" }] },
+      { id: "balance", label: "Balance", sub: "Two-legged then one-legged, safely", rule: "balance and falls, neurology",
+        record: [
+          { text: "Frequent dizziness (chronic migraines)", src: "Neurology clinic · by the patient" },
+          { text: "Cerebral cavernoma · “history of bleeding episodes”", src: "Neurosurgery · report attached" },
+          { text: "Proprioception problems (Ehlers-Danlos)", src: "GP · report attached" },
+        ],
+        tests: [{ test: "Two-legged stance", side: "Both sides" }, { test: "One-legged stance", side: "Affected", ref: "Healthy side" }] },
+    ],
+    sides: ["Both sides", "Affected", "Healthy side", "—"],
     steps: [
       { id: "reason", n: 1, label: "Reason and history", state: "review",
         note: "Pre-filled from the preparation · to review",

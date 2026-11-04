@@ -743,11 +743,12 @@
           <span class="c-sec-note">${st.state === "review" ? st.note : `${st.note ? st.note + " · " : ""}empty`}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
-        <div class="c-sec-body">${st.text
+        <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>` : st.text
           ? `<textarea rows="7" aria-label="${st.label}">${st.text}</textarea>`
           : `<textarea rows="3" aria-label="${st.label}" placeholder="Write here, or dictate…"></textarea>`}</div>
       </article>`).join("");
 
+    buildAssessment();
     const open = (sec, on) => { sec.classList.toggle("is-open", on); sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on); };
     consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
     consult.querySelectorAll(".c-step").forEach((b) => b.addEventListener("click", () => {
@@ -759,6 +760,67 @@
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
     })));
+  }
+
+  /* Assessment by area: tabs for the areas; for each, what the record says (by the practice's rules),
+     a small table of tests to fill in, and free notes. What you type is kept when you switch areas. */
+  let areaId = "balance";
+  const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+
+  function buildAssessment() {
+    const box = $("#assess");
+    box.innerHTML = `
+      <div class="as-tabs" role="tablist">${C.areas.map((a) => `
+        <button role="tab" type="button" class="as-tab" data-area="${a.id}" aria-selected="${a.id === areaId}">
+          <span class="as-tab-name">${a.label}</span><span class="as-tab-sub">${a.sub}</span></button>`).join("")}
+      </div>
+      <div class="as-panel" id="as-panel"></div>`;
+    box.querySelectorAll(".as-tab").forEach((t) => t.addEventListener("click", () => {
+      areaId = t.dataset.area;
+      box.querySelectorAll(".as-tab").forEach((x) => x.setAttribute("aria-selected", x === t));
+      renderArea();
+    }));
+    renderArea();
+  }
+
+  function renderArea() {
+    const a = C.areas.find((x) => x.id === areaId);
+    const panel = $("#as-panel");
+    panel.classList.remove("is-in");
+    panel.innerHTML = `
+      <div class="as-record">
+        <p class="as-record-head"><i class="sw know"></i>From the record for this area</p>
+        ${a.record.length ? a.record.map((x) => `<p class="as-fact">${x.text}<span>${x.src}</span></p>`).join("")
+          + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
+          : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
+      </div>
+      <table class="as-tests">
+        <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Reference / other side</th><th aria-label="Remove"></th></tr></thead>
+        <tbody>${a.tests.map((t, i) => `
+          <tr data-i="${i}">
+            <td><input data-k="test" value="${esc(t.test)}" aria-label="Test"></td>
+            <td><select data-k="side" aria-label="Side">${C.sides.map((sd) => `<option${sd === t.side ? " selected" : ""}>${sd}</option>`).join("")}</select></td>
+            <td><input data-k="result" value="${esc(t.result)}" placeholder="result" aria-label="Result"></td>
+            <td><input data-k="ref" value="${esc(t.ref)}" placeholder="reference" aria-label="Reference or other side"></td>
+            <td><button class="as-del" type="button" aria-label="Remove this test">×</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+      <button class="as-add" type="button">+ Add a test</button>
+      <textarea class="as-notes" rows="3" placeholder="Specific tests and free remarks for ${a.label.toLowerCase()}…" aria-label="Notes for ${a.label}">${a.notes || ""}</textarea>`;
+    panel.querySelectorAll("tbody tr").forEach((tr) => {
+      const t = a.tests[+tr.dataset.i];
+      tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => { t[f.dataset.k] = f.value; }));
+      tr.querySelector(".as-del").addEventListener("click", () => { a.tests.splice(+tr.dataset.i, 1); renderArea(); });
+    });
+    panel.querySelector(".as-add").addEventListener("click", () => {
+      a.tests.push({ test: "", side: "Both sides" });
+      renderArea();
+      const rows = panel.querySelectorAll("tbody tr");
+      rows[rows.length - 1].querySelector("input").focus();
+    });
+    panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
+    requestAnimationFrame(() => panel.classList.add("is-in"));
   }
 
   function tickClock() {
