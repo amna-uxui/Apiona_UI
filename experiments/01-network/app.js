@@ -766,13 +766,10 @@
   let consulting = false, clockTimer = null, startedAt = 0, hideTimer = null;
 
   function buildConsult() {
-    $("#c-steps").innerHTML = C.steps.map((st) => `
-      <li><button class="c-step state-${st.state}" data-step="${st.id}" type="button">
-        <span class="c-n">${st.n}</span>${st.label}<i class="c-state" aria-hidden="true"></i></button></li>`).join("");
     $("#c-sections").innerHTML = C.steps.map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
-          <span class="c-n">${st.n}</span><span class="c-sec-title">${st.label}</span>
+          <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
         <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>`
@@ -799,6 +796,24 @@
       open(sec, true);
       sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     }));
+    // saving status: every change is saved a moment later, and says so
+    const save = $("#c-save");
+    let saveTimer = null;
+    const markSaved = () => {
+      const now = new Date();
+      save.classList.remove("is-saving");
+      save.querySelector("span").textContent = `Saved ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    };
+    const markChanged = () => {
+      save.classList.add("is-saving");
+      save.querySelector("span").textContent = "Saving…";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(markSaved, 800);
+    };
+    consult.addEventListener("input", markChanged);
+    consult.addEventListener("change", markChanged);
+    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no")) markChanged(); });
+    markSaved();
     // segmented choices: one on at a time
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
@@ -1031,6 +1046,124 @@
     sizePills();
   }
 
+  // the web from the home screen: thin lines from the chosen label to each fact from the record
+  // documents attached to the facts of an area: one node per document, however many facts point to it
+  function docNodes(a) {
+    const ids = [...new Set(a.record.map((x) => x.doc).filter(Boolean))];
+    return ids.map((id) => {
+      const M = byId.get(id).media, im = M.images[0];
+      return `<button class="as-doc" type="button" data-doc="${id}" aria-label="View ${M.caption}">
+        <span class="as-doc-page"><img src="${im.src}" alt=""></span><span class="as-doc-cap">GP report</span></button>`;
+    }).join("");
+  }
+
+  // a document, large in the middle of the screen; click anywhere or Esc to put it back
+  function openDoc(id, from) {
+    const M = byId.get(id).media;
+    const view = document.createElement("div");
+    view.className = "doc-view";
+    view.innerHTML = `<div class="doc-pages">${M.images.map((im) => `<img src="${im.src}" alt="${im.alt}">`).join("")}</div>
+      <p class="doc-cap"><span>${M.caption}</span>${M.file ? `<a href="${M.file.href}" target="_blank" rel="noopener">${M.file.label} ↗</a>` : ""}<span class="doc-hint">click anywhere to put it back</span></p>`;
+    const r = from.getBoundingClientRect();
+    view.style.setProperty("--ox", `${r.left + r.width / 2}px`);
+    view.style.setProperty("--oy", `${r.top + r.height / 2}px`);
+    document.body.appendChild(view);
+    const close = () => { view.classList.remove("is-in"); document.removeEventListener("keydown", onKey, true); setTimeout(() => view.remove(), 400); };
+    const onKey = (e) => { if (e.key === "Escape") { e.stopImmediatePropagation(); close(); } };
+    view.addEventListener("click", (e) => { if (!e.target.closest("a")) close(); });
+    document.addEventListener("keydown", onKey, true);
+    requestAnimationFrame(() => requestAnimationFrame(() => view.classList.add("is-in")));
+  }
+
+  // the facts float a little, like the nodes on the home screen, and lean towards the pointer;
+  // soft curves tie them to the chosen label
+  const web = { lay: null, svg: null, a: null, facts: [], ptr: null, raf: 0 };
+  function linkFacts(animate) {
+    const lay = document.querySelector("#assess .as-layout");
+    if (!lay || !lay.offsetWidth) return;
+    let svg = lay.querySelector(".as-links");
+    if (!svg) {
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "as-links");
+      svg.setAttribute("aria-hidden", "true");
+      lay.appendChild(svg);
+      lay.addEventListener("pointermove", (e) => { const L = lay.getBoundingClientRect(); web.ptr = { x: e.clientX - L.left, y: e.clientY - L.top }; });
+      lay.addEventListener("pointerleave", () => { web.ptr = null; });
+    }
+    const pill = lay.querySelector(`.spot[data-area="${areaId}"] .pill`);
+    const els = [...lay.querySelectorAll(".as-fact")];
+    if (!pill || !els.length || !(+pill.getAttribute("width"))) { svg.innerHTML = ""; web.facts = []; return; }
+    els.forEach((el) => { el.style.transform = ""; });
+    const L = lay.getBoundingClientRect(), P = pill.getBoundingClientRect();
+    web.lay = lay; web.svg = svg;
+    web.a = { x: P.right - L.left, y: P.top + P.height / 2 - L.top };
+    const body = (el, x, y, i) => ({ el, i, bx: x, by: y, ox: 0, oy: 0, vx: 0, vy: 0, seed: i * 1.7 + Math.random() });
+    web.facts = els.map((el, i) => {
+      const r = el.querySelector(".as-mark").getBoundingClientRect();
+      const f = body(el, r.left - L.left - 6, r.top + r.height / 2 - L.top, i);
+      const t = el.querySelector(".src-t").getBoundingClientRect();
+      f.end = { x: t.right - L.left + 6, y: t.top + t.height / 2 - L.top };   // where a document link leaves the fact
+      return f;
+    });
+    // documents sit level with the facts that point to them, and float too
+    web.docs = [...lay.querySelectorAll(".as-doc")].map((el, i) => {
+      const from = web.facts.filter((f) => f.el.dataset.doc === el.dataset.doc);
+      el.style.transform = "";
+      el.style.top = `${from.reduce((t, f) => t + f.end.y, 0) / from.length - lay.querySelector("#as-panel").getBoundingClientRect().top + L.top - el.offsetHeight / 2}px`;
+      const r = el.getBoundingClientRect();
+      const d = body(el, r.left - L.left, r.top + r.height / 2 - L.top, i + 5);
+      d.from = from;
+      if (!el.dataset.wired) { el.dataset.wired = 1; el.addEventListener("click", () => openDoc(el.dataset.doc, el)); }
+      return d;
+    });
+    web.links = web.docs.flatMap((d) => d.from.map((f) => ({ f, d })));
+    svg.innerHTML = web.facts.map((f) => `<path pathLength="1" style="--i:${f.i}"/><circle r="2" style="--i:${f.i}"/>`).join("")
+      + web.links.map((l, k) => `<path class="to-doc" pathLength="1" style="--i:${web.facts.length + k}"/>`).join("")
+      + `<circle class="from" cx="${web.a.x}" cy="${web.a.y}" r="2.5"/>`;
+    drawWeb(performance.now());
+    svg.classList.toggle("is-drawn", !animate);
+    if (animate) requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add("is-drawn")));
+    if (!web.raf && !reduceMotion) web.raf = requestAnimationFrame(floatWeb);
+  }
+
+  function drawWeb(t) {
+    const { a, svg } = web;
+    const paths = svg.querySelectorAll("path:not(.to-doc)"), dots = svg.querySelectorAll("circle:not(.from)");
+    svg.querySelectorAll("path.to-doc").forEach((p, k) => {
+      const { f, d } = web.links[k];
+      const s0 = { x: f.end.x + f.ox, y: f.end.y + f.oy }, e = { x: d.bx + d.ox - 4, y: d.by + d.oy };
+      const dx = e.x - s0.x, sway = Math.sin(t / 2100 + d.seed + k) * 6;
+      p.setAttribute("d", `M${s0.x},${s0.y} C${s0.x + dx * 0.5},${s0.y + sway} ${e.x - dx * 0.5},${e.y - sway} ${e.x},${e.y}`);
+    });
+    web.docs.forEach((d) => { d.el.style.transform = `translate(${d.ox.toFixed(2)}px, ${d.oy.toFixed(2)}px)`; });
+    web.facts.forEach((f, k) => {
+      const b = { x: f.bx + f.ox, y: f.by + f.oy };
+      const dx = b.x - a.x, sway = Math.sin(t / 1900 + f.seed) * 10;
+      paths[k].setAttribute("d", `M${a.x},${a.y} C${a.x + dx * 0.45},${a.y + sway} ${b.x - dx * 0.45},${b.y - sway} ${b.x},${b.y}`);
+      dots[k].setAttribute("cx", b.x); dots[k].setAttribute("cy", b.y);
+      f.el.style.transform = `translate(${f.ox.toFixed(2)}px, ${f.oy.toFixed(2)}px)`;
+    });
+  }
+
+  function floatWeb(t) {
+    web.raf = 0;
+    if (!web.lay || !web.lay.isConnected || !web.lay.offsetWidth || !web.facts.length) return;   // restarts on the next linkFacts
+    web.facts.concat(web.docs || []).forEach((f) => {
+      // a slow drift around its place, plus a lean towards the pointer when it is near
+      let tx = Math.sin(t / 2300 + f.seed) * 3, ty = Math.cos(t / 1700 + f.seed * 1.3) * 3.5;
+      if (web.ptr) {
+        const px = web.ptr.x - f.bx, py = web.ptr.y - f.by, d = Math.hypot(px, py);
+        if (d < 160) { const k = (1 - d / 160) * 0.12; tx += px * k; ty += py * k; }
+      }
+      // spring towards the target, as the home network does
+      f.vx = (f.vx + (tx - f.ox) * 0.06) * 0.82; f.vy = (f.vy + (ty - f.oy) * 0.06) * 0.82;
+      f.ox += f.vx; f.oy += f.vy;
+    });
+    drawWeb(t);
+    web.raf = requestAnimationFrame(floatWeb);
+  }
+  addEventListener("resize", () => linkFacts(false));
+
   // each label sits in a pill sized to its text, so it reads as a button (measured once it is visible)
   function sizePills() {
     const spots = document.querySelectorAll("#as-figure .spot");
@@ -1042,6 +1175,7 @@
       Object.entries({ x: b.x - 11, y: b.y + b.height / 2 - h / 2, width: b.width + 22, height: h, rx: h / 2 })
         .forEach(([k, v]) => r.setAttribute(k, v));
     });
+    linkFacts(true);
   }
 
   function hoverArea(id, on) {
@@ -1074,7 +1208,8 @@
       <div class="as-layout">
         <figure class="as-figure" id="as-figure"></figure>
         <div class="as-panel" id="as-panel"></div>
-      </div>`;
+      </div>
+      <div class="as-work" id="as-work"></div>`;
     renderArea();
   }
 
@@ -1085,11 +1220,15 @@
     panel.innerHTML = `
       <div class="as-record">
           <h4 class="as-area-name">${a.label}</h4>
-          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
+          ${a.record.length ? a.record.map((x) => `<p class="as-fact"${x.doc ? ` data-doc="${x.doc}"` : ""}><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src"><span class="src-t">${x.src}</span></span></span></p>`).join("")
+            + docNodes(a)
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
-      </div>
+      </div>`;
+    const work = $("#as-work");
+    work.classList.remove("is-in");
+    work.innerHTML = `
       <table class="as-tests">
-        <colgroup><col style="width:32%"><col style="width:25%"><col style="width:12%"><col style="width:25%"><col style="width:6%"></colgroup>
+        <colgroup><col style="width:30%"><col style="width:20%"><col style="width:20%"><col style="width:26%"><col style="width:4%"></colgroup>
         <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
         <tbody>${a.tests.map((t, i) => `
           <tr data-i="${i}">
@@ -1105,24 +1244,24 @@
       <button class="as-add" type="button">+ Add a test</button>
       <div class="dict-list"></div>
       <textarea class="as-notes" rows="3" placeholder="Specific tests and free remarks for ${a.label.toLowerCase()}…" aria-label="Notes for ${a.label}">${a.notes || ""}</textarea>`;
-    panel.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
+    work.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
       const t = a.tests[+tr.dataset.i];
       tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => {
         t[f.dataset.k] = f.value;
-        panel.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
+        work.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
       }));
       tr.querySelector(".as-del").addEventListener("click", () => { a.tests.splice(+tr.dataset.i, 1); renderArea(); });
     });
-    panel.querySelector(".as-add").addEventListener("click", () => {
+    work.querySelector(".as-add").addEventListener("click", () => {
       a.tests.push({ test: "", side: "Both sides" });
       renderArea();
-      const rows = panel.querySelectorAll("tbody tr[data-i]");
-      rows[rows.length - 1].querySelector("textarea").focus();
+      const rows = work.querySelectorAll("tbody tr[data-i]");
+      rows[rows.length - 1].querySelector("input").focus();
     });
-    panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
-    renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);
+    work.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
+    renderDictated(work.querySelector(".dict-list"), `assessment:${a.id}`);
     syncFigure();
-    requestAnimationFrame(() => panel.classList.add("is-in"));
+    requestAnimationFrame(() => { panel.classList.add("is-in"); work.classList.add("is-in"); linkFacts(true); });
   }
 
   // the analog clock: hands for the time now; a blue arc from when the session started to now

@@ -286,11 +286,15 @@ window.RECORD = {
     areas: [
       { id: "joints", label: "Joints", zones: [[40, 398, 64, 72]],  sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
         record: [
-          { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached" },
+          { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached", doc: "heds" },
           { text: "Several ankle sprains · left shoulder stabilised, 2021", src: "Her history" },
         ],
         tests: [{ test: "Ankle dorsiflexion", side: "Both sides" }, { test: "Mid-foot stability", side: "Affected", ref: "Healthy side" }] },
-      { id: "muscles", label: "Muscles", zones: [[40, 318, 64, 152]],  sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
+      { id: "muscles", label: "Muscles", zones: [[40, 318, 64, 152]],  sub: "Intrinsic foot muscles, peroneals, triceps surae", rule: "pain and load",
+        record: [
+          { text: "Mid-foot · “swollen, limping, pain when walking, at night and sitting”", src: "Patient · preparation" },
+          { text: "Walks with crutches · right wrist pain “from the crutches”", src: "Patient · preparation" },
+        ],
         tests: [{ test: "Peroneal strength", side: "Both sides" }, { test: "Calf raise", side: "Affected", ref: "Healthy side" }] },
       { id: "function", label: "Function", zones: [[30, 222, 142, 248]],  sub: "Walking, limping, stairs", rule: "other pain",
         record: [{ text: "Other pain · right knee (compensation), right wrist (crutches)", src: "Patient · hand centre" }],
@@ -299,7 +303,7 @@ window.RECORD = {
         record: [
           { text: "Frequent dizziness (chronic migraines)", src: "Neurology clinic · by the patient" },
           { text: "Cerebral cavernoma · “history of bleeding episodes”", src: "Neurosurgery · report attached" },
-          { text: "Proprioception problems (Ehlers-Danlos)", src: "GP · report attached" },
+          { text: "Proprioception problems (Ehlers-Danlos)", src: "GP · report attached", doc: "heds" },
         ],
         tests: [{ test: "Two-legged stance", side: "Both sides" }, { test: "One-legged stance", side: "Affected", ref: "Healthy side" }] },
     ],

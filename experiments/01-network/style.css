@@ -1065,3 +1065,74 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .goal textarea:focus { outline: none; border-bottom-color: var(--ink); }
 .goal-head, .goal { grid-template-columns: 22px 1fr 1.3fr 28px; }
 .goal .as-del { margin-top: 4px; }
+/* assessment: body and record side by side, the tests full width underneath */
+.as-figure { position: static; }
+.as-layout { margin-bottom: 26px; }
+.as-record { margin-bottom: 0; }
+.as-work { opacity: 0; transform: translateY(6px); transition: opacity .3s ease, transform .4s var(--ease); }
+.as-work.is-in { opacity: 1; transform: none; }
+.as-work .as-tests { font-size: 15px; }
+
+/* the clock: a quiet reference, not a headline */
+.clock { width: 28px; height: 28px; }
+.clock .face { stroke: #9A9A93; stroke-width: 1.4; }
+.clock .ticks line, .clock .hand { stroke: #6B6B66; }
+.clock .pin { fill: #6B6B66; }
+.c-time { gap: 8px; }
+.c-time-text b { font-size: 14px; font-weight: 400; color: var(--grey); }
+.c-time-text > span { font-size: 12.5px; }
+.c-time-text #c-clock { color: var(--grey); }
+
+/* saving status, next to the actions */
+.c-save { display: inline-flex; align-items: center; gap: 6px; margin: 0 14px 0 0; font-size: 13.5px; color: var(--grey); white-space: nowrap; }
+.c-save svg { width: 14px; height: 14px; fill: none; stroke: var(--ok, #97AD58); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s; }
+.c-save.is-saving svg { opacity: 0; }
+/* links from the chosen body label to the facts, drawn like the home network */
+.as-layout { position: relative; }
+.as-links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.as-links path { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s var(--ease) calc(var(--i) * 80ms); }
+.as-links circle { fill: var(--ink); opacity: 0; transition: opacity .3s ease calc(var(--i, 0) * 80ms + .45s); }
+.as-links circle.from { transition-delay: 0s; }
+.as-links.is-drawn path { stroke-dashoffset: 0; }
+.as-links.is-drawn circle { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .as-links path, .as-links circle { transition: none; } }
+/* floating facts: the move comes from the script, keep it smooth */
+.as-fact { will-change: transform; }
+.as-links path { stroke-width: 1; }
+/* documents attached to facts: a second, smaller web */
+#as-panel { position: relative; }
+.as-record { padding-right: 104px; }
+.as-doc { position: absolute; right: 0; top: 0; width: 66px; padding: 0; border: 0; background: none; cursor: zoom-in; display: grid; gap: 6px; justify-items: center; will-change: transform; }
+.as-doc-page { display: block; width: 58px; aspect-ratio: 0.707; overflow: hidden; background: var(--white); border: 1px solid #DCDAD2; box-shadow: 0 6px 16px rgba(20, 20, 18, .08); transition: transform .3s var(--ease), box-shadow .3s; }
+.as-doc-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.as-doc-cap { font-size: 12.5px; color: var(--grey); white-space: nowrap; }
+.as-doc:hover .as-doc-page { transform: translateY(-3px) rotate(-2deg); box-shadow: 0 10px 22px rgba(20, 20, 18, .14); }
+.as-doc:hover .as-doc-cap { color: var(--ink); }
+.as-links path.to-doc { stroke: var(--ink); stroke-dasharray: 1; }
+
+.doc-view { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; align-content: center; gap: 18px; background: rgba(255, 255, 255, .94); opacity: 0; transition: opacity .35s ease; cursor: zoom-out; }
+.doc-view.is-in { opacity: 1; }
+.doc-pages { display: flex; gap: 28px; transform-origin: var(--ox) var(--oy); transform: scale(.4); transition: transform .5s var(--ease); }
+.doc-view.is-in .doc-pages { transform: none; }
+.doc-pages img { height: min(72vh, 680px); width: auto; box-shadow: 0 18px 50px rgba(20, 20, 18, .16); background: var(--white); }
+.doc-cap { margin: 0; display: flex; gap: 16px; font-size: 14px; color: var(--grey); }
+.doc-cap span:first-child { color: var(--ink); }
+.doc-cap a { color: var(--ink); }
+.as-fact .src .src-t { display: inline; }
+/* clock and timer at the right end of the title row, above Dictate */
+.c-time { margin-left: auto; }
+.c-tools { flex-basis: 100%; justify-content: flex-end; margin-left: 0; }
+/* sections: a colour instead of a number, from the palette */
+.c-sec-head .c-dot { width: 12px; height: 12px; margin: 0 4px 0 2px; border-radius: 50%; background: var(--ink); position: relative; }
+.c-dot[data-sec="reason"] { background: var(--know); }          /* pre-filled from the preparation */
+.c-dot[data-sec="assessment"] { background: var(--alert); }     /* the body, where it hurts */
+.c-dot[data-sec="goals"] { background: var(--voice); }          /* what she wants */
+.c-dot[data-sec="notes"] { background: var(--you); }            /* your own notes */
+.c-dot[data-sec="conclusion"] { background: var(--missing); }   /* to complete in the session */
+.c-dot[data-sec="recommendations"] { background: #2D5A68; }     /* what she takes home */
+.c-dot .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+/* the open section breathes softly */
+.c-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; opacity: 0; }
+.c-sec.is-open .c-dot::after { animation: c-breathe 2.6s ease-out infinite; }
+@keyframes c-breathe { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .c-sec.is-open .c-dot::after { animation: none; } }
