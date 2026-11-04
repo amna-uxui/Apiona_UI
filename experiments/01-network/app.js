@@ -836,7 +836,7 @@
         <div class="goal" data-i="${i}">
           <span class="goal-n">${i + 1}</span>
           <span class="goal-main"><input data-k="goal" value="${esc(g.goal)}" placeholder="Goal" aria-label="Goal ${i + 1}">
-            ${g.link ? `<span class="goal-link">↳ <span class="hl-voice">${g.link}</span></span>` : ""}</span>
+            </span>
           <input data-k="methods" value="${esc(g.methods)}" placeholder="Methods" aria-label="Methods for goal ${i + 1}">
           <button class="as-del" type="button" aria-label="Remove this goal">×</button>
         </div>`).join("")}
