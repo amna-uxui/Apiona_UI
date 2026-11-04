@@ -1065,3 +1065,25 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .goal textarea:focus { outline: none; border-bottom-color: var(--ink); }
 .goal-head, .goal { grid-template-columns: 22px 1fr 1.3fr 28px; }
 .goal .as-del { margin-top: 4px; }
+/* assessment: body and record side by side, the tests full width underneath */
+.as-figure { position: static; }
+.as-layout { margin-bottom: 26px; }
+.as-record { margin-bottom: 0; }
+.as-work { opacity: 0; transform: translateY(6px); transition: opacity .3s ease, transform .4s var(--ease); }
+.as-work.is-in { opacity: 1; transform: none; }
+.as-work .as-tests { font-size: 15px; }
+
+/* the clock: a quiet reference, not a headline */
+.clock { width: 28px; height: 28px; }
+.clock .face { stroke: #9A9A93; stroke-width: 1.4; }
+.clock .ticks line, .clock .hand { stroke: #6B6B66; }
+.clock .pin { fill: #6B6B66; }
+.c-time { gap: 8px; }
+.c-time-text b { font-size: 14px; font-weight: 400; color: var(--grey); }
+.c-time-text > span { font-size: 12.5px; }
+.c-time-text #c-clock { color: var(--grey); }
+
+/* saving status, next to the actions */
+.c-save { display: inline-flex; align-items: center; gap: 6px; margin: 0 14px 0 0; font-size: 13.5px; color: var(--grey); white-space: nowrap; }
+.c-save svg { width: 14px; height: 14px; fill: none; stroke: var(--ok, #97AD58); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s; }
+.c-save.is-saving svg { opacity: 0; }

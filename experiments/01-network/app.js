@@ -766,9 +766,6 @@
   let consulting = false, clockTimer = null, startedAt = 0, hideTimer = null;
 
   function buildConsult() {
-    $("#c-steps").innerHTML = C.steps.map((st) => `
-      <li><button class="c-step state-${st.state}" data-step="${st.id}" type="button">
-        <span class="c-n">${st.n}</span>${st.label}<i class="c-state" aria-hidden="true"></i></button></li>`).join("");
     $("#c-sections").innerHTML = C.steps.map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
@@ -799,6 +796,24 @@
       open(sec, true);
       sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     }));
+    // saving status: every change is saved a moment later, and says so
+    const save = $("#c-save");
+    let saveTimer = null;
+    const markSaved = () => {
+      const now = new Date();
+      save.classList.remove("is-saving");
+      save.querySelector("span").textContent = `Saved ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    };
+    const markChanged = () => {
+      save.classList.add("is-saving");
+      save.querySelector("span").textContent = "Saving…";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(markSaved, 800);
+    };
+    consult.addEventListener("input", markChanged);
+    consult.addEventListener("change", markChanged);
+    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no")) markChanged(); });
+    markSaved();
     // segmented choices: one on at a time
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
@@ -1074,7 +1089,8 @@
       <div class="as-layout">
         <figure class="as-figure" id="as-figure"></figure>
         <div class="as-panel" id="as-panel"></div>
-      </div>`;
+      </div>
+      <div class="as-work" id="as-work"></div>`;
     renderArea();
   }
 
@@ -1087,9 +1103,12 @@
           <h4 class="as-area-name">${a.label}</h4>
           ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
-      </div>
+      </div>`;
+    const work = $("#as-work");
+    work.classList.remove("is-in");
+    work.innerHTML = `
       <table class="as-tests">
-        <colgroup><col style="width:32%"><col style="width:25%"><col style="width:12%"><col style="width:25%"><col style="width:6%"></colgroup>
+        <colgroup><col style="width:30%"><col style="width:20%"><col style="width:20%"><col style="width:26%"><col style="width:4%"></colgroup>
         <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
         <tbody>${a.tests.map((t, i) => `
           <tr data-i="${i}">
@@ -1105,24 +1124,24 @@
       <button class="as-add" type="button">+ Add a test</button>
       <div class="dict-list"></div>
       <textarea class="as-notes" rows="3" placeholder="Specific tests and free remarks for ${a.label.toLowerCase()}…" aria-label="Notes for ${a.label}">${a.notes || ""}</textarea>`;
-    panel.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
+    work.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
       const t = a.tests[+tr.dataset.i];
       tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => {
         t[f.dataset.k] = f.value;
-        panel.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
+        work.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
       }));
       tr.querySelector(".as-del").addEventListener("click", () => { a.tests.splice(+tr.dataset.i, 1); renderArea(); });
     });
-    panel.querySelector(".as-add").addEventListener("click", () => {
+    work.querySelector(".as-add").addEventListener("click", () => {
       a.tests.push({ test: "", side: "Both sides" });
       renderArea();
-      const rows = panel.querySelectorAll("tbody tr[data-i]");
-      rows[rows.length - 1].querySelector("textarea").focus();
+      const rows = work.querySelectorAll("tbody tr[data-i]");
+      rows[rows.length - 1].querySelector("input").focus();
     });
-    panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
-    renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);
+    work.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
+    renderDictated(work.querySelector(".dict-list"), `assessment:${a.id}`);
     syncFigure();
-    requestAnimationFrame(() => panel.classList.add("is-in"));
+    requestAnimationFrame(() => { panel.classList.add("is-in"); work.classList.add("is-in"); });
   }
 
   // the analog clock: hands for the time now; a blue arc from when the session started to now
