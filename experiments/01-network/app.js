@@ -1047,6 +1047,9 @@
   }
 
   // the web from the home screen: thin lines from the chosen label to each fact from the record
+  // the facts float a little, like the nodes on the home screen, and lean towards the pointer;
+  // soft curves tie them to the chosen label
+  const web = { lay: null, svg: null, a: null, facts: [], ptr: null, raf: 0 };
   function linkFacts(animate) {
     const lay = document.querySelector("#assess .as-layout");
     if (!lay || !lay.offsetWidth) return;
@@ -1056,19 +1059,56 @@
       svg.setAttribute("class", "as-links");
       svg.setAttribute("aria-hidden", "true");
       lay.appendChild(svg);
+      lay.addEventListener("pointermove", (e) => { const L = lay.getBoundingClientRect(); web.ptr = { x: e.clientX - L.left, y: e.clientY - L.top }; });
+      lay.addEventListener("pointerleave", () => { web.ptr = null; });
     }
     const pill = lay.querySelector(`.spot[data-area="${areaId}"] .pill`);
-    const marks = [...lay.querySelectorAll(".as-fact .as-mark")];
-    if (!pill || !marks.length || !(+pill.getAttribute("width"))) { svg.innerHTML = ""; return; }
+    const els = [...lay.querySelectorAll(".as-fact")];
+    if (!pill || !els.length || !(+pill.getAttribute("width"))) { svg.innerHTML = ""; web.facts = []; return; }
+    els.forEach((el) => { el.style.transform = ""; });
     const L = lay.getBoundingClientRect(), P = pill.getBoundingClientRect();
-    const a = { x: P.right - L.left, y: P.top + P.height / 2 - L.top };
-    svg.innerHTML = marks.map((m, i) => {
-      const r = m.getBoundingClientRect();
-      const b = { x: r.left - L.left - 6, y: r.top + r.height / 2 - L.top };
-      return `<path pathLength="1" style="--i:${i}" d="${elbow(a, b)}"/><circle cx="${b.x}" cy="${b.y}" r="2" style="--i:${i}"/>`;
-    }).join("") + `<circle class="from" cx="${a.x}" cy="${a.y}" r="2.5"/>`;
+    web.lay = lay; web.svg = svg;
+    web.a = { x: P.right - L.left, y: P.top + P.height / 2 - L.top };
+    web.facts = els.map((el, i) => {
+      const r = el.querySelector(".as-mark").getBoundingClientRect();
+      return { el, i, bx: r.left - L.left - 6, by: r.top + r.height / 2 - L.top, ox: 0, oy: 0, vx: 0, vy: 0, seed: i * 1.7 + Math.random() };
+    });
+    svg.innerHTML = web.facts.map((f) => `<path pathLength="1" style="--i:${f.i}"/><circle r="2" style="--i:${f.i}"/>`).join("")
+      + `<circle class="from" cx="${web.a.x}" cy="${web.a.y}" r="2.5"/>`;
+    drawWeb(performance.now());
     svg.classList.toggle("is-drawn", !animate);
     if (animate) requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add("is-drawn")));
+    if (!web.raf && !reduceMotion) web.raf = requestAnimationFrame(floatWeb);
+  }
+
+  function drawWeb(t) {
+    const { a, svg } = web;
+    const paths = svg.querySelectorAll("path"), dots = svg.querySelectorAll("circle:not(.from)");
+    web.facts.forEach((f, k) => {
+      const b = { x: f.bx + f.ox, y: f.by + f.oy };
+      const dx = b.x - a.x, sway = Math.sin(t / 1900 + f.seed) * 10;
+      paths[k].setAttribute("d", `M${a.x},${a.y} C${a.x + dx * 0.45},${a.y + sway} ${b.x - dx * 0.45},${b.y - sway} ${b.x},${b.y}`);
+      dots[k].setAttribute("cx", b.x); dots[k].setAttribute("cy", b.y);
+      f.el.style.transform = `translate(${f.ox.toFixed(2)}px, ${f.oy.toFixed(2)}px)`;
+    });
+  }
+
+  function floatWeb(t) {
+    web.raf = 0;
+    if (!web.lay || !web.lay.isConnected || !web.lay.offsetWidth || !web.facts.length) return;   // restarts on the next linkFacts
+    web.facts.forEach((f) => {
+      // a slow drift around its place, plus a lean towards the pointer when it is near
+      let tx = Math.sin(t / 2300 + f.seed) * 3, ty = Math.cos(t / 1700 + f.seed * 1.3) * 3.5;
+      if (web.ptr) {
+        const px = web.ptr.x - f.bx, py = web.ptr.y - f.by, d = Math.hypot(px, py);
+        if (d < 160) { const k = (1 - d / 160) * 0.12; tx += px * k; ty += py * k; }
+      }
+      // spring towards the target, as the home network does
+      f.vx = (f.vx + (tx - f.ox) * 0.06) * 0.82; f.vy = (f.vy + (ty - f.oy) * 0.06) * 0.82;
+      f.ox += f.vx; f.oy += f.vy;
+    });
+    drawWeb(t);
+    web.raf = requestAnimationFrame(floatWeb);
   }
   addEventListener("resize", () => linkFacts(false));
 

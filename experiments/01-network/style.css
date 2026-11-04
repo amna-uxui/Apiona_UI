@@ -1096,3 +1096,6 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-links.is-drawn path { stroke-dashoffset: 0; }
 .as-links.is-drawn circle { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .as-links path, .as-links circle { transition: none; } }
+/* floating facts: the move comes from the script, keep it smooth */
+.as-fact { will-change: transform; }
+.as-links path { stroke-width: 1; }
