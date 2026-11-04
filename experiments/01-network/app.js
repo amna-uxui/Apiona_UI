@@ -990,14 +990,16 @@
       (a.zones || []).map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join("")}</g>`).join("");
     const ground = `<line class="ground" data-area="balance" x1="20" y1="466" x2="120" y2="466"/>`;
     const pains = kids("hurts").map((n) => `<circle class="tone-${n.tone}" cx="${n.spot[0]}" cy="${n.spot[1]}" r="5.5"><title>${n.label} · from the record</title></circle>`).join("");
-    const spots = C.areas.map((a) => {
+    const spots = C.areas.map((a, i) => {
       const [x, y] = HOT[a.id];
       return `<g class="spot" data-area="${a.id}" tabindex="0" role="button" aria-label="Assess ${a.label}">
-        <line class="lead" x1="${x}" y1="${y}" x2="214" y2="${y}"/>
-        <circle class="ring" cx="${x}" cy="${y}" r="11"/><circle class="dot" cx="${x}" cy="${y}" r="5"/>
-        <text x="220" y="${y}">${a.label}</text></g>`;
+        <rect class="hit" x="${x - 16}" y="${y - 16}" width="${236 - x + 16}" height="32"/>
+        <line class="lead" x1="${x}" y1="${y}" x2="150" y2="${y}"/>
+        <circle class="pulse" cx="${x}" cy="${y}" r="7" style="animation-delay:${i * 0.6}s"/>
+        <circle class="ring" cx="${x}" cy="${y}" r="12"/><circle class="dot" cx="${x}" cy="${y}" r="7"/>
+        <text x="157" y="${y}">${a.label}</text></g>`;
     }).join("");
-    return `<svg class="as-body" viewBox="0 -10 300 471" aria-label="Choose what to assess on the body">
+    return `<svg class="as-body" viewBox="0 -10 236 481" aria-label="Choose what to assess on the body">
       <defs><clipPath id="as-clip">${shapes}</clipPath></defs>
       <g class="sil">${shapes}</g>${zones}${ground}${spots}
     </svg>`;
@@ -1007,7 +1009,7 @@
     const fig = $("#as-figure");
     if (!fig) return;
     if (!fig.firstElementChild && bodySvgText) {
-      fig.innerHTML = bodyFigure() + `<p class="as-key"><i></i>Assessed here · click the body to change</p>`;
+      fig.innerHTML = bodyFigure() + `<p class="as-key"><i></i>Click a point on the body to choose the area</p>`;
       fig.querySelectorAll(".spot").forEach((sp) => {
         const pick = () => selectArea(sp.dataset.area);
         sp.addEventListener("click", pick);
@@ -1022,6 +1024,8 @@
 
   function hoverArea(id, on) {
     document.querySelectorAll(`#assess [data-area="${id}"]`).forEach((el) => el.classList.toggle("is-hover", on));
+    const body = document.querySelector("#assess .as-body");
+    if (body) body.classList.toggle("has-hover", on && id !== areaId);
   }
 
   function selectArea(id) {
@@ -1065,7 +1069,7 @@
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
       </div>
       <table class="as-tests">
-        <colgroup><col style="width:34%"><col style="width:22%"><col style="width:14%"><col style="width:24%"><col style="width:6%"></colgroup>
+        <colgroup><col style="width:32%"><col style="width:25%"><col style="width:12%"><col style="width:25%"><col style="width:6%"></colgroup>
         <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
         <tbody>${a.tests.map((t, i) => `
           <tr data-i="${i}">
