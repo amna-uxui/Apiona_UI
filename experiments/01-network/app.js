@@ -51,14 +51,21 @@
     }
     return `<svg viewBox="0 0 34 34"><path d="M${pts.join(" L")} Z"/></svg>`;
   })();
-  const half = (n) => (n.kind === "person" ? 17 : n.kind === "section" ? 13 : 8);
+  // a flat folder: back with its tab, papers peeking out, and a front flap that opens
+  const FOLDER = `<svg class="folder" viewBox="0 0 34 26" aria-hidden="true">
+    <path class="f-back" d="M1.5 4.5a2 2 0 0 1 2-2h8l2.5 3h16.5a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2h-27a2 2 0 0 1-2-2z"/>
+    <rect class="f-paper" x="5" y="6" width="22" height="14" rx="1"/>
+    <rect class="f-paper f-paper2" x="7" y="5" width="21" height="14" rx="1"/>
+    <path class="f-front" d="M1.5 10a2 2 0 0 1 2-2h27a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2h-27a2 2 0 0 1-2-2z"/>
+  </svg>`;
+  const half = (n) => (n.kind === "person" ? 17 : n.kind === "section" ? 13 : n.folder ? 13 : 8);
 
-  R.nodes.forEach((n) => {
+  function makeNode(n) {
     const el = document.createElement("button");
     el.type = "button";
-    el.className = ["node", `kind-${n.kind}`, n.source && `src-${n.source}`, n.mark && `mark-${n.mark}`].filter(Boolean).join(" ");
+    el.className = ["node", `kind-${n.kind}`, n.source && `src-${n.source}`, n.mark && `mark-${n.mark}`, n.folder && "is-folder"].filter(Boolean).join(" ");
     el.dataset.id = n.id;
-    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? STAR : "";
+    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? STAR : n.folder ? FOLDER : "";
     el.innerHTML = `<span class="shape">${shape}</span>
       <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span></span>`;
     el.setAttribute("aria-label", `${n.label}. ${n.sub || ""}`);
@@ -71,7 +78,8 @@
     n.t = { x: 0, y: 0, o: 0 };                 // target
     n.release = 0;                              // when it starts moving to its target
     n.m = { x: 0, y: 0, vx: 0, vy: 0 };         // magnetic offset toward the cursor
-  });
+  }
+  R.nodes.forEach(makeNode);
 
   /* ---------------- layouts ---------------- */
 
@@ -109,7 +117,8 @@
 
     // an item: its path back to Camille behind it, what it relates to in front
     const parent = c.parent && byId.get(c.parent);
-    const a = parent ? ANGLE[parent.id] : state.lastAngle;
+    // a document without a section fans its links to the left when it has prints (they sit on the right)
+    const a = parent ? ANGLE[parent.id] : c.media ? 180 : state.lastAngle;
     L[c.id] = { x: 0, y: 0 };
     if (parent) {
       L[parent.id] = polar(a + 180, 220, 150);
@@ -119,12 +128,14 @@
       const bends = [a + 180 + 58, a + 180 - 58].map((d) => { const o = polar(d, 210, 150); return { x: p.x + o.x, y: p.y + o.y }; });
       L.camille = bends[0].y >= bends[1].y ? bends[0] : bends[1];   // prefer below, away from the header
     } else {
-      L.camille = polar(a + 180, 260, 180);
+      L.camille = c.media ? { x: 100, y: 225 } : polar(a + 180, 260, 180);   // below, out of the way of the prints
     }
     const front = [...related.get(c.id)].filter((id) => !(id in L));
     // the fan in front tightens a little when the map is narrow (left menu open)
-    const room = Math.min(1, Math.max(0.78, (map.clientWidth - 140) / 900));
-    Object.assign(L, fan(front, a, 270 * room, 190, 42 / room, 240));   // closer in, so wider apart
+    const avail = map.clientWidth - mediaWidth(c);   // prints take the right of the map
+    const room = Math.min(1, Math.max(0.6, (avail - 140) / 900));
+    if (!parent && c.media) Object.assign(L, fan(front, a, 270, 190, 50, 200));   // a document with prints: a full fan to the left
+    else Object.assign(L, fan(front, a, 270 * room, 190, 42 / room, 240));   // closer in, so wider apart
     return { L, focus: c.id, angle: a };
   }
 
@@ -138,9 +149,10 @@
     const m = map.getBoundingClientRect();
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
-    const room = m.width - (mediaShown() ? MEDIA_W : 0);   // the prints take the right of the map
+    const room = m.width - mediaWidth(state.current && byId.get(state.current));   // the prints take the right of the map
+    const centred = room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
     return {
-      x: room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2,
+      x: Math.max(centred, 120 - Math.min(...xs)),   // never push a label past the left edge
       y: (top + bottom) / 2 - (Math.min(...ys) + Math.max(...ys) + 40) / 2,   // labels hang below
     };
   }
@@ -478,9 +490,25 @@
   // Like the reference: when a record has images, they arrive as overlapping prints beside the network,
   // one after another, and leave when you move on. Hover or click brings a print to the front.
   const media = $("#media");
-  const MEDIA_W = 290;
+  // the room the prints take on the right: a loose pile of films, or a tight stack of paper pages
+  const mediaWidth = (n) => (n && n.media ? (n.media.fan ? 340 : n.media.kind === "paper" ? 230 : 310) : 0);
   const mediaShown = () => !!(state.current && byId.get(state.current).media);
   let mediaTimer = null;
+
+  // papers fanned out of a folder: a soft arc, each a little further and a little more turned
+  function fanSpot(i, count) {
+    const mid = (count - 1) / 2, d = i - mid;
+    return `--x:${8 + i * 46}px;--y:${Math.abs(d) * 10 + 4}px;--r:${d * 5}deg;`;
+  }
+  // a page for a file you dropped in: its name and where it came from (the file itself opens from the caption)
+  function drawnPage(p) {
+    return `<span class="drawn-page">
+      <span class="dp-type">${p.type}</span>
+      <span class="dp-title">${p.title}</span>
+      <span class="dp-from">${p.from}</span>
+      <span class="dp-lines">${"<i></i>".repeat(p.lines)}</span>
+    </span>`;
+  }
 
   function renderMedia() {
     const n = state.current && byId.get(state.current);
@@ -492,12 +520,21 @@
       return;
     }
     const M = n.media;
+    const quote = M.quote ? `<span class="cap-quote">“${M.quote}”</span>` : "";
+    const open = M.file ? `<a class="open-file" href="${M.file.href}" target="_blank" rel="noopener">${M.file.label} ↗</a>` : "";
+    media.dataset.kind = M.kind || "film";
+    media.classList.toggle("from-folder", !!M.fan);
     media.innerHTML = `
-      <div class="prints">${M.images.map((im, i) => `
-        <button class="print p${i}" style="--i:${i}" type="button" aria-label="${im.alt}"><img src="${im.src}" alt=""></button>`).join("")}
+      <div class="prints ${M.fan ? "is-fan" : ""}">${M.images.map((im, i) => `
+        <button class="print p${i}" style="--i:${i};${M.fan ? fanSpot(i, M.images.length) : ""}" type="button" aria-label="${im.alt || im.name || (im.page && im.page.title) || "Document"}">${
+          im.src ? `<img src="${im.src}" alt="">`
+          : im.page ? drawnPage(im.page)
+          : `<span class="blank-page"><svg class="i"><use href="#i-file-text"/></svg><span>${im.name}</span></span>`}</button>`).join("")}
       </div>
-      <figcaption><span class="cap">${M.caption}</span><span class="cap-quote">“${M.quote}”</span></figcaption>
-      <p class="view-cap"><span class="cap">${M.caption}</span><span class="cap-quote">“${M.quote}” · click anywhere to put them back</span></p>`;
+      <figcaption><span class="cap">${M.caption}</span>${quote}</figcaption>
+      <p class="view-cap"><span class="cap">${M.caption}</span>${quote}<span class="view-hint">${open}${open ? " · " : ""}click anywhere to put ${M.images.length > 1 ? "them" : "it"} back</span></p>`;
+    const link = media.querySelector(".open-file");
+    if (link) link.addEventListener("click", (e) => e.stopPropagation());
     media.hidden = false;
     media.style.top = `${$(".brief").getBoundingClientRect().bottom + 28}px`;   // always below the header
     media.querySelectorAll(".print").forEach((p) => p.addEventListener("click", () => setViewing(!viewing)));
@@ -520,9 +557,11 @@
     const base = media.querySelector(".prints").getBoundingClientRect();
     const left = $("#rail").getBoundingClientRect().right;
     const areaW = innerWidth - left, areaH = innerHeight;
-    const gap = 36;
-    const H = Math.min(areaH * 0.72, 680);
-    const sizes = prints.map((p) => { const img = p.querySelector("img"); return { w: H * (img.naturalWidth / img.naturalHeight || 0.45), h: H }; });
+    const gap = prints.length > 2 ? 22 : 36;
+    const ratios = prints.map((p) => { const img = p.querySelector("img"); return (img && img.naturalWidth / img.naturalHeight) || 0.707; });
+    const fitW = (areaW * 0.9 - gap * (prints.length - 1)) / ratios.reduce((a, b) => a + b, 0);
+    const H = Math.min(areaH * 0.72, 680, fitW);   // as large as fits, side by side
+    const sizes = ratios.map((ratio) => ({ w: H * ratio, h: H }));
     const total = sizes.reduce((t, z) => t + z.w, 0) + gap * (sizes.length - 1);
     let x = left + (areaW - total) / 2;
     const y = (areaH - H) / 2 - 18;
@@ -535,6 +574,89 @@
   veil.addEventListener("click", () => setViewing(false));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && viewing) { e.stopImmediatePropagation(); setViewing(false); } }, true);
   window.addEventListener("resize", () => { if (viewing) setViewing(true); });
+
+  /* ---------------- attach: drop a file onto the record ---------------- */
+
+  // Drag a file from your computer over the page: a paper print follows the cursor and the nearest
+  // point of the record lights up. Drop it, and it attaches there as a document on a dotted line,
+  // then opens as prints. The file stays in this browser tab only: nothing is uploaded.
+  const ghost = $("#ghost");
+  let dropTarget = null, dragDepth = 0;
+  const hasFiles = (e) => [...(e.dataTransfer && e.dataTransfer.types || [])].includes("Files");
+
+  function nearestNode(x, y) {
+    let best = null, bestD = 120;
+    R.nodes.forEach((n) => {
+      if (n.p.o < 0.5 || n.kind === "person") return;
+      const r = n.el.querySelector(".shape").getBoundingClientRect();
+      const d = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y);
+      if (d < bestD) { best = n; bestD = d; }
+    });
+    return best;
+  }
+  function setDropTarget(n) {
+    if (dropTarget === n) return;
+    if (dropTarget) dropTarget.el.classList.remove("is-drop-target");
+    dropTarget = n;
+    if (n) n.el.classList.add("is-drop-target");
+    $("#drop-hint").textContent = n ? `Attach to “${n.label}”` : "Drop it on a point of the record";
+  }
+  function endDrag() {
+    dragDepth = 0; setDropTarget(null);
+    document.body.classList.remove("is-dropping");
+  }
+
+  window.addEventListener("dragenter", (e) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; document.body.classList.add("is-dropping"); });
+  window.addEventListener("dragleave", () => { if (--dragDepth <= 0) endDrag(); });
+  window.addEventListener("dragover", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    ghost.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 10}px) rotate(-5deg)`;
+    setDropTarget(nearestNode(e.clientX, e.clientY));
+  });
+  window.addEventListener("drop", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    const target = dropTarget, file = e.dataTransfer.files[0];
+    endDrag();
+    if (target && file) attach(file, target);
+  });
+
+  function attach(file, target) {
+    const url = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
+    const name = file.name.length > 34 ? file.name.slice(0, 31) + "…" : file.name;
+    const n = {
+      id: `attached-${Date.now()}`, kind: "item", source: "document", icon: "file-text", attached: true,
+      label: name, sub: "Attached just now", type: "Document", links: [target.id],
+      media: {
+        kind: isImage ? "film" : "paper",
+        caption: `${name} · attached just now to ${target.label}`,
+        file: { href: url, label: "Open the file" },
+        images: [isImage ? { src: url, alt: name } : { name }],
+      },
+    };
+    R.nodes.push(n);
+    byId.set(n.id, n);
+    related.set(n.id, new Set([target.id]));
+    related.get(target.id).add(n.id);
+    makeNode(n);
+    n.el.classList.add("is-new");
+    if (target.folder) {   // a file dropped on the folder goes inside it
+      target.media.images.push(isImage ? { src: url, alt: name } : { page: { type: "Attached just now", title: name, from: "Dropped in by you", lines: 6 } });
+      target.label = target.label.replace(/\d+$/, target.media.images.length);
+      target.el.querySelector(".title").textContent = target.label;
+    }
+    // and in the index, under Details and sources
+    const list = document.getElementById("sec-sources");
+    list.insertAdjacentHTML("beforeend", row(n, icon("file-text")));
+    const rowEl = list.lastElementChild;
+    rowEl.addEventListener("click", () => go(n.id));
+    rowEl.addEventListener("mouseenter", () => hint(n.id, true));
+    rowEl.addEventListener("mouseleave", () => hint(n.id, false));
+    go(n.id);
+  }
 
   /* ---------------- photos ---------------- */
 

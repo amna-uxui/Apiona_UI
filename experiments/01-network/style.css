@@ -472,3 +472,90 @@ body.is-viewing .view-cap { opacity: 1; transform: none; transition-delay: .35s;
 .photo.no-photo .initials { font-size: 18px; letter-spacing: .02em; }
 .mini-photo.no-photo .initials { font-size: 8.5px; }
 .photo.no-photo .new { z-index: 1; }
+
+
+/* ---------- Documents: paper prints ---------- */
+.media[data-kind="paper"] .print { background: var(--white); outline: 1px solid var(--rule); outline-offset: -1px; }
+.media[data-kind="paper"] { width: 200px; }
+.media[data-kind="paper"] .print.p1 { --x: 40px; --y: 28px; }
+.media[data-kind="paper"] .prints { height: 250px; }
+.blank-page {
+  display: grid; place-items: center; align-content: center; gap: 10px;
+  aspect-ratio: 1 / 1.414; padding: 14px; text-align: center;
+  background: var(--white); color: var(--ink); font-size: 11px; line-height: 1.3; word-break: break-word;
+}
+.blank-page .i { width: 22px; height: 22px; }
+.view-hint { font-size: 13px; color: var(--grey); }
+.open-file { color: var(--ink); pointer-events: auto; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Attaching a file ---------- */
+.ghost {
+  position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none;
+  width: 58px; aspect-ratio: 1 / 1.414; display: grid; place-items: center;
+  background: var(--white); border: 1px solid var(--ink); border-radius: 3px;
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / .35);
+  opacity: 0; transition: opacity .2s ease;
+}
+.ghost .i { width: 20px; height: 20px; }
+body.is-dropping .ghost { opacity: 1; }
+.drop-hint {
+  position: fixed; left: var(--rail-space); right: var(--side); bottom: 28px; margin: 0; z-index: 6;
+  text-align: center; font-size: 13px; pointer-events: none;
+  opacity: 0; transform: translateY(8px); transition: opacity .25s ease, transform .35s var(--ease);
+}
+body.is-dropping .drop-hint { opacity: 1; transform: none; }
+body.is-dropping .map { outline: 1.5px dashed var(--rule); outline-offset: -14px; }
+
+/* the point that will receive the file: a soft pulsing ring */
+.node.is-drop-target .shape { box-shadow: 0 0 0 6px var(--you), 0 0 0 7px var(--ink); animation: drop-pulse 1.1s ease-in-out infinite; }
+.node.is-drop-target .label { background: var(--you); }
+@keyframes drop-pulse { 50% { box-shadow: 0 0 0 10px var(--you), 0 0 0 11px var(--ink); } }
+
+/* a freshly attached document arrives with a small pop */
+.node.is-new .shape { animation: just-attached 1.2s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes just-attached { 0% { transform: scale(.2); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.media[data-kind="film"] figcaption { padding-left: 64px; }   /* sits under the second print, clear of the network */
+
+/* ---------- The documents folder ---------- */
+.node.is-folder .shape { width: 34px; height: 26px; border: 0; background: none; border-radius: 0; margin-bottom: 5px; }
+.node.is-folder .shape::after { display: none; }
+.folder { width: 100%; height: 100%; overflow: visible; }
+.folder .f-back { fill: #E4E3DC; stroke: var(--ink); stroke-width: 1.1; }
+.folder .f-paper { fill: var(--white); stroke: var(--ink); stroke-width: .8; transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); transform-box: fill-box; transform-origin: bottom; }
+.folder .f-front { fill: #EFEEE8; stroke: var(--ink); stroke-width: 1.1; transform-box: fill-box; transform-origin: bottom; transition: transform .55s cubic-bezier(.34, 1.4, .64, 1); }
+/* hover peeks inside; open (selected) lets the papers rise and the flap fall forward */
+.node.is-folder:hover .f-paper2 { transform: translateY(-2px) rotate(3deg); }
+.node.is-folder:hover .f-front { transform: skewX(-6deg) scaleY(.92); }
+.node.is-folder.is-current .f-paper { transform: translateY(-5px) rotate(-4deg); }
+.node.is-folder.is-current .f-paper2 { transform: translateY(-7px) rotate(5deg); }
+.node.is-folder.is-current .f-front { transform: skewX(-14deg) scaleY(.74); }
+.node.is-folder.is-current .shape { box-shadow: none; }
+.node.is-folder.is-drop-target .shape { box-shadow: none; animation: none; }
+.node.is-folder.is-drop-target .f-front { transform: skewX(-14deg) scaleY(.74); }
+.node.is-folder.is-drop-target .folder { filter: drop-shadow(0 0 0 var(--you)) drop-shadow(0 0 5px var(--you)); }
+
+/* five papers fanned out of the folder */
+.prints.is-fan { height: 230px; }
+.media[data-kind="paper"] .prints.is-fan .print { width: 104px; }
+/* they leave the folder: start small, from the side of the network, then spread into the fan */
+.media.from-folder .print { transform: translate(-150px, 40px) rotate(-12deg) scale(.35); transition-delay: calc(var(--i) * 90ms); }
+.media.from-folder.is-in .print { transform: translate(var(--x), var(--y)) rotate(var(--r)); }
+
+/* a page drawn in CSS: type, title, origin and lines for the text */
+.drawn-page {
+  position: relative; display: flex; flex-direction: column; gap: 5px;
+  aspect-ratio: 1 / 1.414; padding: 11% 10%; text-align: left; background: var(--white); color: var(--ink);
+}
+.dp-type { font-size: 5.5px; letter-spacing: .08em; text-transform: uppercase; color: #2D5A68; font-weight: 500; }
+.dp-title { font-size: 8.5px; font-weight: 500; line-height: 1.2; }
+.dp-from { font-size: 5.5px; color: var(--grey); }
+.dp-lines { display: grid; gap: 4px; margin-top: 4px; }
+.dp-lines i { display: block; height: 2px; border-radius: 1px; background: rgb(17 17 17 / .22); }
+.dp-lines i:nth-child(3n) { width: 72%; }
+.dp-lines i:nth-child(4n) { width: 88%; }
+.media.from-folder { width: 280px; }
+/* in the fan every document is a page: the X-ray is cropped to the same page shape */
+.prints.is-fan .print img { aspect-ratio: 1 / 1.414; object-fit: cover; object-position: center 35%; }
+.media.from-folder { width: 320px; }
+.media.from-folder figcaption { padding-left: 70px; }
+body.is-viewing .prints.is-fan .print img { aspect-ratio: auto; }

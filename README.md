@@ -20,6 +20,9 @@ We moved away from a text-heavy dashboard. The patient's record is shown as a sm
     - Nodes lean toward the cursor (magnetic pull); a refresh always returns to the overview
     - The index on the side lists the same record, each section in its own form: icons, a body with pain points, a vertical timeline, a checklist
     - `data.js` holds the record (text from the record, never rephrased); `app.js` the layout and motion; `style.css` the look
+    - Documents and images appear as a pile of prints beside the network (the hEDS report, the foot X-rays); click them to view them large in the centre
+    - Documents · 2 is a folder: opened, it fans out the foot X-ray and the GP's report; a file dropped on it goes inside
+    - Drag a file from your computer onto the map to attach it to the nearest point of the record. It stays in that browser tab only: nothing is uploaded
     - Add `?still` to the address to turn the motion off (for reviewing layouts)
 
 - `design/` — shared design assets
@@ -27,6 +30,7 @@ We moved away from a text-heavy dashboard. The patient's record is shown as a sm
   - `components.css`, `app.js`, `specimen.html` — pieces of the earlier dashboard, kept for reference
   - `icons.js` — the icon set (one line style), used by the prototype's index
   - `illustrations/` — body silhouettes, female and male, from the stock vector file (check its licence before publishing)
+  - `media/report-hypermobility-*` — the team's fictional sample report on hypermobility (PDF and page previews), marked as a demonstration document
   - `media/` — foot X-rays (dorsoplantar and oblique) by Mikael Häggström, M.D., CC0 1.0, from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:X-ray_of_normal_right_foot_by_oblique_projection.jpg); resized to 900 px tall. Shown as a pile of prints when the X-ray is opened in the prototype
   - `logo/` — Apiona logo and icon
     - `colours/apiona-logo-teal.svg`, `colours/apiona-icon-teal.svg` — the current logo and its icon, used in the prototype's menu

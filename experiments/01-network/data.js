@@ -30,7 +30,6 @@ window.RECORD = {
   // documents behind the points to know: listed after them in the index, open the point they support
   knowDocs: [
     { title: "Medical report · hypermobile Ehlers-Danlos", sub: "GP · attached", opens: "heds" },
-    { title: "Medical report · left parietal cavernoma", sub: "Neurosurgery · attached", opens: "cavernoma" },
   ],
   prepared: { when: "[date]", event: "Prepares and sends her file" },
 
@@ -40,7 +39,16 @@ window.RECORD = {
     /* 1 · Know before the session — highlighted by the practice's rules */
     { id: "know", kind: "section", n: 1, mark: "know", parent: "camille", label: "Know before the session", sub: "hEDS · dizziness · cavernoma · asthma · other pain", x: -270, y: -150, open: true },
     {
-      id: "heds", icon: "bone", kind: "item", parent: "know", mark: "know", source: "report", open: true,
+      id: "heds", media: {
+        kind: "paper",
+        caption: "Medical report · hypermobile Ehlers-Danlos · GP",
+        quote: "Ligament laxity, joint instability, repeated sprains, proprioception problems",
+        file: { href: "../../design/media/report-hypermobility-sample.pdf", label: "Open the PDF" },
+        images: [
+          { src: "../../design/media/report-hypermobility-p1.jpg", alt: "Report, page 1" },
+          { src: "../../design/media/report-hypermobility-p2.jpg", alt: "Report, page 2" },
+        ],
+      }, icon: "bone", kind: "item", parent: "know", mark: "know", source: "report", open: true,
       label: "Hypermobility (Ehlers-Danlos)", sub: "GP · report attached", x: -540, y: -290,
       type: "Diagnosis", title: "Hypermobile Ehlers-Danlos syndrome",
       quote: "Ligament laxity, joint instability, repeated sprains, proprioception problems",
@@ -64,7 +72,7 @@ window.RECORD = {
       quote: "History of bleeding episodes",
       facts: [["Diagnosed by", "Neurosurgery"], ["Added to the record", "Medical report attached"]],
       rule: "neurology",
-      links: ["docs"],
+      links: [],
     },
     {
       id: "asthma", icon: "wind", kind: "item", parent: "know", mark: "know", source: "patient", open: true,
@@ -228,12 +236,22 @@ window.RECORD = {
     /* Details and sources: not drawn in the first view. They appear, linked by dotted lines,
        when you select something that cites them, and they are always listed in the index. */
     {
-      id: "docs", icon: "file-text", kind: "item", source: "document",
-      label: "Documents · 5", sub: "Scanned by the patient", x: -700, y: -250,
-      type: "Documents", title: "Documents attached · 5",
-      list: ["Prescription", "Insurance card", "X-ray", "Privacy notice signed", "GP consent"],
+      id: "docs", icon: "folder", folder: true, kind: "item", source: "document",
+      // the folder: the documents in Camille's record that we actually have
+      media: {
+        kind: "paper", fan: true,
+        caption: "Documents · shared by the patient",
+        quote: "",
+        images: [
+          { src: "../../design/media/xray-foot-dorsoplantar.jpg", alt: "Foot X-ray · Emergency, Clinique Bois-Cerf" },
+          { src: "../../design/media/report-hypermobility-p1.jpg", alt: "Medical report · hypermobile Ehlers-Danlos · GP" },
+        ],
+      },
+      label: "Documents · 2", sub: "Shared by the patient", x: -700, y: -250,
+      type: "Documents", title: "Documents attached · 2",
+      list: ["Foot X-ray", "Medical report · hypermobile Ehlers-Danlos (GP)"],
       facts: [["Source", "Patient, preparation of [date] · documents scanned by her"]],
-      links: ["heds", "cavernoma", "emergency"],
+      links: ["heds", "emergency"],
     },
     {
       id: "prescription", icon: "clipboard", kind: "item", source: "document",
