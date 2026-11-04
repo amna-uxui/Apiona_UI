@@ -277,4 +277,18 @@ window.RECORD = {
       links: ["insurer", "employer"],
     },
   ],
+
+  /* ---------- Consultation in progress (frame 2) ---------- */
+  consultation: {
+    steps: [
+      { id: "reason", n: 1, label: "Reason and history", state: "review",
+        note: "Pre-filled from the preparation · to review",
+        text: "28-year-old patient referred by the emergency department of Clinique Bois-Cerf for a mid-foot sprain after a fall on the stairs. X-ray: no fracture. Reason: foot still swollen, limping, pain when walking. Priority: less pain, at night and at the desk. Other pain: right knee (compensation), right wrist (crutches). Documented diagnoses: hypermobile Ehlers-Danlos syndrome, chronic migraines with dizziness, left parietal cavernoma, asthma, extensor tendinopathy of the fingers of the right wrist. Several ankle sprains in the past. Arthroscopic stabilisation of the left shoulder in 2021." },
+      { id: "assessment", n: 2, label: "Assessment", state: "empty", note: "Joints · muscles · function · balance" },
+      { id: "goals", n: 3, label: "Goals and methods", state: "empty", note: "Each goal with its methods" },
+      { id: "notes", n: 4, label: "Notes", state: "empty" },
+      { id: "conclusion", n: 5, label: "Conclusion", state: "empty" },
+      { id: "recommendations", n: 6, label: "Recommendations", state: "empty" },
+    ],
+  },
 };

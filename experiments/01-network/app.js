@@ -321,7 +321,7 @@
     apply(instant);
   }
 
-  window.addEventListener("popstate", () => select(location.hash.slice(1) || null));
+  window.addEventListener("popstate", () => { if (location.hash !== "#consultation") select(location.hash.slice(1) || null); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.current) go(back(byId.get(state.current)));   // one step back
   });
@@ -705,6 +705,91 @@
   // once the map has finished resizing, the network glides back to the middle of the new space
   map.addEventListener("transitionend", (e) => { if (e.propertyName === "left") apply(); });
   try { if (localStorage.getItem("apiona-rail") === "collapsed") setRail(true); } catch (e) {}
+
+  /* ---------------- consultation ---------------- */
+
+  /* Start consultation: the summary and the network step aside and the consultation slides in, in the
+     same place. The menu and the index stay: during the visit the index is the patient summary beside
+     the notes. "← Summary", the menu, or the browser's back button return to the summary. */
+  const consult = $("#consult");
+  const startBtn = $(".start");
+  const C = R.consultation;
+  let consulting = false, clockTimer = null, startedAt = 0, hideTimer = null;
+
+  function buildConsult() {
+    $("#c-steps").innerHTML = C.steps.map((st) => `
+      <li><button class="c-step state-${st.state}" data-step="${st.id}" type="button">
+        <span class="c-n">${st.n}</span>${st.label}<i class="c-state" aria-hidden="true"></i></button></li>`).join("");
+    $("#c-sections").innerHTML = C.steps.map((st, i) => `
+      <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
+        <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
+          <span class="c-n">${st.n}</span><span class="c-sec-title">${st.label}</span>
+          <span class="c-sec-note">${st.state === "review" ? st.note : `${st.note ? st.note + " · " : ""}empty`}</span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="c-sec-body">${st.text
+          ? `<textarea rows="7" aria-label="${st.label}">${st.text}</textarea>`
+          : `<textarea rows="3" aria-label="${st.label}" placeholder="Write here, or dictate…"></textarea>`}</div>
+      </article>`).join("");
+
+    const open = (sec, on) => { sec.classList.toggle("is-open", on); sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on); };
+    consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
+    consult.querySelectorAll(".c-step").forEach((b) => b.addEventListener("click", () => {
+      const sec = document.getElementById(`cs-${b.dataset.step}`);
+      open(sec, true);
+      sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    }));
+    // segmented choices: one on at a time
+    consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
+    })));
+  }
+
+  function tickClock() {
+    const t = Math.floor((Date.now() - startedAt) / 1000);
+    $("#c-clock").textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  }
+
+  function setConsult(on, push = true) {
+    if (on === consulting) return;
+    consulting = on;
+    if (on && viewing) setViewing(false);
+    if (on && state.current) select(null);
+    document.body.classList.toggle("is-consult", on);
+    clearTimeout(hideTimer);
+    if (on) {
+      consult.hidden = false;
+      consult.scrollTop = 0;
+      requestAnimationFrame(() => requestAnimationFrame(() => consult.classList.add("is-in")));
+      startedAt = Date.now(); tickClock(); clockTimer = setInterval(tickClock, 1000);
+    } else {
+      consult.classList.remove("is-in");
+      hideTimer = setTimeout(() => { consult.hidden = true; }, 500);
+      clearInterval(clockTimer);
+    }
+    // the menu follows
+    document.querySelectorAll(".page[data-page]").forEach((a) => {
+      const here = a.dataset.page === (on ? "consultation" : "summary");
+      a.classList.toggle("is-current", here);
+      a.classList.toggle("is-live", here && on);
+      if (here) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    // the green button becomes the next step of the visit
+    startBtn.querySelector("span").textContent = on ? "Finish and prepare the report" : "Start consultation";
+    if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
+  }
+
+  buildConsult();
+  startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); });
+  consult.querySelector("[data-to-summary]").addEventListener("click", () => setConsult(false));
+  document.querySelectorAll(".page[data-page]").forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    setConsult(a.dataset.page === "consultation");
+  }));
+  window.addEventListener("popstate", () => {
+    if (location.hash === "#consultation") setConsult(true, false);
+    else if (consulting) setConsult(false, false);
+  });
 
   /* ---------------- start ---------------- */
 

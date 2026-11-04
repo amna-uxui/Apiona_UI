@@ -585,3 +585,81 @@ body.is-viewing .prints.is-fan .print img { aspect-ratio: auto; }
 .sd-facts dt { color: var(--grey); }
 .sd-facts dd { margin: 0; }
 .row.has-detail[aria-expanded="true"] .r-sub { color: var(--ink); }
+
+
+/* =========================================================================
+   Consultation in progress
+   ========================================================================= */
+
+/* the summary and the network step aside */
+.map, .brief { transition: opacity .45s ease, transform .6s var(--ease), left .45s var(--ease); }
+body.is-consult .map, body.is-consult .brief { opacity: 0; transform: translateY(-14px); pointer-events: none; }
+body.is-consult .media { display: none; }
+
+.consult {
+  position: absolute; top: 0; bottom: 0; left: var(--rail-space); right: var(--side); z-index: 3;
+  overflow: auto; padding: 26px 44px 80px; transition: left .45s var(--ease);
+}
+.consult[hidden] { display: none; }
+/* everything arrives one after another, from just below */
+.consult .reveal { opacity: 0; transform: translateY(14px); transition: opacity .45s ease calc(var(--d) * 60ms), transform .6s var(--ease) calc(var(--d) * 60ms); }
+.consult.is-in .reveal { opacity: 1; transform: none; }
+
+/* top bar */
+.c-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 0 18px; border-bottom: 1px solid var(--rule); }
+.c-back { background: none; border: 0; padding: 0; cursor: pointer; font-size: 14px; color: var(--grey); }
+.c-back:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.c-title h2 { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+.c-title p { font-size: 13px; color: var(--grey); margin-top: 2px; }
+.c-clock { color: var(--ink); font-variant-numeric: tabular-nums; }
+.c-tools { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+/* segmented choices */
+.seg { display: inline-flex; padding: 2px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white); }
+.seg button { background: none; border: 0; border-radius: 5px; padding: 6px 11px; cursor: pointer; font-size: 13px; color: var(--grey); }
+.seg button.is-on { background: var(--panel); color: var(--ink); font-weight: 500; }
+.seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.c-dictate {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--rule); border-radius: 7px; font-size: 13px; color: var(--ink);
+}
+.c-dictate:hover { border-color: var(--ink); }
+.c-dictate svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+
+/* assessment type and date */
+.c-type { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 20px 0 16px; }
+.c-date { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--grey); }
+.c-date input { width: 112px; border: 0; border-bottom: 1px solid var(--rule); padding: 4px 2px; font: inherit; font-size: 14px; color: var(--ink); background: none; }
+.c-date input:focus { outline: none; border-color: var(--ink); }
+
+/* the report's six steps */
+.c-steps { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.c-step {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 11px 4px 4px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--rule); border-radius: 999px; font-size: 13px; color: var(--ink);
+}
+.c-step:hover { border-color: var(--ink); }
+.c-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); font-size: 11px; font-weight: 500; flex: none; }
+.c-state { width: 8px; height: 8px; border-radius: 50%; border: 1.25px solid var(--ink); }
+.c-step.state-review .c-state { background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
+
+/* sections */
+.c-sec { border-bottom: 1px solid var(--rule); }
+.c-sec-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 0; background: none; border: 0; cursor: pointer; text-align: left; }
+.c-sec-title { font-size: 16px; font-weight: 500; }
+.c-sec-note { margin-left: auto; font-size: 13px; color: var(--grey); }
+.c-sec-head .chev::before { content: "+"; font-size: 15px; }
+.c-sec.is-open .c-sec-head .chev::before { content: "−"; }
+.c-sec-body { display: none; padding: 0 0 20px 32px; }
+.c-sec.is-open .c-sec-body { display: block; }
+.c-sec textarea {
+  width: 100%; resize: vertical; border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px;
+  font: 15px/1.55 var(--font); color: var(--ink); background: var(--white);
+}
+.c-sec textarea:focus { outline: none; border-color: var(--ink); }
+
+/* the menu: the consultation page is live while the visit runs */
+.page.is-live::before { animation: live-dot 1.6s ease-in-out infinite; }
+@keyframes live-dot { 50% { box-shadow: 0 0 0 4px rgb(177 204 238 / .55); } }
+@media (prefers-reduced-motion: reduce) { .consult .reveal { transition: none; } .page.is-live::before { animation: none; } }
