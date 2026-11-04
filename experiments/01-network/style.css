@@ -1059,3 +1059,4 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-body .spot.is-on .pill { fill: var(--ink); stroke: var(--ink); }
 .as-body .spot.is-on text { fill: var(--white); }
 .as-body .spot.is-hover:not(.is-on) .pill { fill: #F4F4F1; stroke: var(--ink); }
+.as-area-name { margin-bottom: 14px; }

@@ -1011,7 +1011,7 @@
     const fig = $("#as-figure");
     if (!fig) return;
     if (!fig.firstElementChild && bodySvgText) {
-      fig.innerHTML = bodyFigure() + `<p class="as-key"><i></i>Click a point on the body to choose the area</p>`;
+      fig.innerHTML = bodyFigure();
       fig.querySelectorAll(".spot").forEach((sp) => {
         const pick = () => selectArea(sp.dataset.area);
         sp.addEventListener("click", pick);
@@ -1079,9 +1079,7 @@
     panel.innerHTML = `
       <div class="as-record">
           <h4 class="as-area-name">${a.label}</h4>
-          <p class="as-record-head">From the record for this area</p>
           ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
-            + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
       </div>
       <table class="as-tests">
