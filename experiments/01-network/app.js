@@ -782,7 +782,13 @@
       </article>`).join("");
 
     buildAssessment();
-    const open = (sec, on) => { sec.classList.toggle("is-open", on); sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on); };
+    const open = (sec, on) => {
+      sec.classList.toggle("is-open", on);
+      sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on);
+      const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
+      if (chip) chip.classList.toggle("is-open", on);
+    };
+    consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
     consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
     consult.querySelectorAll(".c-step").forEach((b) => b.addEventListener("click", () => {
       const sec = document.getElementById(`cs-${b.dataset.step}`);
@@ -792,6 +798,7 @@
     // segmented choices: one on at a time
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
+      g.querySelectorAll("button").forEach((x) => x.classList.toggle("is-ok", x === b && x.textContent.trim() === "Present"));
     })));
   }
 
@@ -856,9 +863,29 @@
     requestAnimationFrame(() => panel.classList.add("is-in"));
   }
 
+  // the analog clock: hands for the time now; a blue arc from when the session started to now
+  (function drawTicks() {
+    const g = $(".clock .ticks");
+    g.innerHTML = Array.from({ length: 12 }, (_, i) => {
+      const a = (i * 30 * Math.PI) / 180, r1 = i % 3 ? 15.5 : 14, r2 = 17;
+      return `<line x1="${20 + r1 * Math.sin(a)}" y1="${20 - r1 * Math.cos(a)}" x2="${20 + r2 * Math.sin(a)}" y2="${20 - r2 * Math.cos(a)}"/>`;
+    }).join("");
+  })();
+  const onFace = (deg, r) => [20 + r * Math.sin((deg * Math.PI) / 180), 20 - r * Math.cos((deg * Math.PI) / 180)];
+
   function tickClock() {
-    const t = Math.floor((Date.now() - startedAt) / 1000);
+    const now = new Date(), t = Math.floor((Date.now() - startedAt) / 1000);
     $("#c-clock").textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+    $("#c-now").textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const mDeg = (now.getMinutes() + now.getSeconds() / 60) * 6, hDeg = ((now.getHours() % 12) + now.getMinutes() / 60) * 30;
+    const [mx, my] = onFace(mDeg, 13), [hx, hy] = onFace(hDeg, 8.5);
+    $("#c-minute").setAttribute("x2", mx); $("#c-minute").setAttribute("y2", my);
+    $("#c-hour").setAttribute("x2", hx); $("#c-hour").setAttribute("y2", hy);
+    // session arc, on the minute ring: from the start minute to now (a full turn = one hour)
+    const start = new Date(startedAt), sDeg = (start.getMinutes() + start.getSeconds() / 60) * 6;
+    const span = Math.min(359.9, Math.max(1.5, mDeg - sDeg + (mDeg < sDeg ? 360 : 0)));
+    const [ax, ay] = onFace(sDeg, 18), [bx, by] = onFace(sDeg + span, 18);
+    $("#c-arc").setAttribute("d", `M20,20 L${ax},${ay} A18,18 0 ${span > 180 ? 1 : 0} 1 ${bx},${by} Z`);
   }
 
   function setConsult(on, push = true) {
