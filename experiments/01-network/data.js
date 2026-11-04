@@ -283,18 +283,18 @@ window.RECORD = {
     // Assessment by area. "From the record" is what the practice's rules highlight for that area, in the record's words.
     // Apiona provides the fields (the tests, sides, results); the physiotherapist provides the content.
     areas: [
-      { id: "joints", label: "Joints", sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
+      { id: "joints", label: "Joints", zones: [[76, 430, 13, 22]],  sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
         record: [
           { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached" },
           { text: "Several ankle sprains · left shoulder stabilised, 2021", src: "Her history" },
         ],
         tests: [{ test: "Ankle dorsiflexion", side: "Both sides" }, { test: "Mid-foot stability", side: "Affected", ref: "Healthy side" }] },
-      { id: "muscles", label: "Muscles", sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
+      { id: "muscles", label: "Muscles", zones: [[80, 370, 12, 52], [76, 440, 12, 12]],  sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
         tests: [{ test: "Peroneal strength", side: "Both sides" }, { test: "Calf raise", side: "Affected", ref: "Healthy side" }] },
-      { id: "function", label: "Function", sub: "Walking, limping, stairs", rule: "other pain",
+      { id: "function", label: "Function", zones: [[78, 330, 16, 110], [122, 330, 16, 110]],  sub: "Walking, limping, stairs", rule: "other pain",
         record: [{ text: "Other pain · right knee (compensation), right wrist (crutches)", src: "Patient · hand centre" }],
         tests: [{ test: "Walking, 10 metres", side: "—" }, { test: "Stairs", side: "—" }] },
-      { id: "balance", label: "Balance", sub: "Two-legged then one-legged, safely", rule: "balance and falls, neurology",
+      { id: "balance", label: "Balance", zones: [[78, 330, 16, 110], [100, 455, 70, 6]],  sub: "Two-legged then one-legged, safely", rule: "balance and falls, neurology",
         record: [
           { text: "Frequent dizziness (chronic migraines)", src: "Neurology clinic · by the patient" },
           { text: "Cerebral cavernoma · “history of bleeding episodes”", src: "Neurosurgery · report attached" },
@@ -303,12 +303,34 @@ window.RECORD = {
         tests: [{ test: "Two-legged stance", side: "Both sides" }, { test: "One-legged stance", side: "Affected", ref: "Healthy side" }] },
     ],
     sides: ["Both sides", "Affected", "Healthy side", "—"],
+
+    // asked during the session: the answer is marked "Physio, in session"
+    ask: [
+      { id: "allergies", label: "Allergies" },
+      { id: "doses", label: "Medication doses" },
+    ],
+
+    // goals and methods: an example filled in by the physiotherapist (Apiona provides the fields, not the content)
+    goals: [
+      { goal: "Reduce pain and swelling", methods: "Drainage, compression, gradual weight-bearing", link: "Linked to her priority · “less pain”" },
+      { goal: "Stabilise the mid-foot", methods: "Strengthening of the intrinsic foot muscles and peroneals" },
+      { goal: "Regain balance safely", methods: "Gradual proprioceptive rehabilitation, adapted to the dizziness" },
+      { goal: "Prevent recurrence", methods: "Education about hypermobility, home programme", link: "Answers her expectation · home exercises" },
+    ],
+
+    // dictation, simulated for the prototype: sentences arrive one by one and wait to be approved
+    dictation: [
+      "Two-legged stance stable, eyes open, 30 seconds.",
+      "One-legged stance on the affected side: 12 seconds, with corrections at the ankle.",
+      "Reports slight dizziness on quick head turns; test stopped, seated, recovered.",
+      "Healthy side: one-legged stance 30 seconds without corrections.",
+    ],
     steps: [
       { id: "reason", n: 1, label: "Reason and history", state: "review",
         note: "Pre-filled from the preparation · to review",
         text: "28-year-old patient referred by the emergency department of Clinique Bois-Cerf for a mid-foot sprain after a fall on the stairs. X-ray: no fracture. Reason: foot still swollen, limping, pain when walking. Priority: less pain, at night and at the desk. Other pain: right knee (compensation), right wrist (crutches). Documented diagnoses: hypermobile Ehlers-Danlos syndrome, chronic migraines with dizziness, left parietal cavernoma, asthma, extensor tendinopathy of the fingers of the right wrist. Several ankle sprains in the past. Arthroscopic stabilisation of the left shoulder in 2021." },
       { id: "assessment", n: 2, label: "Assessment", state: "empty", note: "Joints · muscles · function · balance" },
-      { id: "goals", n: 3, label: "Goals and methods", state: "empty", note: "Each goal with its methods" },
+      { id: "goals", n: 3, label: "Goals and methods", state: "review", note: "Example filled in · to review" },
       { id: "notes", n: 4, label: "Notes", state: "empty" },
       { id: "conclusion", n: 5, label: "Conclusion", state: "empty" },
       { id: "recommendations", n: 6, label: "Recommendations", state: "empty" },

@@ -98,7 +98,7 @@ p, h1, h2, h3 { margin: 0; }
 }
 .start .arrow { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
 .start:hover .arrow { transform: translateX(4px); }
-.start:hover { background: color-mix(in srgb, var(--voice) 88%, var(--ink)); }
+.start:hover { box-shadow: 0 0 0 2px var(--ink); }   /* same green; the hover is an outline, not a darker shade */
 .start:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* ---------- Map ---------- */
@@ -177,8 +177,8 @@ p, h1, h2, h3 { margin: 0; }
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
 .kind-item.mark-know .title { background: var(--know); }
-.kind-item.mark-voice .title { background: color-mix(in srgb, var(--voice) 55%, var(--bg)); }
-.kind-item.mark-missing .title { background: color-mix(in srgb, var(--missing) 60%, var(--bg)); }
+.kind-item.mark-voice .title { background: var(--voice); }
+.kind-item.mark-missing .title { background: var(--missing); }
 
 .node:hover .title { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
@@ -236,8 +236,8 @@ p, h1, h2, h3 { margin: 0; }
 .row .r-title { display: block; font-size: 14px; line-height: 1.3; }
 .row .r-sub { display: block; font-size: 11px; color: var(--grey); letter-spacing: .04em; text-transform: uppercase; margin-top: 1px; }
 .row.mark-know .r-title > span { background: var(--know); padding: 0 3px; border-radius: 2px; }
-.row.mark-missing .r-title > span { background: color-mix(in srgb, var(--missing) 60%, var(--panel)); padding: 0 3px; border-radius: 2px; }
-.row.mark-voice .r-title > span { background: color-mix(in srgb, var(--voice) 55%, var(--panel)); padding: 0 3px; border-radius: 2px; }
+.row.mark-missing .r-title > span { background: var(--missing); padding: 0 3px; border-radius: 2px; }
+.row.mark-voice .r-title > span { background: var(--voice); padding: 0 3px; border-radius: 2px; }
 .row.visited .r-title { text-decoration: line-through; text-decoration-thickness: 1px; }
 
 .index-foot { padding-top: 12px; font-size: 12px; color: var(--grey); }
@@ -292,7 +292,7 @@ p, h1, h2, h3 { margin: 0; }
 @keyframes pain-pulse { 0%, 100% { transform: scale(.7); } 50% { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .marker .halo { animation: none; } }
 
-.pain-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 30%, transparent); }
+.pain-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; }
 .pain-dot.tone-injury { background: var(--alert); color: var(--alert); }
 .pain-dot.tone-other { background: var(--know); color: var(--know); }
 .body-list .r-sub { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
@@ -311,7 +311,7 @@ p, h1, h2, h3 { margin: 0; }
 .step.is-today .when { color: var(--ink); }
 
 /* To complete: an empty dashed box, waiting to be filled in session */
-.check { width: 13px; height: 13px; margin-top: 2px; border: 1.25px dashed var(--ink); border-radius: 3px; background: color-mix(in srgb, var(--missing) 45%, var(--white)); }
+.check { width: 13px; height: 13px; margin-top: 2px; border: 1.25px dashed var(--ink); border-radius: 3px; background: var(--missing); }
 
 /* her words: plain text, no icon, no highlight */
 .row.plain-quote { grid-template-columns: 1fr; }
@@ -692,7 +692,7 @@ body.is-consult .media { display: none; }
 .as-panel.is-in { opacity: 1; transform: none; }
 
 /* what the record says for this area: the practice's highlight, in the record's words */
-.as-record { padding: 12px 14px; margin-bottom: 18px; border-radius: 8px; background: color-mix(in srgb, var(--know) 22%, var(--white)); }
+.as-record { padding: 12px 14px; margin-bottom: 18px; border-radius: 8px; background: var(--panel); }
 .as-record-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
 .as-fact { font-size: 14.5px; line-height: 1.4; margin: 0 0 6px; }
 .as-fact span { display: block; font-size: 12.5px; color: var(--grey); }
@@ -769,7 +769,7 @@ body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: no
 .c-time-text #c-clock { color: var(--ink); }
 
 /* present = ok, in green */
-.seg button.is-on.is-ok { background: color-mix(in srgb, var(--voice) 45%, var(--white)); }
+.seg button.is-on.is-ok { background: var(--voice); }
 
 /* the date: a calendar icon, the browser's own date picker underneath */
 .c-date-field { position: relative; display: inline-flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--rule); padding: 2px 2px 4px; }
@@ -782,3 +782,128 @@ body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: no
 /* the open report steps, in blue (you are here) */
 .c-step.is-open { background: var(--you); border-color: var(--you); }
 .c-step.is-open .c-n { background: var(--white); }
+
+.as-fact .hl { background: var(--know); padding: 0 3px; border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+
+/* ---------- Assessment visuals ---------- */
+.as-head { display: grid; grid-template-columns: 92px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }
+.as-head .as-record { margin-bottom: 0; }
+.as-figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+.as-figure figcaption { font-size: 11.5px; color: var(--grey); text-align: center; line-height: 1.3; }
+.as-fig { position: relative; width: 72px; aspect-ratio: 201 / 471; color: #DCDAD2; }
+.as-fig .as-body, .as-fig .as-zones { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.as-zones .zone ellipse { fill: var(--you); }
+.as-zones .pain circle { stroke: var(--ink); stroke-width: 1.5; }
+.as-zones .pain .tone-injury { fill: var(--alert); }
+.as-zones .pain .tone-other { fill: var(--know); }
+.as-record-head { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.as-fact .src { display: block; font-size: 12.5px; color: var(--grey); margin-top: 2px; }
+
+/* side by side: this side in black, the other side in grey, and the ratio in words */
+.as-tests tr.cmp td { padding: 0 0 8px; border-bottom: 1px solid var(--rule); }
+.as-tests tr[data-i] td { border-bottom: 0; }
+.as-tests tr.cmp td:empty { padding: 0; }
+.cmp-bar { display: grid; gap: 4px; padding: 2px 34px 4px 0; }
+.cmp-row { display: grid; grid-template-columns: 74px 1fr 64px; align-items: center; gap: 10px; font-size: 12px; color: var(--grey); }
+.cmp-row i { display: block; height: 6px; border-radius: 3px; background: var(--ink); min-width: 4px; }
+.cmp-row.is-ref i { background: var(--rule); }
+.cmp-row b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cmp-ratio { font-size: 12.5px; color: var(--ink); margin-top: 2px; }
+
+/* ---------- Ask during the session (missing in the record: pink, dashed) ---------- */
+.c-ask { margin: 4px 0 18px; padding: 12px 14px; border: 1px dashed var(--ink); border-radius: 8px; }
+.c-ask-head { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.c-ask-list { display: grid; gap: 6px; }
+.ask { display: flex; align-items: center; gap: 12px; min-height: 32px; font-size: 14.5px; }
+.ask-label { width: 150px; }
+.ask-missing { background: var(--missing); padding: 0 4px; border-radius: 2px; font-size: 13px; }
+.ask-add, .ask-input {
+  margin-left: auto; padding: 6px 11px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white);
+  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.ask-add:hover { border-color: var(--ink); }
+.ask-input { cursor: text; width: 260px; }
+.ask-input:focus { outline: none; border-color: var(--ink); }
+.ask-answer { display: flex; align-items: center; gap: 10px; }
+.ask-by { font-size: 12px; padding: 1px 6px; border-radius: 3px; background: var(--you); }
+
+/* ---------- Goals and methods ---------- */
+.goal-head, .goal { display: grid; grid-template-columns: 22px 1fr 1fr 28px; gap: 12px; align-items: start; }
+.goal-head { font-size: 12.5px; color: var(--grey); padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.goal-head span:first-child { grid-column: 2; }
+.goal { padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+.goal-n { font-size: 13px; color: var(--grey); padding-top: 6px; }
+.goal input { width: 100%; border: 0; border-bottom: 1px dashed transparent; padding: 5px 2px; font: inherit; color: var(--ink); background: none; }
+.goal input:focus { outline: none; border-bottom-color: var(--ink); }
+.goal-main { display: grid; gap: 2px; }
+.goal-link { font-size: 12.5px; color: var(--grey); padding-left: 2px; }
+.hl-voice { background: var(--voice); color: var(--ink); padding: 0 4px; border-radius: 2px; }
+
+/* ---------- Dictation ---------- */
+.c-dictate.is-on { border-color: var(--ink); }
+.c-dictate.is-on svg { color: var(--alert); }
+.dict-bar {
+  position: sticky; bottom: 0; z-index: 2; margin: 24px 0 0;
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px;
+  background: var(--ink); color: var(--white); font-size: 14px;
+}
+.dict-bar[hidden] { display: none; }
+.dict-bar b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.dict-where { color: #CFCFC9; }
+.dict-bar #dict-stop { margin-left: auto; padding: 6px 12px; border-radius: 7px; border: 1px solid #55554F; background: none; color: var(--white); font: inherit; font-size: 13px; cursor: pointer; }
+.dict-bar #dict-stop:hover { border-color: var(--white); }
+.rec { width: 10px; height: 10px; border-radius: 50%; background: var(--alert); animation: rec 1.2s ease-in-out infinite; }
+@keyframes rec { 50% { opacity: .35; } }
+
+.dict-list { display: grid; gap: 6px; margin: 8px 0; }
+.dict-list:empty { display: none; }
+.dictated {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 12px; border-radius: 8px;
+  border: 1px dashed var(--ink); font-size: 14.5px; animation: dict-in .5s var(--ease);
+}
+@keyframes dict-in { from { opacity: 0; transform: translateY(6px); } }
+.dict-text { flex: 1 1 220px; }
+.dict-tag { font-size: 12px; color: var(--grey); }
+.dictated button { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--white); font: inherit; font-size: 12.5px; cursor: pointer; }
+.dictated button:hover { border-color: var(--ink); }
+.dictated .dict-ok { border-color: var(--ink); }
+
+/* ---------- The report: a paper page in the middle ---------- */
+.report {
+  position: fixed; inset: 0 0 0 var(--rail-space); z-index: 7; overflow: auto; padding: 40px 0 120px;
+  display: grid; justify-items: center; pointer-events: none;
+}
+.report[hidden] { display: none; }
+.report .paper, .report .report-actions { pointer-events: auto; }
+.paper {
+  width: min(680px, 90%); background: var(--white); border: 1px solid var(--rule); border-radius: 4px; padding: 44px 52px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / .06), 0 30px 60px -24px rgb(0 0 0 / .35);
+  font-size: 14.5px; line-height: 1.55;
+  opacity: 0; transform: translateY(40px) scale(.97); transition: opacity .4s ease, transform .7s cubic-bezier(.34, 1.2, .64, 1);
+}
+.report.is-in .paper { opacity: 1; transform: none; }
+.paper .r-kicker { font-size: 12px; color: var(--grey); margin-bottom: 6px; }
+.paper h2 { font-size: 22px; font-weight: 500; letter-spacing: -.01em; }
+.paper .r-meta { font-size: 13px; color: var(--grey); margin: 4px 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.paper h3 { font-size: 15px; font-weight: 500; margin: 18px 0 6px; }
+.paper h4 { font-size: 13.5px; font-weight: 500; margin: 10px 0 2px; }
+.paper ul, .paper ol { margin: 4px 0; padding-left: 20px; }
+.paper .r-empty { color: var(--grey); }
+.paper .r-by { font-size: 11.5px; padding: 0 5px; border-radius: 3px; background: var(--you); }
+.paper .r-sign { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--grey); }
+.report-actions {
+  display: flex; gap: 10px; margin-top: 18px;
+  opacity: 0; transform: translateY(10px); transition: opacity .4s ease .25s, transform .5s var(--ease) .25s;
+}
+.report.is-in .report-actions { opacity: 1; transform: none; }
+.r-back-btn, .r-sign-btn { padding: 10px 16px; border-radius: 7px; font: inherit; font-size: 14px; cursor: pointer; }
+.r-back-btn { background: var(--white); border: 1px solid var(--rule); color: var(--ink); }
+.r-back-btn:hover { border-color: var(--ink); }
+.r-sign-btn { background: var(--voice); border: 0; color: var(--ink); font-weight: 500; }
+.r-sign-btn:disabled { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .paper, .report-actions, .dictated, .rec { transition: none; animation: none; } }
+
+/* while the report is open, the consultation behind steps away like everything else */
+.consult { transition: left .45s var(--ease), opacity .45s ease, filter .45s ease; }
+body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; }

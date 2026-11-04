@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=consult-10">
+  <link rel="stylesheet" href="style.css?v=consult-12">
 </head>
 <body>
   <main class="stage">
@@ -120,9 +120,21 @@
         </label>
       </div>
 
-      <ol class="c-steps reveal" style="--d:2" id="c-steps"></ol>
+      <section class="c-ask reveal" style="--d:2" id="c-ask" aria-label="Ask during the session"></section>
+      <ol class="c-steps reveal" style="--d:3" id="c-steps"></ol>
       <div class="c-sections" id="c-sections"></div>
+
+      <!-- dictation: where the text goes, and how long it has been running -->
+      <div class="dict-bar" id="dict-bar" hidden>
+        <span class="rec" aria-hidden="true"></span>
+        <b>Dictating · <span id="dict-time">00:00</span></b>
+        <span class="dict-where">the text is filed in “<span id="dict-target">Assessment › Balance</span>”</span>
+        <button type="button" id="dict-stop">Stop</button>
+      </div>
     </section>
+
+    <!-- the report, assembled from the sections when you finish -->
+    <div class="report" id="report" role="dialog" aria-modal="true" aria-label="Initial assessment report" hidden></div>
 
     <button class="start" type="button"><span>Start consultation</span><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
 
@@ -142,8 +154,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=consult-10"></script>
-  <script src="data.js?v=consult-10"></script>
-  <script src="app.js?v=consult-10"></script>
+  <script src="../../design/icons.js?v=consult-12"></script>
+  <script src="data.js?v=consult-12"></script>
+  <script src="app.js?v=consult-12"></script>
 </body>
 </html>

@@ -776,12 +776,15 @@
           <span class="c-sec-note">${st.state === "review" ? st.note : `${st.note ? st.note + " · " : ""}empty`}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
-        <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>` : st.text
-          ? `<textarea rows="7" aria-label="${st.label}">${st.text}</textarea>`
-          : `<textarea rows="3" aria-label="${st.label}" placeholder="Write here, or dictate…"></textarea>`}</div>
+        <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>`
+          : st.id === "goals" ? `<div class="goals" id="goals"></div>`
+          : `<textarea rows="${st.text ? 7 : 3}" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
+             <div class="dict-list" data-key="${st.id}"></div>`}</div>
       </article>`).join("");
 
     buildAssessment();
+    buildGoals();
+    buildAsk();
     const open = (sec, on) => {
       sec.classList.toggle("is-open", on);
       sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on);
@@ -802,10 +805,200 @@
     })));
   }
 
+  /* ---------- Ask during the session: the answer is added to the record, marked "Physio, in session" ---------- */
+  function buildAsk() {
+    const box = $("#c-ask");
+    box.innerHTML = `<p class="c-ask-head">Ask during the session</p>
+      <div class="c-ask-list">${C.ask.map((q) => `
+        <div class="ask" data-q="${q.id}">
+          <span class="ask-label">${q.label}</span>
+          ${q.answer ? `<span class="ask-answer">${q.answer}<span class="ask-by">Physio, in session</span></span>`
+            : `<span class="ask-missing">Not in the record</span><button type="button" class="ask-add">Add the answer</button>`}
+        </div>`).join("")}</div>`;
+    box.querySelectorAll(".ask-add").forEach((b) => b.addEventListener("click", () => {
+      const row = b.closest(".ask"), q = C.ask.find((x) => x.id === row.dataset.q);
+      b.outerHTML = `<input class="ask-input" placeholder="Type the answer, then Enter" aria-label="${q.label}">`;
+      const inp = row.querySelector(".ask-input");
+      inp.focus();
+      const save = () => { if (inp.value.trim()) { q.answer = inp.value.trim(); } buildAsk(); };
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { e.stopPropagation(); buildAsk(); } });
+      inp.addEventListener("blur", save);
+    }));
+  }
+
+  /* ---------- Goals and methods: each goal with its methods; some answer what she asked for ---------- */
+  function buildGoals() {
+    const box = $("#goals");
+    box.innerHTML = `
+      <div class="goal-head"><span>Goal</span><span>Methods</span></div>
+      ${C.goals.map((g, i) => `
+        <div class="goal" data-i="${i}">
+          <span class="goal-n">${i + 1}</span>
+          <span class="goal-main"><input data-k="goal" value="${esc(g.goal)}" placeholder="Goal" aria-label="Goal ${i + 1}">
+            ${g.link ? `<span class="goal-link">↳ <span class="hl-voice">${g.link}</span></span>` : ""}</span>
+          <input data-k="methods" value="${esc(g.methods)}" placeholder="Methods" aria-label="Methods for goal ${i + 1}">
+          <button class="as-del" type="button" aria-label="Remove this goal">×</button>
+        </div>`).join("")}
+      <button class="as-add" type="button">+ Add a goal and its methods</button>
+      <div class="dict-list" data-key="goals"></div>`;
+    box.querySelectorAll(".goal").forEach((row) => {
+      const g = C.goals[+row.dataset.i];
+      row.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => { g[f.dataset.k] = f.value; }));
+      row.querySelector(".as-del").addEventListener("click", () => { C.goals.splice(+row.dataset.i, 1); buildGoals(); });
+    });
+    box.querySelector(".as-add").addEventListener("click", () => {
+      C.goals.push({ goal: "", methods: "" });
+      buildGoals();
+      const rows = box.querySelectorAll(".goal");
+      rows[rows.length - 1].querySelector("input").focus();
+    });
+    renderDictated(box.querySelector(".dict-list"), "goals");
+  }
+
+  /* ---------- Dictation (simulated): sentences arrive where you are working and wait to be approved ---------- */
+  const dict = {};            // where each dictated sentence waits: key → [text]
+  let dictating = false, dictTimer = null, dictClock = null, dictStart = 0, dictNext = 0;
+
+  function dictTarget() {
+    const open = [...consult.querySelectorAll(".c-sec.is-open")].map((sec) => sec.id.slice(3));
+    if (open.includes("assessment")) {
+      const a = C.areas.find((x) => x.id === areaId);
+      return { key: `assessment:${areaId}`, label: `Assessment › ${a.label}` };
+    }
+    const id = open.find((x) => x !== "reason") || open[0] || "notes";
+    return { key: id, label: C.steps.find((x) => x.id === id).label };
+  }
+
+  function listFor(key) {
+    if (key.startsWith("assessment:")) return key === `assessment:${areaId}` ? $("#as-panel .dict-list") : null;
+    return consult.querySelector(`.dict-list[data-key="${key}"]`);
+  }
+
+  function renderDictated(el, key) {
+    if (!el) return;
+    el.innerHTML = (dict[key] || []).map((text, i) => `
+      <div class="dictated" data-i="${i}">
+        <span class="dict-text">${text}</span>
+        <span class="dict-tag">Dictated · to approve</span>
+        <button type="button" class="dict-ok">Approve</button>
+        <button type="button" class="dict-move">Move to notes</button>
+      </div>`).join("");
+    el.querySelectorAll(".dictated").forEach((row) => {
+      const i = +row.dataset.i;
+      row.querySelector(".dict-ok").addEventListener("click", () => {
+        const text = dict[key].splice(i, 1)[0];
+        if (key.startsWith("assessment:")) {
+          const a = C.areas.find((x) => `assessment:${x.id}` === key);
+          a.notes = (a.notes ? a.notes.trim() + " " : "") + text;
+          const ta = $("#as-panel .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
+        } else {
+          const ta = consult.querySelector(`textarea[data-sec="${key}"]`);
+          if (ta) ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + text;
+        }
+        renderDictated(el, key);
+      });
+      row.querySelector(".dict-move").addEventListener("click", () => {
+        const text = dict[key].splice(i, 1)[0];
+        (dict.notes = dict.notes || []).push(text);
+        renderDictated(el, key);
+        renderDictated(listFor("notes"), "notes");
+      });
+    });
+  }
+
+  function setDictation(on) {
+    dictating = on;
+    $("#dict-bar").hidden = !on;
+    consult.querySelector(".c-dictate").classList.toggle("is-on", on);
+    clearInterval(dictTimer); clearInterval(dictClock);
+    if (!on) return;
+    dictStart = Date.now();
+    const tick = () => {
+      const t = Math.floor((Date.now() - dictStart) / 1000);
+      $("#dict-time").textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+      $("#dict-target").textContent = dictTarget().label;
+    };
+    tick(); dictClock = setInterval(tick, 500);
+    dictTimer = setInterval(() => {
+      const tgt = dictTarget();
+      (dict[tgt.key] = dict[tgt.key] || []).push(C.dictation[dictNext++ % C.dictation.length]);
+      renderDictated(listFor(tgt.key), tgt.key);
+    }, 3200);
+  }
+
+  /* ---------- Finish: the report, assembled from what was written, shown as a paper page ---------- */
+  let reportOpen = false;
+  function openReport(on) {
+    reportOpen = on;
+    const box = $("#report");
+    document.body.classList.toggle("is-viewing", on);
+    if (!on) { box.classList.remove("is-in"); setTimeout(() => { if (!reportOpen) box.hidden = true; }, 400); return; }
+    if (dictating) setDictation(false);
+    const val = (id) => (consult.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
+    const para = (t) => (t.trim() ? `<p>${t.trim()}</p>` : `<p class="r-empty">Not written yet.</p>`);
+    const areas = C.areas.map((a) => {
+      const tests = a.tests.filter((t) => t.test && t.result);   // only tests with a result go into the report
+      if (!tests.length && !a.notes) return "";
+      return `<h4>${a.label}</h4>${tests.length ? `<ul>${tests.map((t) => `<li>${t.test} (${t.side}): ${t.result || "—"}${t.ref ? ` · other side: ${t.ref}` : ""}</li>`).join("")}</ul>` : ""}${a.notes ? `<p>${a.notes}</p>` : ""}`;
+    }).join("");
+    const type = consult.querySelector('.c-type .seg .is-on').textContent.trim();
+    const date = consult.querySelector('.c-date-field input').value;
+    const asked = C.ask.filter((q) => q.answer).map((q) => `<li>${q.label}: ${q.answer} <span class="r-by">Physio, in session</span></li>`).join("");
+    box.innerHTML = `
+      <article class="paper">
+        <p class="r-kicker">Apiona · ${type}</p>
+        <h2>Camille M. · 28 · female</h2>
+        <p class="r-meta">Session 1 of 9 · Accident · mid-foot sprain · ${date ? date.split("-").reverse().join(".") : "[assessment date]"} · prescribed by the emergency department, Clinique Bois-Cerf</p>
+        <h3>1 · Reason and history</h3>${para(val("reason"))}
+        ${asked ? `<h4>Completed in session</h4><ul>${asked}</ul>` : ""}
+        <h3>2 · Assessment</h3>${areas || `<p class="r-empty">No results entered yet.</p>`}
+        <h3>3 · Goals and methods</h3><ol>${C.goals.filter((g) => g.goal).map((g) => `<li><b>${g.goal}</b>${g.methods ? ` · ${g.methods}` : ""}</li>`).join("")}</ol>
+        <h3>4 · Notes</h3>${para(val("notes"))}
+        <h3>5 · Conclusion</h3>${para(val("conclusion"))}
+        <h3>6 · Recommendations</h3>${para(val("recommendations"))}
+        <p class="r-sign">[Physiotherapist] · draft, not signed</p>
+      </article>
+      <div class="report-actions">
+        <button type="button" class="r-back-btn">Back to the consultation</button>
+        <button type="button" class="r-sign-btn">Sign and send to Dr [Name], GP</button>
+      </div>`;
+    box.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
+    box.querySelector(".r-back-btn").addEventListener("click", () => openReport(false));
+    box.querySelector(".r-sign-btn").addEventListener("click", (e) => {
+      e.target.textContent = "Signed · ready to send (prototype)";
+      e.target.disabled = true;
+      box.querySelector(".r-sign").textContent = "[Physiotherapist] · signed";
+    });
+  }
+
   /* Assessment by area: tabs for the areas; for each, what the record says (by the practice's rules),
      a small table of tests to fill in, and free notes. What you type is kept when you switch areas. */
   let areaId = "balance";
+  let bodySvgText = null;
+  fetch("../../design/illustrations/body-female.svg").then((x) => x.text()).then((t) => { bodySvgText = t; if ($("#as-panel")) renderArea(); });
   const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+
+  // the body, with what this area assesses in blue (you are looking here now) and the record's pain points
+  function figureFor(a) {
+    const body = bodySvgText ? bodySvgText.replace("<svg", '<svg class="as-body" aria-hidden="true"') : "";
+    const zones = (a.zones || []).map(([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`).join("");
+    const pains = kids("hurts").map((n) => `<circle class="tone-${n.tone}" cx="${n.spot[0]}" cy="${n.spot[1]}" r="6"/>`).join("");
+    return `<div class="as-fig">${body}<svg class="as-zones" viewBox="0 -10 201 471" aria-hidden="true"><g class="zone">${zones}</g><g class="pain">${pains}</g></svg></div>`;
+  }
+
+  // affected side against the other side, when both are numbers: a two-part bar and the ratio in words
+  function compareBar(t) {
+    const num = (v) => { const m = String(v || "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+    const a = num(t.result), b = num(t.ref);
+    if (a === null || b === null || b <= 0) return "";
+    const max = Math.max(a, b), unit = (String(t.result).match(/[a-z°%]+/i) || [""])[0];
+    return `<div class="cmp-bar">
+      <span class="cmp-row"><span class="cmp-k">This side</span><i style="width:${(a / max) * 100}%"></i><b>${a} ${unit}</b></span>
+      <span class="cmp-row is-ref"><span class="cmp-k">Other side</span><i style="width:${(b / max) * 100}%"></i><b>${b} ${unit}</b></span>
+      <span class="cmp-ratio">${Math.round((a / b) * 100)}% of the other side</span>
+    </div>`;
+  }
 
   function buildAssessment() {
     const box = $("#assess");
@@ -828,11 +1021,14 @@
     const panel = $("#as-panel");
     panel.classList.remove("is-in");
     panel.innerHTML = `
-      <div class="as-record">
-        <p class="as-record-head"><i class="sw know"></i>From the record for this area</p>
-        ${a.record.length ? a.record.map((x) => `<p class="as-fact">${x.text}<span>${x.src}</span></p>`).join("")
-          + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
-          : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
+      <div class="as-head">
+        <figure class="as-figure" aria-label="What this area assesses">${figureFor(a)}<figcaption>${a.sub}</figcaption></figure>
+        <div class="as-record">
+          <p class="as-record-head">From the record for this area</p>
+          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><span class="hl">${x.text}</span><span class="src">${x.src}</span></p>`).join("")
+            + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
+            : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
+        </div>
       </div>
       <table class="as-tests">
         <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Reference / other side</th><th aria-label="Remove"></th></tr></thead>
@@ -843,23 +1039,29 @@
             <td><input data-k="result" value="${esc(t.result)}" placeholder="result" aria-label="Result"></td>
             <td><input data-k="ref" value="${esc(t.ref)}" placeholder="reference" aria-label="Reference or other side"></td>
             <td><button class="as-del" type="button" aria-label="Remove this test">×</button></td>
-          </tr>`).join("")}
+          </tr>
+          <tr class="cmp" data-for="${i}"><td colspan="5">${compareBar(t)}</td></tr>`).join("")}
         </tbody>
       </table>
       <button class="as-add" type="button">+ Add a test</button>
+      <div class="dict-list"></div>
       <textarea class="as-notes" rows="3" placeholder="Specific tests and free remarks for ${a.label.toLowerCase()}…" aria-label="Notes for ${a.label}">${a.notes || ""}</textarea>`;
-    panel.querySelectorAll("tbody tr").forEach((tr) => {
+    panel.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
       const t = a.tests[+tr.dataset.i];
-      tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => { t[f.dataset.k] = f.value; }));
+      tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => {
+        t[f.dataset.k] = f.value;
+        panel.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
+      }));
       tr.querySelector(".as-del").addEventListener("click", () => { a.tests.splice(+tr.dataset.i, 1); renderArea(); });
     });
     panel.querySelector(".as-add").addEventListener("click", () => {
       a.tests.push({ test: "", side: "Both sides" });
       renderArea();
-      const rows = panel.querySelectorAll("tbody tr");
+      const rows = panel.querySelectorAll("tbody tr[data-i]");
       rows[rows.length - 1].querySelector("input").focus();
     });
     panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
+    renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);
     requestAnimationFrame(() => panel.classList.add("is-in"));
   }
 
@@ -901,6 +1103,8 @@
       requestAnimationFrame(() => requestAnimationFrame(() => consult.classList.add("is-in")));
       startedAt = Date.now(); tickClock(); clockTimer = setInterval(tickClock, 1000);
     } else {
+      if (dictating) setDictation(false);
+      if (reportOpen) openReport(false);
       consult.classList.remove("is-in");
       hideTimer = setTimeout(() => { consult.hidden = true; }, 500);
       clearInterval(clockTimer);
@@ -918,7 +1122,11 @@
   }
 
   buildConsult();
-  startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); });
+  startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); else openReport(true); });
+  consult.querySelector(".c-dictate").addEventListener("click", () => setDictation(!dictating));
+  $("#dict-stop").addEventListener("click", () => setDictation(false));
+  veil.addEventListener("click", () => { if (reportOpen) openReport(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && reportOpen) { e.stopImmediatePropagation(); openReport(false); } }, true);
   consult.querySelector("[data-to-summary]").addEventListener("click", () => setConsult(false));
   document.querySelectorAll(".page[data-page]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();
