@@ -1119,3 +1119,6 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .doc-cap span:first-child { color: var(--ink); }
 .doc-cap a { color: var(--ink); }
 .as-fact .src .src-t { display: inline; }
+/* clock and timer at the right end of the title row, above Dictate */
+.c-time { margin-left: auto; }
+.c-tools { flex-basis: 100%; justify-content: flex-end; margin-left: 0; }
