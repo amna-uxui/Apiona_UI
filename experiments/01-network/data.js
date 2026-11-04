@@ -164,7 +164,14 @@ window.RECORD = {
       links: ["midfoot", "emergency"],
     },
     {
-      id: "emergency", when: "Sunday", event: "Bois-Cerf emergency · X-ray: no fracture · 9 sessions", kind: "item", parent: "happened", source: "document",
+      id: "emergency", media: {
+        caption: "Foot X-ray · Emergency, Clinique Bois-Cerf",
+        quote: "X-ray: no fracture",
+        images: [
+          { src: "../../design/media/xray-foot-dorsoplantar.jpg", alt: "Foot X-ray, view from above" },
+          { src: "../../design/media/xray-foot-oblique.jpg", alt: "Foot X-ray, angled view" },
+        ],
+      }, when: "Sunday", event: "Bois-Cerf emergency · X-ray: no fracture · 9 sessions", kind: "item", parent: "happened", source: "document",
       label: "Sunday · emergency, X-ray", sub: "Prescription · X-ray report", x: 390, y: 450,
       type: "What happened", title: "Sunday · Bois-Cerf emergency",
       quote: "X-ray: no fracture · 9 sessions",

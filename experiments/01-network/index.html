@@ -9,14 +9,50 @@
 <body>
   <main class="stage">
 
+    <!-- Left: where am I in the product. Plain text on white, full height, so it never reads like the index. -->
+    <nav class="rail" id="rail" aria-label="Main">
+      <a class="rail-logo" href="./" aria-label="Apiona">
+        <img class="logo-full" src="../../design/logo/colours/apiona-logo-teal.svg" alt="">
+        <img class="logo-icon" src="../../design/logo/colours/apiona-icon-teal.svg" alt="">
+      </a>
+
+      <ul class="rail-list">
+        <li><a class="rail-item is-soon" aria-disabled="true" title="Schedule · not built yet"><svg class="i"><use href="#i-calendar"/></svg><span class="r-label">Schedule</span></a></li>
+        <li>
+          <a class="rail-item" aria-disabled="true" title="Patients"><svg class="i"><use href="#i-users"/></svg><span class="r-label">Patients</span></a>
+          <!-- a tree: Patients › Camille M. › her pages -->
+          <div class="patient-tree">
+            <a class="rail-patient" href="./" title="Camille M.">
+              <span class="mini-photo"><img src="../../ui/assets/patient.jpg" alt="" data-initials="CM"></span><span class="r-label">Camille M.</span>
+            </a>
+            <ol class="pages">
+              <li><a class="page is-current" href="./" aria-current="page">Summary</a></li>
+              <li><a class="page is-soon" aria-disabled="true" title="Not built yet">Consultation</a></li>
+              <li><a class="page is-soon" aria-disabled="true" title="Not built yet">Follow-up</a></li>
+              <li><a class="page is-soon" aria-disabled="true" title="Not built yet">Documents</a></li>
+            </ol>
+          </div>
+        </li>
+        <li><a class="rail-item is-soon" aria-disabled="true" title="Billing · not built yet"><svg class="i"><use href="#i-receipt"/></svg><span class="r-label">Billing</span></a></li>
+      </ul>
+
+      <ul class="rail-list rail-bottom">
+        <li><a class="rail-item is-soon" aria-disabled="true" title="Settings · not built yet"><svg class="i"><use href="#i-settings"/></svg><span class="r-label">Settings</span></a></li>
+        <li><a class="rail-item is-soon" aria-disabled="true" title="Your profile · not built yet">
+          <span class="mini-photo"><img src="../../ui/assets/practitioner.jpg" alt="" data-initials="You"></span><span class="r-label">Your profile</span></a></li>
+      </ul>
+
+      <!-- the fold handle sits on the menu's edge -->
+      <button class="rail-handle" id="rail-toggle" aria-expanded="true" aria-controls="rail" title="Collapse the menu">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
+      </button>
+    </nav>
+
     <!-- Always visible: who she is and why she is here. Never behind a click. -->
     <header class="brief">
-      <div class="brief-top">
-        <img class="logo" src="../../design/logo/colours/apiona-logo-teal.svg" alt="Apiona">
-      </div>
       <div class="who">
         <!-- photo of a real person: it stays on this Mac (ui/assets is not in git) -->
-        <span class="photo"><img src="../../ui/assets/patient.jpg" alt=""><span class="new" id="p-new">New</span></span>
+        <span class="photo"><img src="../../ui/assets/patient.jpg" alt="" data-initials="CM"><span class="new" id="p-new">New</span></span>
         <span class="who-text">
           <h1 class="name" id="p-name"></h1>
           <span class="meta" id="p-meta"></span>
@@ -33,6 +69,10 @@
         <div class="nodes" id="nodes"></div>
       </div>
     </section>
+
+    <!-- Images of the selected record, shown as a small pile of prints (after the reference) -->
+    <figure class="media" id="media" aria-live="polite" hidden></figure>
+    <div class="veil" id="veil" aria-hidden="true"></div>
 
     <button class="start" type="button"><span>Start consultation</span><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
 
