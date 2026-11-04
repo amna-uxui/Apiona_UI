@@ -789,6 +789,7 @@
       sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on);
       const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
       if (chip) chip.classList.toggle("is-open", on);
+      if (on && sec.id === "cs-assessment") requestAnimationFrame(sizePills);
     };
     consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
     consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
@@ -997,7 +998,8 @@
         <line class="lead" x1="${x}" y1="${y}" x2="150" y2="${y}"/>
         <circle class="pulse" cx="${x}" cy="${y}" r="7" style="animation-delay:${i * 0.6}s"/>
         <circle class="ring" cx="${x}" cy="${y}" r="12"/><circle class="dot" cx="${x}" cy="${y}" r="7"/>
-        <text x="157" y="${y}">${a.label}</text></g>`;
+        <rect class="pill" x="0" y="0" width="0" height="0"/>
+        <text x="162" y="${y}">${a.label}</text></g>`;
     }).join("");
     return `<svg class="as-body" viewBox="0 -10 236 481" aria-label="Choose what to assess on the body">
       <defs><clipPath id="as-clip">${shapes}</clipPath></defs>
@@ -1020,6 +1022,20 @@
       fig.querySelectorAll(".zone").forEach((z) => z.addEventListener("click", () => selectArea(z.dataset.area)));
     }
     fig.querySelectorAll("[data-area]").forEach((el) => el.classList.toggle("is-on", el.dataset.area === areaId));
+    sizePills();
+  }
+
+  // each label sits in a pill sized to its text, so it reads as a button (measured once it is visible)
+  function sizePills() {
+    const spots = document.querySelectorAll("#as-figure .spot");
+    if (!spots.length || spots[0].querySelector(".pill").getAttribute("width") > 30) return;
+    spots.forEach((sp) => {
+      const b = sp.querySelector("text").getBBox();
+      if (!b.width) return;
+      const h = b.height + 12, r = sp.querySelector(".pill");
+      Object.entries({ x: b.x - 11, y: b.y + b.height / 2 - h / 2, width: b.width + 22, height: h, rx: h / 2 })
+        .forEach(([k, v]) => r.setAttribute(k, v));
+    });
   }
 
   function hoverArea(id, on) {

@@ -1051,3 +1051,11 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-body .zone rect { fill: var(--alert); }
 .as-body .spot.is-hover .dot { fill: var(--alert); }
 .as-key i { background: var(--alert); }
+/* the labels are buttons: a pill outline, filled when chosen */
+.as-body .spot .pill { fill: var(--white); stroke: #C9C7BF; stroke-width: 1; transition: fill .2s, stroke .2s; }
+.as-body .spot text { font-weight: 400; transition: fill .2s; }
+.as-body .spot.is-on text { font-weight: 400; }
+.as-body .spot.is-hover .pill, .as-body .spot:focus-visible .pill { stroke: var(--ink); }
+.as-body .spot.is-on .pill { fill: var(--ink); stroke: var(--ink); }
+.as-body .spot.is-on text { fill: var(--white); }
+.as-body .spot.is-hover:not(.is-on) .pill { fill: #F4F4F1; stroke: var(--ink); }
