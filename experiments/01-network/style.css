@@ -636,7 +636,7 @@ body.is-consult .media { display: none; }
 
 /* assessment type and date */
 .c-type { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 20px 0 16px; }
-.c-date { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--grey); }
+.c-date { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--grey); margin-left: auto; }
 .c-date input { width: 112px; border: 0; border-bottom: 1px solid var(--rule); padding: 4px 2px; font: inherit; font-size: 14px; color: var(--ink); background: none; }
 .c-date input:focus { outline: none; border-color: var(--ink); }
 
@@ -709,8 +709,9 @@ body.is-consult .media { display: none; }
 }
 .as-tests input::placeholder { color: #A3A39D; }
 .as-tests input:focus, .as-tests select:focus { outline: none; border-bottom-color: var(--ink); }
-.as-tests td:first-child { width: 34%; }
-.as-tests td:last-child { width: 28px; text-align: center; }
+.as-tests { table-layout: fixed; }
+.as-tests td:last-child { text-align: center; }
+.as-tests select { text-overflow: ellipsis; }
 .as-del { background: none; border: 0; cursor: pointer; color: var(--grey); font-size: 16px; line-height: 1; padding: 4px; }
 .as-del:hover { color: var(--ink); }
 .as-add {
@@ -787,16 +788,35 @@ body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: no
 
 
 /* ---------- Assessment visuals ---------- */
-.as-head { display: grid; grid-template-columns: 92px 1fr; gap: 16px; align-items: start; margin-bottom: 18px; }
-.as-head .as-record { margin-bottom: 0; }
-.as-figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
-.as-figure figcaption { font-size: 11.5px; color: var(--grey); text-align: center; line-height: 1.3; }
-.as-fig { position: relative; width: 72px; aspect-ratio: 201 / 471; color: #DCDAD2; }
-.as-fig .as-body, .as-fig .as-zones { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.as-zones .zone ellipse { fill: var(--you); }
-.as-zones .pain circle { stroke: var(--ink); stroke-width: 1.5; }
-.as-zones .pain .tone-injury { fill: var(--alert); }
-.as-zones .pain .tone-other { fill: var(--know); }
+/* the body is a column of its own, large, and the way to choose the area */
+.as-layout { display: grid; grid-template-columns: 250px 1fr; gap: 26px; align-items: start; }
+.as-figure { margin: 0; position: sticky; top: 12px; display: grid; gap: 10px; }
+.as-body { width: 250px; height: auto; overflow: visible; display: block; }
+.as-body .sil { fill: #DCDAD2; }
+.as-body .zone rect { fill: var(--you); opacity: 0; transition: opacity .45s ease; }
+.as-body .zone.is-on rect { opacity: 1; }
+.as-body .zone { cursor: pointer; }
+.as-body .ground { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; opacity: 0; transition: opacity .45s ease; }
+.as-body .ground.is-on { opacity: 1; }
+.as-body .pain circle { stroke: var(--white); stroke-width: 2; pointer-events: auto; }
+.as-body .pain .tone-injury { fill: var(--alert); }
+.as-body .pain .tone-other { fill: var(--know); }
+
+/* hotspots: a dot on the body, a thin leader line, the area's name */
+.as-body .spot { cursor: pointer; outline: none; }
+.as-body .spot .lead { stroke: var(--rule); stroke-width: 1; transition: stroke .25s; }
+.as-body .spot .ring { fill: var(--white); stroke: var(--ink); stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(.5); transition: opacity .25s, transform .4s cubic-bezier(.34, 1.56, .64, 1); }
+.as-body .spot .dot { fill: var(--white); stroke: var(--ink); stroke-width: 1.5; transition: fill .25s; }
+.as-body .spot text { font: 15px var(--font); fill: var(--grey); dominant-baseline: middle; transition: fill .25s; }
+.as-body .spot.is-hover .ring, .as-body .spot:focus-visible .ring { opacity: 1; transform: none; }
+.as-body .spot.is-hover text, .as-body .spot.is-hover .lead { fill: var(--ink); stroke: var(--ink); }
+.as-body .spot.is-on .dot { fill: var(--ink); }
+.as-body .spot.is-on text { fill: var(--ink); font-weight: 500; }
+.as-body .spot.is-on .lead { stroke: var(--ink); }
+.as-tab.is-hover .as-tab-name { color: var(--ink); }
+.as-key { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--grey); margin: 0; }
+.as-key i { width: 10px; height: 10px; border-radius: 2px; background: var(--you); flex: none; }
+.as-what { font-size: 13px; color: var(--grey); margin: 0 0 10px; }
 .as-record-head { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
 .as-fact .src { display: block; font-size: 12.5px; color: var(--grey); margin-top: 2px; }
 
@@ -804,7 +824,8 @@ body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: no
 .as-tests tr.cmp td { padding: 0 0 8px; border-bottom: 1px solid var(--rule); }
 .as-tests tr[data-i] td { border-bottom: 0; }
 .as-tests tr.cmp td:empty { padding: 0; }
-.cmp-bar { display: grid; gap: 4px; padding: 2px 34px 4px 0; }
+.cmp-bar { display: grid; gap: 4px; padding: 2px 30px 4px 0; }
+.cmp-row { grid-template-columns: 70px 1fr 56px !important; }
 .cmp-row { display: grid; grid-template-columns: 74px 1fr 64px; align-items: center; gap: 10px; font-size: 12px; color: var(--grey); }
 .cmp-row i { display: block; height: 6px; border-radius: 3px; background: var(--ink); min-width: 4px; }
 .cmp-row.is-ref i { background: var(--rule); }
@@ -907,3 +928,8 @@ body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: no
 /* while the report is open, the consultation behind steps away like everything else */
 .consult { transition: left .45s var(--ease), opacity .45s ease, filter .45s ease; }
 body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; }
+
+/* Ask during the session: a question icon on the title, a meaningful icon for each question */
+.c-ask-head { display: flex; align-items: center; gap: 8px; }
+.c-ask-head .i, .ask-label .i { width: 16px; height: 16px; flex: none; }
+.ask-label { display: inline-flex; align-items: center; gap: 9px; width: 190px; }

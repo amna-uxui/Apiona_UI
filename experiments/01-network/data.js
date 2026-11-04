@@ -280,21 +280,22 @@ window.RECORD = {
 
   /* ---------- Consultation in progress (frame 2) ---------- */
   consultation: {
-    // Assessment by area. "From the record" is what the practice's rules highlight for that area, in the record's words.
+    // Assessment by area. zones = the part of the body each area assesses, as rectangles [x, y, w, h] on the body drawing.
+    // "From the record" is what the practice's rules highlight for that area, in the record's words.
     // Apiona provides the fields (the tests, sides, results); the physiotherapist provides the content.
     areas: [
-      { id: "joints", label: "Joints", zones: [[76, 430, 13, 22]],  sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
+      { id: "joints", label: "Joints", zones: [[40, 398, 64, 72]],  sub: "Ankle, mid-foot · laxity vs healthy side", rule: "balance and falls",
         record: [
           { text: "Hypermobility (Ehlers-Danlos) · “joint instability, repeated sprains”", src: "GP · report attached" },
           { text: "Several ankle sprains · left shoulder stabilised, 2021", src: "Her history" },
         ],
         tests: [{ test: "Ankle dorsiflexion", side: "Both sides" }, { test: "Mid-foot stability", side: "Affected", ref: "Healthy side" }] },
-      { id: "muscles", label: "Muscles", zones: [[80, 370, 12, 52], [76, 440, 12, 12]],  sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
+      { id: "muscles", label: "Muscles", zones: [[40, 318, 64, 152]],  sub: "Intrinsic foot muscles, peroneals, triceps surae", record: [],
         tests: [{ test: "Peroneal strength", side: "Both sides" }, { test: "Calf raise", side: "Affected", ref: "Healthy side" }] },
-      { id: "function", label: "Function", zones: [[78, 330, 16, 110], [122, 330, 16, 110]],  sub: "Walking, limping, stairs", rule: "other pain",
+      { id: "function", label: "Function", zones: [[30, 222, 142, 248]],  sub: "Walking, limping, stairs", rule: "other pain",
         record: [{ text: "Other pain · right knee (compensation), right wrist (crutches)", src: "Patient · hand centre" }],
         tests: [{ test: "Walking, 10 metres", side: "—" }, { test: "Stairs", side: "—" }] },
-      { id: "balance", label: "Balance", zones: [[78, 330, 16, 110], [100, 455, 70, 6]],  sub: "Two-legged then one-legged, safely", rule: "balance and falls, neurology",
+      { id: "balance", label: "Balance", zones: [[30, 222, 71, 248]], ground: true,  sub: "Two-legged then one-legged, safely", rule: "balance and falls, neurology",
         record: [
           { text: "Frequent dizziness (chronic migraines)", src: "Neurology clinic · by the patient" },
           { text: "Cerebral cavernoma · “history of bleeding episodes”", src: "Neurosurgery · report attached" },

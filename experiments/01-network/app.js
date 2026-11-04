@@ -808,10 +808,11 @@
   /* ---------- Ask during the session: the answer is added to the record, marked "Physio, in session" ---------- */
   function buildAsk() {
     const box = $("#c-ask");
-    box.innerHTML = `<p class="c-ask-head">Ask during the session</p>
+    const askIcon = { allergies: "alert", doses: "pill" };
+    box.innerHTML = `<p class="c-ask-head">${icon("question")}Ask during the session</p>
       <div class="c-ask-list">${C.ask.map((q) => `
         <div class="ask" data-q="${q.id}">
-          <span class="ask-label">${q.label}</span>
+          <span class="ask-label">${icon(askIcon[q.id] || "info")}${q.label}</span>
           ${q.answer ? `<span class="ask-answer">${q.answer}<span class="ask-by">Physio, in session</span></span>`
             : `<span class="ask-missing">Not in the record</span><button type="button" class="ask-add">Add the answer</button>`}
         </div>`).join("")}</div>`;
@@ -976,15 +977,58 @@
      a small table of tests to fill in, and free notes. What you type is kept when you switch areas. */
   let areaId = "balance";
   let bodySvgText = null;
-  fetch("../../design/illustrations/body-female.svg").then((x) => x.text()).then((t) => { bodySvgText = t; if ($("#as-panel")) renderArea(); });
+  fetch("../../design/illustrations/body-female.svg").then((x) => x.text()).then((t) => { bodySvgText = t; syncFigure(); });
   const esc = (v) => String(v || "").replace(/"/g, "&quot;");
 
-  // the body, with what this area assesses in blue (you are looking here now) and the record's pain points
-  function figureFor(a) {
-    const body = bodySvgText ? bodySvgText.replace("<svg", '<svg class="as-body" aria-hidden="true"') : "";
-    const zones = (a.zones || []).map(([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`).join("");
-    const pains = kids("hurts").map((n) => `<circle class="tone-${n.tone}" cx="${n.spot[0]}" cy="${n.spot[1]}" r="6"/>`).join("");
-    return `<div class="as-fig">${body}<svg class="as-zones" viewBox="0 -10 201 471" aria-hidden="true"><g class="zone">${zones}</g><g class="pain">${pains}</g></svg></div>`;
+  /* The body is how you choose what to assess. Each area has a labelled hotspot (Balance at the centre of gravity,
+     Function at the hips, Muscles at the calf, Joints at the ankle). Click one to assess it: that part of the body
+     fills in blue, following the body's own outline. Hovering a hotspot or a tab lights up the other. */
+  const HOT = { balance: [100, 200], function: [122, 292], muscles: [80, 362], joints: [74, 424] };
+  function bodyFigure() {
+    if (!bodySvgText) return "";
+    const shapes = (bodySvgText.match(/<g[^>]*>([\s\S]*)<\/g>/) || [])[1] || "";
+    const zones = C.areas.map((a) => `<g class="zone" data-area="${a.id}" clip-path="url(#as-clip)">${
+      (a.zones || []).map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join("")}</g>`).join("");
+    const ground = `<line class="ground" data-area="balance" x1="20" y1="466" x2="120" y2="466"/>`;
+    const pains = kids("hurts").map((n) => `<circle class="tone-${n.tone}" cx="${n.spot[0]}" cy="${n.spot[1]}" r="5.5"><title>${n.label} · from the record</title></circle>`).join("");
+    const spots = C.areas.map((a) => {
+      const [x, y] = HOT[a.id];
+      return `<g class="spot" data-area="${a.id}" tabindex="0" role="button" aria-label="Assess ${a.label}">
+        <line class="lead" x1="${x}" y1="${y}" x2="214" y2="${y}"/>
+        <circle class="ring" cx="${x}" cy="${y}" r="11"/><circle class="dot" cx="${x}" cy="${y}" r="5"/>
+        <text x="220" y="${y}">${a.label}</text></g>`;
+    }).join("");
+    return `<svg class="as-body" viewBox="0 -10 300 471" aria-label="Choose what to assess on the body">
+      <defs><clipPath id="as-clip">${shapes}</clipPath></defs>
+      <g class="sil">${shapes}</g>${zones}${ground}<g class="pain">${pains}</g>${spots}
+    </svg>`;
+  }
+
+  function syncFigure() {
+    const fig = $("#as-figure");
+    if (!fig) return;
+    if (!fig.firstElementChild && bodySvgText) {
+      fig.innerHTML = bodyFigure() + `<p class="as-key"><i></i>Assessed here · click the body to change</p>`;
+      fig.querySelectorAll(".spot").forEach((sp) => {
+        const pick = () => selectArea(sp.dataset.area);
+        sp.addEventListener("click", pick);
+        sp.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        sp.addEventListener("mouseenter", () => hoverArea(sp.dataset.area, true));
+        sp.addEventListener("mouseleave", () => hoverArea(sp.dataset.area, false));
+      });
+      fig.querySelectorAll(".zone").forEach((z) => z.addEventListener("click", () => selectArea(z.dataset.area)));
+    }
+    fig.querySelectorAll("[data-area]").forEach((el) => el.classList.toggle("is-on", el.dataset.area === areaId));
+  }
+
+  function hoverArea(id, on) {
+    document.querySelectorAll(`#assess [data-area="${id}"]`).forEach((el) => el.classList.toggle("is-hover", on));
+  }
+
+  function selectArea(id) {
+    areaId = id;
+    document.querySelectorAll("#assess .as-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.area === id));
+    renderArea();
   }
 
   // affected side against the other side, when both are numbers: a two-part bar and the ratio in words
@@ -1007,12 +1051,15 @@
         <button role="tab" type="button" class="as-tab" data-area="${a.id}" aria-selected="${a.id === areaId}">
           <span class="as-tab-name">${a.label}</span><span class="as-tab-sub">${a.sub}</span></button>`).join("")}
       </div>
-      <div class="as-panel" id="as-panel"></div>`;
-    box.querySelectorAll(".as-tab").forEach((t) => t.addEventListener("click", () => {
-      areaId = t.dataset.area;
-      box.querySelectorAll(".as-tab").forEach((x) => x.setAttribute("aria-selected", x === t));
-      renderArea();
-    }));
+      <div class="as-layout">
+        <figure class="as-figure" id="as-figure"></figure>
+        <div class="as-panel" id="as-panel"></div>
+      </div>`;
+    box.querySelectorAll(".as-tab").forEach((t) => {
+      t.addEventListener("click", () => selectArea(t.dataset.area));
+      t.addEventListener("mouseenter", () => hoverArea(t.dataset.area, true));
+      t.addEventListener("mouseleave", () => hoverArea(t.dataset.area, false));
+    });
     renderArea();
   }
 
@@ -1021,17 +1068,16 @@
     const panel = $("#as-panel");
     panel.classList.remove("is-in");
     panel.innerHTML = `
-      <div class="as-head">
-        <figure class="as-figure" aria-label="What this area assesses">${figureFor(a)}<figcaption>${a.sub}</figcaption></figure>
-        <div class="as-record">
+      <p class="as-what">${a.label} · ${a.sub}</p>
+      <div class="as-record">
           <p class="as-record-head">From the record for this area</p>
           ${a.record.length ? a.record.map((x) => `<p class="as-fact"><span class="hl">${x.text}</span><span class="src">${x.src}</span></p>`).join("")
             + `<p class="as-rule">Your practice’s rule · ${a.rule} · text taken from the record</p>`
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
-        </div>
       </div>
       <table class="as-tests">
-        <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Reference / other side</th><th aria-label="Remove"></th></tr></thead>
+        <colgroup><col style="width:32%"><col style="width:23%"><col style="width:18%"><col style="width:21%"><col style="width:6%"></colgroup>
+        <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
         <tbody>${a.tests.map((t, i) => `
           <tr data-i="${i}">
             <td><input data-k="test" value="${esc(t.test)}" aria-label="Test"></td>
@@ -1062,6 +1108,7 @@
     });
     panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
     renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);
+    syncFigure();
     requestAnimationFrame(() => panel.classList.add("is-in"));
   }
 
