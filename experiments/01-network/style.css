@@ -1045,3 +1045,9 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .as-tests { font-size: 14px; }
 /* while hovering another point, only that area shows on the body */
 .as-body.has-hover .zone.is-on:not(.is-hover) rect, .as-body.has-hover .ground.is-on:not(.is-hover) { opacity: 0; }
+/* smaller body, wider gap; the area on the body is shown in the pain red */
+.as-layout { grid-template-columns: 215px 1fr; gap: 80px; }
+.as-body { width: 215px; }
+.as-body .zone rect { fill: var(--alert); }
+.as-body .spot.is-hover .dot { fill: var(--alert); }
+.as-key i { background: var(--alert); }
