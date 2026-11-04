@@ -715,9 +715,6 @@ body.is-consult .media { display: none; }
 
 
 /* ---------- Patient details: in the index, with her photo behind it ---------- */
-.pt-facts { display: grid; grid-template-columns: 82px 1fr; gap: 6px 12px; margin: 2px 0 6px; font-size: 13.5px; line-height: 1.4; }
-.pt-facts dt { color: var(--grey); }
-.pt-facts dd { margin: 0; }
 
 .portrait {
   position: absolute; z-index: 3; top: 112px; right: calc(var(--side) - 34px); width: 190px; aspect-ratio: 4 / 5;

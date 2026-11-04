@@ -321,6 +321,13 @@
     $("#portrait").classList.toggle("is-in", on);
     if (on) setIndexOpen(true);
     renderIndexState();
+    const rowEl = indexBody.querySelector('.row[data-id="coverage"]');
+    if (rowEl) {
+      rowEl.setAttribute("aria-expanded", on);
+      rowEl.classList.toggle("is-current", on);
+      document.getElementById("detail-coverage").hidden = !on;
+      if (on) rowEl.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+    }
     apply();
   }
 
@@ -369,7 +376,6 @@
   /* ---------------- index ---------------- */
 
   const groups = [
-    { key: "patient", name: "Patient · Camille M.", icon: `<i class="ico person"></i>`, items: [] },
     ...sections.map((s) => ({ key: s.id, name: s.label, icon: `<i class="ico section" style="${s.mark ? `background:var(--${s.mark})` : ""}"></i>`, items: kids(s.id) })),
     { key: "sources", name: "Details and sources", icon: `<i class="ico document"></i>`, items: orphans },
   ];
@@ -387,9 +393,6 @@
     </button>`;
 
   const bodyFor = {
-    patient: () => `<dl class="pt-facts">${[
-      ["Age", "28 · female · new patient"], ["Occupation", R.patient.occupation], ...(R.patient.profile || []),
-    ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`,
 
     know: (items) => {
       const points = items.filter((n) => n.id !== "treatments");
@@ -467,17 +470,22 @@
 
     indexBody.querySelectorAll(".sec-head").forEach((b) => b.addEventListener("click", () => {
       const open = b.getAttribute("aria-expanded") !== "true";
-      if (b.getAttribute("aria-controls") === "sec-patient") { if (state.current) go(null); setProfile(open); return; }
       b.setAttribute("aria-expanded", open);
       document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
     }));
     indexBody.querySelectorAll(".row.has-detail").forEach((r) => r.addEventListener("click", () => {
+      if (r.dataset.id === "coverage") return;   // handled below: her details and photo
       const open = r.getAttribute("aria-expanded") !== "true";
       r.setAttribute("aria-expanded", open);
       document.getElementById(r.getAttribute("aria-controls")).hidden = !open;
     }));
     indexBody.querySelectorAll(".row").forEach((r) => {
-      r.addEventListener("click", () => go(r.dataset.id));
+      r.addEventListener("click", () => {
+        if (r.dataset.id !== "coverage") return go(r.dataset.id);
+        const open = !state.profile;
+        if (state.current) go(null);
+        setProfile(open);
+      });
       r.addEventListener("mouseenter", () => hint(r.dataset.id, true));
       r.addEventListener("mouseleave", () => hint(r.dataset.id, false));
     });
@@ -502,7 +510,7 @@
     });
     // the section you are in on the map is the one unfolded in the index
     const c = state.current && byId.get(state.current);
-    const key = !c ? (state.profile ? "patient" : null) : c.kind === "section" ? c.id : c.parent || "sources";
+    const key = !c ? (state.profile ? "sources" : null) : c.kind === "section" ? c.id : c.parent || "sources";
     indexBody.querySelectorAll(".sec-head").forEach((b) => {
       const open = b.getAttribute("aria-controls") === `sec-${key}`;
       b.setAttribute("aria-expanded", open);
