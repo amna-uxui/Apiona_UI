@@ -1087,3 +1087,12 @@ body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; 
 .c-save { display: inline-flex; align-items: center; gap: 6px; margin: 0 14px 0 0; font-size: 13.5px; color: var(--grey); white-space: nowrap; }
 .c-save svg { width: 14px; height: 14px; fill: none; stroke: var(--ok, #97AD58); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s; }
 .c-save.is-saving svg { opacity: 0; }
+/* links from the chosen body label to the facts, drawn like the home network */
+.as-layout { position: relative; }
+.as-links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.as-links path { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s var(--ease) calc(var(--i) * 80ms); }
+.as-links circle { fill: var(--ink); opacity: 0; transition: opacity .3s ease calc(var(--i, 0) * 80ms + .45s); }
+.as-links circle.from { transition-delay: 0s; }
+.as-links.is-drawn path { stroke-dashoffset: 0; }
+.as-links.is-drawn circle { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .as-links path, .as-links circle { transition: none; } }

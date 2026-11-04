@@ -1046,6 +1046,32 @@
     sizePills();
   }
 
+  // the web from the home screen: thin lines from the chosen label to each fact from the record
+  function linkFacts(animate) {
+    const lay = document.querySelector("#assess .as-layout");
+    if (!lay || !lay.offsetWidth) return;
+    let svg = lay.querySelector(".as-links");
+    if (!svg) {
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "as-links");
+      svg.setAttribute("aria-hidden", "true");
+      lay.appendChild(svg);
+    }
+    const pill = lay.querySelector(`.spot[data-area="${areaId}"] .pill`);
+    const marks = [...lay.querySelectorAll(".as-fact .as-mark")];
+    if (!pill || !marks.length || !(+pill.getAttribute("width"))) { svg.innerHTML = ""; return; }
+    const L = lay.getBoundingClientRect(), P = pill.getBoundingClientRect();
+    const a = { x: P.right - L.left, y: P.top + P.height / 2 - L.top };
+    svg.innerHTML = marks.map((m, i) => {
+      const r = m.getBoundingClientRect();
+      const b = { x: r.left - L.left - 6, y: r.top + r.height / 2 - L.top };
+      return `<path pathLength="1" style="--i:${i}" d="${elbow(a, b)}"/><circle cx="${b.x}" cy="${b.y}" r="2" style="--i:${i}"/>`;
+    }).join("") + `<circle class="from" cx="${a.x}" cy="${a.y}" r="2.5"/>`;
+    svg.classList.toggle("is-drawn", !animate);
+    if (animate) requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add("is-drawn")));
+  }
+  addEventListener("resize", () => linkFacts(false));
+
   // each label sits in a pill sized to its text, so it reads as a button (measured once it is visible)
   function sizePills() {
     const spots = document.querySelectorAll("#as-figure .spot");
@@ -1057,6 +1083,7 @@
       Object.entries({ x: b.x - 11, y: b.y + b.height / 2 - h / 2, width: b.width + 22, height: h, rx: h / 2 })
         .forEach(([k, v]) => r.setAttribute(k, v));
     });
+    linkFacts(true);
   }
 
   function hoverArea(id, on) {
@@ -1141,7 +1168,7 @@
     work.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
     renderDictated(work.querySelector(".dict-list"), `assessment:${a.id}`);
     syncFigure();
-    requestAnimationFrame(() => { panel.classList.add("is-in"); work.classList.add("is-in"); });
+    requestAnimationFrame(() => { panel.classList.add("is-in"); work.classList.add("is-in"); linkFacts(true); });
   }
 
   // the analog clock: hands for the time now; a blue arc from when the session started to now
