@@ -345,8 +345,8 @@ window.RECORD = {
       { id: "assessment", n: 2, label: "Assessment", state: "empty", note: "Joints · muscles · function · balance" },
       { id: "goals", n: 3, label: "Goals and methods", state: "review", note: "Example filled in · to review" },
       { id: "notes", n: 4, label: "Notes", state: "empty" },
-      { id: "conclusion", n: 5, label: "Conclusion", state: "empty", fields: ["Main findings", "Physiotherapy diagnosis", "Prognosis"] },
-      { id: "recommendations", n: 6, label: "Recommendations", state: "empty", fields: ["For her at home", "For the GP", "Next session"] },
+      { id: "conclusion", n: 5, label: "Conclusion", state: "empty" },
+      { id: "recommendations", n: 6, label: "Recommendations", state: "empty" },
     ],
   },
 };

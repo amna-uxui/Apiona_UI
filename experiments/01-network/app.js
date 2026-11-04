@@ -213,7 +213,14 @@
   // Magnetic pull: near the cursor, a node leans toward it and its lines stretch along.
   // It never drifts on its own, and stays still with "reduce motion".
   const PULL = { radius: 150, max: 12, k: 180, damp: 2 * Math.sqrt(180) * 0.6 };   // a little springy
-  const at = (n) => ({ x: n.p.x + n.m.x, y: n.p.y + n.m.y });
+  // every node drifts a few pixels around its place, like the facts in the assessment; the lines follow
+  let driftT = 0;
+  const drift = (n) => {
+    if (reduceMotion) return { x: 0, y: 0 };
+    const k = n.seed || (n.seed = Math.random() * 10);
+    return { x: Math.sin(driftT / 2600 + k) * 4, y: Math.cos(driftT / 2100 + k * 1.3) * 4 };
+  };
+  const at = (n) => { const d = drift(n); return { x: n.p.x + n.m.x + d.x, y: n.p.y + n.m.y + d.y }; };
 
   function pullTarget(n) {
     if (!state.cursor || drag || n.t.o === 0 || n.p.o < 0.5) return { x: 0, y: 0 };
@@ -261,6 +268,9 @@
     cam.x += cam.vx * dt; cam.y += cam.vy * dt;
     if (Math.abs(cam.tx - cam.x) + Math.abs(cam.ty - cam.y) > 0.2) moving = true;
 
+    driftT = t;
+    // on the summary the web never quite stops; elsewhere it rests, to cost nothing
+    if (!reduceMotion && !consulting && !aux && !document.hidden) moving = true;
     draw();
     if (moving) requestAnimationFrame(tick);
     else running = false;
@@ -783,7 +793,7 @@
           <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
-        <div class="c-sec-body">${st.fields ? `<div class="fields" data-fields="${st.id}">${st.fields.map((f, k) => `
+        <div class="c-sec-body"><div class="c-sec-inner">${st.fields ? `<div class="fields" data-fields="${st.id}">${st.fields.map((f, k) => `
             <div class="fld-row"><label class="fld-label" for="f-${st.id}-${k}">${f}</label>
               <textarea class="fld" id="f-${st.id}-${k}" rows="1" data-k="${k}" placeholder="Write, or dictate…"></textarea></div>`).join("")}</div>
             <textarea data-sec="${st.id}" hidden aria-hidden="true"></textarea><div class="dict-list" data-key="${st.id}"></div>`
@@ -791,7 +801,7 @@
           : st.id === "assessment" ? `<div class="assess" id="assess"></div>`
           : st.id === "goals" ? `<div class="goals" id="goals"></div>`
           : `<textarea class="c-grow" rows="3" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
-             <div class="dict-list" data-key="${st.id}"></div>`}</div>
+             <div class="dict-list" data-key="${st.id}"></div>`}</div></div>
       </article>`).join("");
 
     buildReason();
@@ -801,10 +811,13 @@
     buildAsk();
     const open = (sec, on) => {
       sec.classList.toggle("is-open", on);
+      // while it unfolds, the content is clipped to the growing height; once open, it may overflow again
+      clearTimeout(sec._settle); sec.classList.remove("is-settled");
+      if (on) sec._settle = setTimeout(() => sec.classList.add("is-settled"), reduceMotion ? 0 : 520);
       sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on);
       const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
       if (chip) chip.classList.toggle("is-open", on);
-      if (on && sec.id === "cs-assessment") requestAnimationFrame(sizePills);
+      if (on && sec.id === "cs-assessment") { requestAnimationFrame(sizePills); setTimeout(sizePills, 560); }   // again once it has unfolded
       if (on) requestAnimationFrame(() => sec.querySelectorAll(".goal textarea, textarea.c-grow").forEach((f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; }));
     };
     consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
@@ -986,7 +999,8 @@
 
   /* ---------- Finish: the report, assembled from what was written, shown as a paper page ---------- */
   let reportOpen = false;
-  function openReport(on) {
+  let tagFresh = false;
+  function openReport(on, from) {
     reportOpen = on;
     const box = $("#report");
     document.body.classList.toggle("is-viewing", on);
@@ -1048,6 +1062,11 @@
         <button type="button" class="r-sign-btn">Sign and send to Dr Marc Favre, GP</button>`}
       </div>`;
     box.hidden = false;
+    const o = (from && from.isConnected ? from : startBtn).getBoundingClientRect();
+    box.querySelectorAll(".paper, .r-review").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      el.style.transformOrigin = `${o.left + o.width / 2 - r.left}px ${o.top + o.height / 2 - r.top}px`;
+    });
     requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
     box.querySelector(".r-back-btn").addEventListener("click", () => openReport(false));
     box.querySelectorAll(".r-review li button").forEach((b) => b.addEventListener("click", () => todo[+b.dataset.i].go()));
@@ -1063,8 +1082,15 @@
       const now = new Date();
       C.signed = { at: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` };
       C.changedAfterSign = false;
-      saveConsult(); applySigned();
-      openReport(true);   // shown again, as signed
+      saveConsult(); applySigned(); tagFresh = true;
+      // one calm moment: a green check draws itself, then the report shows as signed
+      const seal = document.createElement("div");
+      seal.className = "r-seal";
+      seal.innerHTML = `<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" pathLength="1"/><path d="M15 27l7 7 15-16" pathLength="1"/></svg><b>Signed and sent</b><span>to Dr Marc Favre, GP</span>`;
+      box.appendChild(seal);
+      void seal.offsetWidth;   // start from the hidden state, then draw
+      seal.classList.add("is-in");
+      setTimeout(() => { seal.remove(); openReport(true); }, reduceMotion ? 0 : 1500);
     });
   }
 
@@ -1132,7 +1158,8 @@
       date: consult.querySelector(".c-date-field input").value,
       type: segIndex(".c-type .seg"), attendance: segIndex(".c-tools .seg"),
       areas: C.areas.map((a) => ({ tests: a.tests, notes: a.notes || "" })),
-      goals: C.goals, fields: C.fieldVals, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
+      goals: C.goals, fields: C.fieldVals,
+      texts: { conclusion: text("conclusion"), recommendations: text("recommendations") }, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
       ask: C.ask.map((q) => q.answer || ""),
       reason: (C.steps.find((x) => x.id === "reason").rows || []).map((r) => ({ text: r.text, ok: !!r.ok, edited: !!r.edited })),
       jots,
@@ -1163,6 +1190,13 @@
     if (stored.date) consult.querySelector(".c-date-field input").value = stored.date;
     pick(".c-type .seg", stored.type); pick(".c-tools .seg", stored.attendance);
     if (jots.length) renderJots();
+    // the conclusion and recommendations, as plain text (older saves kept them as labelled fields)
+    ["conclusion", "recommendations"].forEach((id) => {
+      const f = document.querySelector(`textarea[data-sec="${id}"]`);
+      const old = stored.fields && Array.isArray(stored.fields[id]) ? stored.fields[id].filter((v) => v.trim()).join("\n\n") : "";
+      const v = (stored.texts && stored.texts[id]) || old;
+      if (f && v) f.value = v;
+    });
     const ta = document.querySelector('textarea[data-sec="reason"]'), rows = C.steps.find((x) => x.id === "reason").rows || [];
     if (ta) ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
     const n = $('#c-notes textarea[data-sec="notes"]'); if (n) n.value = jots.map((j) => `${j.time}  ${j.text}`).join("\n");
@@ -1263,7 +1297,7 @@
         <span class="rh-label">${r.label}</span>
         <span class="rh-body"><span class="rh-text" contenteditable="plaintext-only" spellcheck="true" aria-label="${r.label}">${r.text}</span>
           <span class="rh-src">${r.src}<span class="rh-today"> · corrected today</span></span></span>
-        <button type="button" class="rh-ok" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg><span>Confirm</span></button>
+        <button type="button" class="rh-ok" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" pathLength="1"/></svg><span>Confirm</span></button>
       </div>`).join("");
     box.querySelectorAll(".rh-row").forEach((row) => {
       const r = rows[+row.dataset.i], text = row.querySelector(".rh-text"), ok = row.querySelector(".rh-ok");
@@ -1306,6 +1340,8 @@
     const onKey = (e) => { if (e.key === "Escape") { e.stopImmediatePropagation(); close(); } };
     view.addEventListener("click", (e) => { if (!e.target.closest("a")) close(); });
     document.addEventListener("keydown", onKey, true);
+    const pages = view.querySelector(".doc-pages"), pr = pages.getBoundingClientRect();
+    pages.style.transformOrigin = `${r.left + r.width / 2 - pr.left}px ${r.top + r.height / 2 - pr.top}px`;
     requestAnimationFrame(() => requestAnimationFrame(() => view.classList.add("is-in")));
   }
 
@@ -1525,6 +1561,7 @@
 
   function setConsult(on, push = true) {
     if (on === consulting) return;
+    setDir(on ? "consultation" : "summary");
     consulting = on;
     if (on && viewing) setViewing(false);
     if (on && state.current) select(null);
@@ -1532,6 +1569,7 @@
     clearTimeout(hideTimer);
     if (on) {
       consult.hidden = false;
+      consult.classList.remove("is-out");
       consult.scrollTop = 0;
       requestAnimationFrame(() => requestAnimationFrame(() => { consult.classList.add("is-in"); }));
       startedAt = Date.now(); tickClock(); clockTimer = setInterval(tickClock, 1000);
@@ -1539,6 +1577,7 @@
       if (dictating) setDictation(false);
       if (reportOpen) openReport(false);
       consult.classList.remove("is-in");
+      consult.classList.add("is-out");
       hideTimer = setTimeout(() => { consult.hidden = true; }, 500);
       clearInterval(clockTimer);
     }
@@ -1550,7 +1589,16 @@
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown
+  const ORDER = ["summary", "consultation", "followup", "documents"];
+  let curPage = "summary";
+  function setDir(p, d) {   // forward in the menu: the new page comes from the right; back: from the left
+    document.body.style.setProperty("--dir", d || (ORDER.indexOf(p) >= ORDER.indexOf(curPage) ? 1 : -1));
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && curPage === "summary") kick(); });
   function syncMenu(p) {
+    curPage = p;
+    if (p === "summary") kick();   // the web starts drifting again
+    if (p === "summary" && tagFresh) { tagFresh = false; setTimeout(() => { const t = $("#p-tags li"); if (t) t.classList.add("is-fresh"); }, 520); }
     document.querySelectorAll(".page[data-page]").forEach((a) => {
       const here = a.dataset.page === p;
       a.classList.toggle("is-current", here);
@@ -1561,16 +1609,18 @@
   function showAux(p) {
     ["followup", "documents"].forEach((id) => {
       const el = document.getElementById(id), on = id === p;
-      if (on) { (id === "followup" ? renderFollowup : renderDocuments)(); el.hidden = false; el.scrollTop = 0; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("is-in"))); }
-      else if (!el.hidden) { el.classList.remove("is-in"); setTimeout(() => { if (aux !== id) el.hidden = true; }, 400); }
+      if (on) { (id === "followup" ? renderFollowup : renderDocuments)(); el.hidden = false; el.classList.remove("is-out"); el.scrollTop = 0; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("is-in"))); }
+      else if (!el.hidden) { el.classList.remove("is-in"); el.classList.add("is-out"); setTimeout(() => { if (aux !== id) el.hidden = true; }, 450); }
     });
     aux = p;
     document.body.classList.toggle("is-page", !!p);
   }
   function setPage(p, push = true) {
+    const d = ORDER.indexOf(p) >= ORDER.indexOf(curPage) ? 1 : -1;
+    setDir(p, d);
     if (reportOpen) openReport(false);
     if (p === "consultation") { showAux(null); setConsult(true, push); syncMenu(p); return; }
-    if (consulting) setConsult(false, false);
+    if (consulting) { setConsult(false, false); setDir(p, d); }   // leaving the consultation must not flip the direction
     if (p !== "summary" && state.current) select(null);
     showAux(p === "summary" ? null : p);
     syncMenu(p);
