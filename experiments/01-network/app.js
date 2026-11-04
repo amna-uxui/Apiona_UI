@@ -343,7 +343,8 @@
     apply(instant);
   }
 
-  window.addEventListener("popstate", () => { if (location.hash !== "#consultation") select(location.hash.slice(1) || null); });
+  const PAGE_HASH = ["#consultation", "#follow-up", "#documents"];
+  window.addEventListener("popstate", () => { if (!PAGE_HASH.includes(location.hash)) select(location.hash.slice(1) || null); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.current) go(back(byId.get(state.current)));   // one step back
   });
@@ -782,7 +783,11 @@
           <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
-        <div class="c-sec-body">${st.id === "reason" ? `<div class="rh" id="rh"></div><textarea data-sec="reason" hidden aria-hidden="true"></textarea>`
+        <div class="c-sec-body">${st.fields ? `<div class="fields" data-fields="${st.id}">${st.fields.map((f, k) => `
+            <div class="fld-row"><label class="fld-label" for="f-${st.id}-${k}">${f}</label>
+              <textarea class="fld" id="f-${st.id}-${k}" rows="1" data-k="${k}" placeholder="Write, or dictate…"></textarea></div>`).join("")}</div>
+            <textarea data-sec="${st.id}" hidden aria-hidden="true"></textarea><div class="dict-list" data-key="${st.id}"></div>`
+          : st.id === "reason" ? `<div class="rh" id="rh"></div><textarea data-sec="reason" hidden aria-hidden="true"></textarea>`
           : st.id === "assessment" ? `<div class="assess" id="assess"></div>`
           : st.id === "goals" ? `<div class="goals" id="goals"></div>`
           : `<textarea class="c-grow" rows="3" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
@@ -790,6 +795,7 @@
       </article>`).join("");
 
     buildReason();
+    buildFields();
     buildAssessment();
     buildGoals();
     buildAsk();
@@ -823,9 +829,12 @@
       saveConsult();
       const now = new Date();
       save.classList.remove("is-saving");
-      save.querySelector("span").textContent = `All changes saved · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      if (C.signed) return;
+      save.querySelector("span").textContent = `${C.changedAfterSign ? "Changed after signing · saved" : "All changes saved"} · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     };
     const markChanged = () => {
+      if (restoring) return;   // putting back what was saved is not a change
+      if (C.signed) { C.signed = null; C.changedAfterSign = true; applySigned(); }   // a change after signing needs a new signature
       save.classList.add("is-saving");
       save.querySelector("span").textContent = "Saving…";
       clearTimeout(saveTimer);
@@ -833,7 +842,7 @@
     };
     consult.addEventListener("input", markChanged);
     consult.addEventListener("change", markChanged);
-    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no, .dict-move, .rh-ok, .jot-del")) markChanged(); });
+    consult.addEventListener("click", (e) => { if (e.target.closest(".seg button, .as-del, .as-add, .dict-ok, .dict-no, .dict-move, .rh-ok, .jot-del, .goal-keep")) markChanged(); });
     markSaved();
     // segmented choices: one on at a time
     consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
@@ -870,9 +879,10 @@
     box.innerHTML = `
       <div class="goal-head"><span>Goal</span><span>Methods</span></div>
       ${C.goals.map((g, i) => `
-        <div class="goal" data-i="${i}">
+        <div class="goal${g.example ? " is-example" : ""}" data-i="${i}">
           <span class="goal-n">${i + 1}</span>
-          <textarea data-k="goal" rows="1" placeholder="Goal" aria-label="Goal ${i + 1}">${esc(g.goal)}</textarea>
+          <span class="goal-main"><textarea data-k="goal" rows="1" placeholder="Goal" aria-label="Goal ${i + 1}">${esc(g.goal)}</textarea>
+            ${g.example ? `<span class="goal-ex">Example · <button type="button" class="goal-keep">Keep it</button></span>` : ""}</span>
           <textarea data-k="methods" rows="1" placeholder="Methods" aria-label="Methods for goal ${i + 1}">${esc(g.methods)}</textarea>
           <button class="as-del" type="button" aria-label="Remove this goal">×</button>
         </div>`).join("")}
@@ -883,11 +893,12 @@
       // the text wraps: each field grows to show all of it
       const fit = (f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; };
       row.querySelectorAll("[data-k]").forEach((f) => {
-        f.addEventListener("input", () => { g[f.dataset.k] = f.value; C.goalsReviewed = true; fit(f); });
+        f.addEventListener("input", () => { g[f.dataset.k] = f.value; if (g.example) { g.example = false; row.classList.remove("is-example"); row.querySelector(".goal-ex")?.remove(); } fit(f); });
         f.addEventListener("focus", () => fit(f));
         requestAnimationFrame(() => fit(f));
       });
       row.querySelector(".as-del").addEventListener("click", () => { C.goals.splice(+row.dataset.i, 1); buildGoals(); });
+      row.querySelector(".goal-keep")?.addEventListener("click", () => { g.example = false; row.classList.remove("is-example"); row.querySelector(".goal-ex").remove(); });
     });
     box.querySelector(".as-add").addEventListener("click", () => {
       C.goals.push({ goal: "", methods: "" });
@@ -936,6 +947,8 @@
           const ta = $("#as-work .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
         } else if (key === "notes") {
           addJot(text);
+        } else if (C.fieldVals[key]) {
+          addToField(key, text);
         } else {
           const ta = document.querySelector(`textarea[data-sec="${key}"]`);
           if (ta) ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + text;
@@ -1004,13 +1017,15 @@
       ...C.ask.filter((q) => !q.answer).map((q) => ({ text: `${q.label} not asked yet`, go: goTo(null, () => $("#c-ask").scrollIntoView({ block: "center" })) })),
       unconfirmed && { text: `Reason and history · ${unconfirmed} of ${reasonRows.length} lines not confirmed with her`, go: goTo("reason") },
       ...emptyAreas.map((a) => ({ text: `Assessment · no results for ${a.label.toLowerCase()}`, go: goTo("assessment", () => { selectArea(a.id); $("#cs-assessment").scrollIntoView({ behavior: "smooth", block: "start" }); }) })),
-      !C.goalsReviewed && { text: "Goals and methods · still the example, not reviewed", go: goTo("goals") },
+      C.goals.some((g) => g.example) && { text: `Goals and methods · ${C.goals.filter((g) => g.example).length} examples not kept or edited`, go: goTo("goals") },
+      C.changedAfterSign && { text: "Changed after signing · sign again", go: goTo(null) },
       !val("conclusion").trim() && { text: "Conclusion not written", go: goTo("conclusion") },
       !val("recommendations").trim() && { text: "Recommendations not written", go: goTo("recommendations") },
     ].filter(Boolean);
     const asked = C.ask.filter((q) => q.answer).map((q) => `<li>${q.label}: ${q.answer} <span class="r-by">Physio, in session</span></li>`).join("");
     box.innerHTML = `
-      ${todo.length ? `<aside class="r-review" aria-label="Still to review">
+      ${C.signed ? `<aside class="r-review is-done"><p class="r-review-head"><i aria-hidden="true"></i>Signed and sent to Dr Marc Favre, GP · ${C.signed.at}</p></aside>`
+      : todo.length ? `<aside class="r-review" aria-label="Still to review">
         <p class="r-review-head">Still to review before signing</p>
         <ul>${todo.map((t, i) => `<li><button type="button" data-i="${i}"><i aria-hidden="true"></i>${t.text}<span aria-hidden="true">→</span></button></li>`).join("")}</ul>
       </aside>` : `<aside class="r-review is-done"><p class="r-review-head"><i aria-hidden="true"></i>Everything reviewed · ready to sign</p></aside>`}
@@ -1025,17 +1040,19 @@
         <h3>4 · Notes</h3>${para(val("notes"))}
         <h3>5 · Conclusion</h3>${para(val("conclusion"))}
         <h3>6 · Recommendations</h3>${para(val("recommendations"))}
-        <p class="r-sign">Lena Keller, physiotherapist · draft, not signed</p>
+        <p class="r-sign">${C.signed ? `Signed by Lena Keller, physiotherapist · sent to Dr Marc Favre, GP · ${C.signed.at}` : "Lena Keller, physiotherapist · draft, not signed"}</p>
       </article>
       <div class="report-actions">
-        <button type="button" class="r-back-btn">Back to the consultation</button>
-        <button type="button" class="r-sign-btn">Sign and send to Dr Marc Favre, GP</button>
+        <button type="button" class="r-back-btn">Back to the consultation</button>${C.signed ? `
+        <button type="button" class="r-done-btn">Done · back to the summary</button>` : `
+        <button type="button" class="r-sign-btn">Sign and send to Dr Marc Favre, GP</button>`}
       </div>`;
     box.hidden = false;
     requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
     box.querySelector(".r-back-btn").addEventListener("click", () => openReport(false));
     box.querySelectorAll(".r-review li button").forEach((b) => b.addEventListener("click", () => todo[+b.dataset.i].go()));
-    box.querySelector(".r-sign-btn").addEventListener("click", (e) => {
+    box.querySelector(".r-done-btn")?.addEventListener("click", () => { openReport(false); setConsult(false); });
+    box.querySelector(".r-sign-btn")?.addEventListener("click", (e) => {
       // with things left to review, the first click says so; a second click signs anyway
       if (todo.length && !e.target.dataset.sure) {
         e.target.dataset.sure = "1";
@@ -1043,9 +1060,11 @@
         e.target.classList.add("is-warn");
         return;
       }
-      e.target.textContent = "Signed · ready to send (prototype)";
-      e.target.disabled = true;
-      box.querySelector(".r-sign").textContent = "Lena Keller, physiotherapist · signed";
+      const now = new Date();
+      C.signed = { at: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` };
+      C.changedAfterSign = false;
+      saveConsult(); applySigned();
+      openReport(true);   // shown again, as signed
     });
   }
 
@@ -1104,6 +1123,7 @@
   // the web from the home screen: thin lines from the chosen label to each fact from the record
   /* ---------- Keeping the consultation: "All changes saved" is true — it lives in this browser until ?fresh ---------- */
   const STORE = "apiona-consultation-v1";
+  let restoring = false;
   let stored = null;
   function saveConsult() {
     const segIndex = (sel) => [...consult.querySelectorAll(`${sel} button`)].findIndex((b) => b.classList.contains("is-on"));
@@ -1112,10 +1132,10 @@
       date: consult.querySelector(".c-date-field input").value,
       type: segIndex(".c-type .seg"), attendance: segIndex(".c-tools .seg"),
       areas: C.areas.map((a) => ({ tests: a.tests, notes: a.notes || "" })),
-      goals: C.goals, goalsReviewed: !!C.goalsReviewed,
+      goals: C.goals, fields: C.fieldVals, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
       ask: C.ask.map((q) => q.answer || ""),
       reason: (C.steps.find((x) => x.id === "reason").rows || []).map((r) => ({ text: r.text, ok: !!r.ok, edited: !!r.edited })),
-      jots, conclusion: text("conclusion"), recommendations: text("recommendations"),
+      jots,
     };
     try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
   }
@@ -1127,7 +1147,9 @@
     } catch (e) { stored = null; }
     if (!stored) return;
     stored.areas?.forEach((x, i) => { if (C.areas[i]) { C.areas[i].tests = x.tests; C.areas[i].notes = x.notes; } });
-    if (stored.goals) { C.goals.splice(0, C.goals.length, ...stored.goals); C.goalsReviewed = stored.goalsReviewed; }
+    if (stored.goals) C.goals.splice(0, C.goals.length, ...stored.goals);
+    if (stored.fields) Object.keys(C.fieldVals).forEach((id) => { if (Array.isArray(stored.fields[id])) C.fieldVals[id] = stored.fields[id]; });
+    C.signed = stored.signed || null; C.changedAfterSign = !!stored.changedAfterSign;
     stored.ask?.forEach((a, i) => { if (C.ask[i] && a) C.ask[i].answer = a; });
     const rows = C.steps.find((x) => x.id === "reason").rows || [];
     stored.reason?.forEach((x, i) => { if (rows[i]) Object.assign(rows[i], x); });
@@ -1136,15 +1158,17 @@
   // … then the fields that only exist on the page
   function restoreConsultFields() {
     if (!stored) return;
+    restoring = true;
     const pick = (sel, i) => { const b = consult.querySelectorAll(`${sel} button`)[i]; if (b && i >= 0) b.click(); };
     if (stored.date) consult.querySelector(".c-date-field input").value = stored.date;
     pick(".c-type .seg", stored.type); pick(".c-tools .seg", stored.attendance);
-    ["conclusion", "recommendations"].forEach((id) => { const f = document.querySelector(`textarea[data-sec="${id}"]`); if (f && stored[id]) f.value = stored[id]; });
     if (jots.length) renderJots();
     const ta = document.querySelector('textarea[data-sec="reason"]'), rows = C.steps.find((x) => x.id === "reason").rows || [];
     if (ta) ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
     const n = $('#c-notes textarea[data-sec="notes"]'); if (n) n.value = jots.map((j) => `${j.time}  ${j.text}`).join("\n");
+    restoring = false;
     saveConsult();   // the page saved itself while it was being built; store the restored version again
+    applySigned();
   }
 
   /* ---------- Notes as timed jottings: Enter files a note with the time in the session ---------- */
@@ -1186,6 +1210,44 @@
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addJot(input.value); input.value = ""; fit(); }
     });
     input.addEventListener("input", fit);
+  }
+
+  /* ---------- Conclusion and Recommendations: a few labelled fields, structure without pre-written content ---------- */
+  C.fieldVals = C.fieldVals || {};
+  C.steps.filter((st) => st.fields).forEach((st) => { C.fieldVals[st.id] = C.fieldVals[st.id] || st.fields.map(() => ""); });
+  function syncField(id) {
+    const st = C.steps.find((x) => x.id === id), ta = document.querySelector(`textarea[data-sec="${id}"]`);
+    ta.value = st.fields.map((f, k) => (C.fieldVals[id][k].trim() ? `${f}: ${C.fieldVals[id][k].trim()}` : "")).filter(Boolean).join("\n\n");
+  }
+  function buildFields() {
+    document.querySelectorAll(".fields[data-fields]").forEach((box) => {
+      const id = box.dataset.fields;
+      box.querySelectorAll("textarea.fld").forEach((f) => {
+        const k = +f.dataset.k;
+        f.value = C.fieldVals[id][k] || "";
+        const fit = () => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; };
+        f.addEventListener("input", () => { C.fieldVals[id][k] = f.value; syncField(id); fit(); });
+        f.addEventListener("focus", fit);
+      });
+      syncField(id);
+    });
+  }
+  function addToField(id, text) {
+    const k = Math.max(0, C.fieldVals[id].findIndex((v) => !v.trim()));   // the first empty field, else the first
+    C.fieldVals[id][k] = (C.fieldVals[id][k].trim() ? C.fieldVals[id][k].trim() + " " : "") + text;
+    const f = document.getElementById(`f-${id}-${k}`); if (f) f.value = C.fieldVals[id][k];
+    syncField(id);
+  }
+
+  /* ---------- After signing: the visit is done, and the summary says so ---------- */
+  const sessionTag = R.patient.tags[0].text;
+  function renderTags() { $("#p-tags").innerHTML = R.patient.tags.map((t) => `<li class="tag tag-${t.tone}">${t.text}</li>`).join(""); }
+  function applySigned() {
+    R.patient.tags[0].text = C.signed ? "Session 1 of 9 · done today" : sessionTag;
+    renderTags();
+    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : consulting ? "Finish and prepare the report" : "Start consultation";
+    const save = $("#c-save");
+    if (C.signed) { save.classList.remove("is-saving"); save.querySelector("span").textContent = `Signed and sent · ${C.signed.at}`; }
   }
 
   /* ---------- Reason and history: lines to go through with her, confirm or correct ---------- */
@@ -1480,34 +1542,179 @@
       hideTimer = setTimeout(() => { consult.hidden = true; }, 500);
       clearInterval(clockTimer);
     }
-    // the menu follows
+    syncMenu(on ? "consultation" : "summary");
+    // the green button becomes the next step of the visit
+    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : on ? "Finish and prepare the report" : "Start consultation";
+    if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
+  }
+
+  /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
+  let aux = null;   // "followup" or "documents" while one of them is shown
+  function syncMenu(p) {
     document.querySelectorAll(".page[data-page]").forEach((a) => {
-      const here = a.dataset.page === (on ? "consultation" : "summary");
+      const here = a.dataset.page === p;
       a.classList.toggle("is-current", here);
-      a.classList.toggle("is-live", here && on);
+      a.classList.toggle("is-live", here && p === "consultation");
       if (here) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    // the green button becomes the next step of the visit
-    startBtn.querySelector("span").textContent = on ? "Finish and prepare the report" : "Start consultation";
-    if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
+  }
+  function showAux(p) {
+    ["followup", "documents"].forEach((id) => {
+      const el = document.getElementById(id), on = id === p;
+      if (on) { (id === "followup" ? renderFollowup : renderDocuments)(); el.hidden = false; el.scrollTop = 0; requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("is-in"))); }
+      else if (!el.hidden) { el.classList.remove("is-in"); setTimeout(() => { if (aux !== id) el.hidden = true; }, 400); }
+    });
+    aux = p;
+    document.body.classList.toggle("is-page", !!p);
+  }
+  function setPage(p, push = true) {
+    if (reportOpen) openReport(false);
+    if (p === "consultation") { showAux(null); setConsult(true, push); syncMenu(p); return; }
+    if (consulting) setConsult(false, false);
+    if (p !== "summary" && state.current) select(null);
+    showAux(p === "summary" ? null : p);
+    syncMenu(p);
+    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : "Start consultation";
+    if (push) history.pushState(null, "", { followup: "#follow-up", documents: "#documents" }[p] || location.pathname + location.search);
+  }
+  const hm = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
+  const pageBar = (title, sub) => `<header class="pg-bar"><div class="c-title"><h2>${title} · Camille M.</h2><p>${sub}</p></div></header>`;
+
+  /* Follow-up: a calm list, newest first. Dates on the left, plain text, a thin line; colour only in small dots. */
+  function renderFollowup() {
+    const box = $("#followup");
+    const attendance = ((consult.querySelector(".c-tools .seg .is-on") || {}).textContent || "Present").trim();
+    const goals = C.goals.filter((g) => g.goal);
+    const kept = goals.filter((g) => !g.example), examples = goals.filter((g) => g.example);
+    const asked = C.ask.filter((q) => q.answer);
+    const done = C.signed ? 1 : 0;
+    box.innerHTML = pageBar("Follow-up", `Session 1 of 9 · ${C.signed ? "done today" : "today, in progress"}`) + `
+      <div class="pg-main">
+        <ol class="cl-list">
+          <li class="cl-item">
+            <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 of 9 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
+              ${goals.length ? `<p>${goals.length} goal${goals.length > 1 ? "s" : ""} set${examples.length ? ` <span class="cl-quiet">· ${examples.length} still example${examples.length > 1 ? "s" : ""}</span>` : ""}</p>` : ""}
+              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Marc Favre, GP · ${C.signed.at}` : "Report not signed yet"}
+                · <button type="button" data-go="report">${C.signed ? "view the report" : "finish it"}</button></p>
+              ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
+              ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
+              <p class="cl-sign"><span>Lena Keller · ${C.signed ? "assessment validated and signed" : C.changedAfterSign ? "changed after signing, to sign again" : "in progress"}</span><button type="button" data-go="consultation">Open the consultation</button></p>
+            </div>
+          </li>
+          <li class="cl-item is-before">
+            <div class="cl-when">Sunday<span>1 Nov</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-prep" aria-hidden="true"></i>Preparation received</h3>
+              <p class="cl-quiet">Her summary and 2 documents · <button type="button" data-go="summary">view the summary</button></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+      <aside class="pg-side">
+        <h4><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>Sessions</h4>
+        <div class="fu-bar" aria-label="${done} of 9 sessions done">${Array.from({ length: 9 }, (_, k) => `<i class="${k < done ? "is-done" : k === 0 ? "is-today" : ""}"></i>`).join("")}</div>
+        <p class="fu-strong">${done} of 9 done${done ? "" : " · session 1 today"}</p>
+        <p class="fu-sub">Prescribed by the emergency department, Clinique Bois-Cerf</p>
+        <h4><svg class="i" aria-hidden="true"><use href="#i-flag"/></svg>Goals of the initial assessment</h4>
+        ${goals.length ? `<ol class="fu-side-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="fu-sub">${g.example ? "example" : "0 sessions"}</span></li>`).join("")}</ol>
+          <p class="fu-foot">Sessions where the goal was worked on, from the session notes</p>` : `<p class="fu-sub">Set in the consultation</p>`}
+        ${C.signed ? `<h4><svg class="i" aria-hidden="true"><use href="#i-send"/></svg>Sent to other carers</h4>
+          <p class="fu-row"><span>Initial assessment report</span><span class="fu-sub">GP · today ${C.signed.at}</span></p>` : ""}
+        <h4><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg>Still to come</h4>
+        <p class="fu-row"><span>Session 2</span><span class="fu-sub">not booked yet</span></p>
+        <p class="fu-row"><span>Final report to the GP</span><span class="fu-sub">after session 9</span></p>
+      </aside>`;
+    wireGo(box);
+  }
+  function wireGo(box) {
+    box.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => {
+      const g = b.dataset.go;
+      if (g === "report") { setPage("consultation"); setTimeout(() => openReport(true), 450); }
+      else setPage(g);
+    }));
+  }
+
+  /* Documents: only what really exists in her record, plus what the practice created */
+  let docSel = "emergency", docFilter = "all", reminded = null;
+  function docList() {
+    const emer = byId.get("emergency").media, heds = byId.get("heds").media;
+    return [
+      { id: "emergency", group: "shared", name: "Foot X-ray · 2 views", type: "Imaging", from: "Emergency, Clinique Bois-Cerf", added: "1 Nov 2026", images: emer.images,
+        meta: [["From", "Emergency, Clinique Bois-Cerf"], ["Shared by", "Her, in the preparation"], ["Added", "1 November 2026"], ["Used in", "Summary · “X-ray: no fracture”"], ["Seen by", "The practice"]] },
+      { id: "heds", group: "shared", name: "Medical report · hypermobile Ehlers-Danlos", type: "Medical report", from: "GP", added: "1 Nov 2026", images: heds.images, file: heds.file,
+        meta: [["From", "GP"], ["Shared by", "Her, in the preparation"], ["Added", "1 November 2026"], ["Used in", "Know before the session · Assessment › Joints, Balance"], ["Seen by", "The practice"]] },
+      { id: "report", group: "practice", name: "Initial assessment report", type: "Report", from: C.signed ? `GP · sent today ${C.signed.at}` : "Not sent yet",
+        by: `Lena Keller · ${C.signed ? "signed" : "draft"}`, added: "Today",
+        meta: [["Written by", "Lena Keller, physiotherapist"], ["State", C.signed ? `Signed and sent · ${C.signed.at}` : "Draft, not signed"], ["Shared with", C.signed ? "Dr Marc Favre, GP" : "Nobody yet"], ["Seen by", "The practice"]] },
+      ...(jots.length ? [{ id: "notes", group: "practice", name: "Session 1 notes", type: "Session notes", from: "Practice only", by: `${jots.length} timed note${jots.length > 1 ? "s" : ""}`, added: "Today",
+        meta: [["Written by", "Lena Keller, physiotherapist"], ["Shared with", "Nobody · practice only"], ["Also in", "Follow-up"]] }] : []),
+    ];
+  }
+  /* Documents: the prints you know from the summary, slightly turned, one per document; the awaited one is a dashed gap */
+  function renderDocuments() {
+    const box = $("#documents"), docs = docList();
+    if (docSel !== "waiting" && !docs.find((d) => d.id === docSel)) docSel = docs[0].id;
+    const shared = docs.filter((d) => d.group === "shared"), practice = docs.filter((d) => d.group === "practice");
+    const face = (d) => d.images ? `<img src="${d.images[0].src}" alt="">`
+      : `<span class="pr-paper"><b>${d.id === "report" ? "Initial assessment" : "Session 1 notes"}</b><i></i><i></i><i></i><i></i>${d.id === "report" && C.signed ? "<em>signed</em>" : ""}</span>`;
+    let turn = 0;
+    const print = (d) => { const r = [-4, 3, -2, 4, -3][turn++ % 5]; return `
+      <button type="button" class="pr-item${d.id === docSel ? " is-sel" : ""}" data-doc="${d.id}" style="--r:${r}deg">
+        <span class="pr-face${d.images ? " is-img" : ""}${d.id === "report" ? " is-report" : ""}">${face(d)}</span>
+        <span class="pr-name">${d.name}</span><span class="pr-from">${d.from}</span>
+      </button>`; };
+    const waitSel = docSel === "waiting";
+    const sel = waitSel ? null : docs.find((d) => d.id === docSel);
+    box.innerHTML = pageBar("Documents", `${docs.length} documents · 1 awaited`) + `
+      <div class="pg-main">
+        <section class="pr-group"><h3>From her <span>· shared in her preparation</span></h3><div class="prints-row">${shared.map(print).join("")}</div></section>
+        <section class="pr-group"><h3>From the practice <span>· who it went to</span></h3><div class="prints-row">${practice.map(print).join("")}</div></section>
+        <section class="pr-group"><h3>Awaited</h3><div class="prints-row">
+          <button type="button" class="pr-item is-wait${waitSel ? " is-sel" : ""}" data-doc="waiting" style="--r:-2deg"><span class="pr-face is-gap"><i aria-hidden="true"></i></span>
+            <span class="pr-name">Insurer’s letter on cover</span><span class="pr-from">${reminded ? `reminder sent · ${reminded}` : "she said “not yet”"}</span></button></div></section>
+      </div>
+      <aside class="pg-side doc-preview" aria-live="polite">${waitSel ? `
+        <h3>Insurer’s letter on cover</h3>
+        <div class="pr-face is-gap is-large"><i aria-hidden="true"></i></div>
+        <dl class="doc-meta"><dt>From</dt><dd>Her accident insurer</dd><dt>State</dt><dd>Not received yet</dd><dt>Her answer</dt><dd>“Not yet”, in her preparation</dd></dl>
+        <div class="doc-actions"><button type="button" class="pg-chip" data-remind ${reminded ? "disabled" : ""}>${reminded ? `Reminder sent · ${reminded}` : "Remind her"}</button></div>` : `
+        <h3>${sel.name}</h3>
+        ${sel.images ? `<div class="dp-imgs">${sel.images.map((im) => `<img src="${im.src}" alt="${im.alt || ""}">`).join("")}</div>`
+          : `<div class="doc-paper"><b>${sel.name}</b>${sel.id === "report" ? "<span>Reason and history · Assessment · Goals · Notes · Conclusion · Recommendations</span>" : `<span>${jots.slice(0, 3).map((jt) => `${jt.time} ${jt.text.replace(/</g, "&lt;")}`).join("<br>")}</span>`}</div>`}
+        <dl class="doc-meta">${sel.meta.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+        <div class="doc-actions">${sel.images ? `<button type="button" class="pg-chip" data-view>View large</button>` : ""}
+          ${sel.file ? `<a class="pg-chip" href="${sel.file.href}" target="_blank" rel="noopener">Open the PDF ↗</a>` : ""}
+          ${sel.id === "report" ? `<button type="button" class="pg-chip" data-go="report">Open the report</button>` : ""}
+          ${sel.id === "notes" ? `<button type="button" class="pg-chip" data-go="consultation">Open the notes</button>` : ""}</div>`}
+      </aside>`;
+    box.querySelectorAll(".pr-item").forEach((b) => b.addEventListener("click", () => { docSel = b.dataset.doc; renderDocuments(); }));
+    box.querySelector("[data-view]")?.addEventListener("click", (e) => openDoc(docSel, e.currentTarget));
+    box.querySelector("[data-remind]")?.addEventListener("click", () => { reminded = hm(); renderDocuments(); });
+    wireGo(box);
   }
 
   restoreConsult();
   buildConsult();
   restoreConsultFields();
-  startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); else openReport(true); });
+  startBtn.addEventListener("click", () => {
+    if (aux) { setPage("consultation"); if (C.signed) setTimeout(() => openReport(true), 450); return; }
+    if (consulting) openReport(true);
+    else { setConsult(true); if (C.signed) setTimeout(() => openReport(true), 450); }   // done: straight to the signed report
+  });
   consult.querySelector(".c-dictate").addEventListener("click", () => setDictation(!dictating));
   $("#dict-stop").addEventListener("click", () => setDictation(false));
   veil.addEventListener("click", () => { if (reportOpen) openReport(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && reportOpen) { e.stopImmediatePropagation(); openReport(false); } }, true);
-  consult.querySelector("[data-to-summary]").addEventListener("click", () => setConsult(false));
+  consult.querySelector("[data-to-summary]").addEventListener("click", () => setPage("summary"));
   document.querySelectorAll(".page[data-page]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();
-    setConsult(a.dataset.page === "consultation");
+    setPage(a.dataset.page);
   }));
   window.addEventListener("popstate", () => {
-    if (location.hash === "#consultation") setConsult(true, false);
-    else if (consulting) setConsult(false, false);
+    const p = { "#consultation": "consultation", "#follow-up": "followup", "#documents": "documents" }[location.hash] || "summary";
+    setPage(p, false);
   });
 
   /* ---------------- start ---------------- */

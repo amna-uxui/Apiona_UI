@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=sticky-28">
+  <link rel="stylesheet" href="style.css?v=fu-46">
 </head>
 <body>
   <main class="stage">
@@ -28,8 +28,8 @@
             <ol class="pages">
               <li><a class="page is-current" href="./" aria-current="page" data-page="summary">Summary</a></li>
               <li><a class="page" href="#consultation" data-page="consultation">Consultation</a></li>
-              <li><a class="page is-soon" aria-disabled="true" title="Not built yet">Follow-up</a></li>
-              <li><a class="page is-soon" aria-disabled="true" title="Not built yet">Documents</a></li>
+              <li><a class="page" href="#follow-up" data-page="followup">Follow-up</a></li>
+              <li><a class="page" href="#documents" data-page="documents">Documents</a></li>
             </ol>
           </div>
         </li>
@@ -137,6 +137,11 @@
       <aside class="c-notes reveal" style="--d:2" id="c-notes" aria-label="Notes"></aside>
     </section>
 
+    <!-- Follow-up: everything since her first contact, growing with each session -->
+    <section class="pg" id="followup" aria-label="Follow-up" hidden></section>
+    <!-- Documents: what she shared, what the practice made, what is still awaited -->
+    <section class="pg" id="documents" aria-label="Documents" hidden></section>
+
     <!-- the report, assembled from the sections when you finish -->
     <div class="report" id="report" role="dialog" aria-modal="true" aria-label="Initial assessment report" hidden></div>
 
@@ -161,8 +166,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=sticky-28"></script>
-  <script src="data.js?v=sticky-28"></script>
-  <script src="app.js?v=sticky-28"></script>
+  <script src="../../design/icons.js?v=fu-46"></script>
+  <script src="data.js?v=fu-46"></script>
+  <script src="app.js?v=fu-46"></script>
 </body>
 </html>
