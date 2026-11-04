@@ -59,22 +59,19 @@
     <rect class="f-paper f-paper2" x="7" y="5" width="21" height="14" rx="1"/>
     <path class="f-front" d="M1.5 10a2 2 0 0 1 2-2h27a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2h-27a2 2 0 0 1-2-2z"/>
   </svg>`;
-  const half = (n) => (n.kind === "person" ? (state.profile ? 32 : 17) : n.kind === "section" ? 13 : n.folder ? 13 : 8);
-
-  const profileBlock = () => `<span class="profile" aria-hidden="true">
-    ${(R.patient.profile || []).map(([k, v]) => `<span class="pf-row"><span class="pf-k">${k}</span><span class="pf-v">${v}</span></span>`).join("")}
-  </span>`;
+  const half = (n) => (n.kind === "person" ? 17 : n.kind === "section" ? 13 : n.folder ? 13 : 8);
 
   function makeNode(n) {
     const el = document.createElement("button");
     el.type = "button";
     el.className = ["node", `kind-${n.kind}`, n.source && `src-${n.source}`, n.mark && `mark-${n.mark}`, n.folder && "is-folder"].filter(Boolean).join(" ");
     el.dataset.id = n.id;
-    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? `${STAR}<span class="node-photo"><img src="../../ui/assets/patient.jpg" alt="" data-initials="CM"></span>` : n.folder ? FOLDER : "";
+    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? STAR : n.folder ? FOLDER : "";
     el.innerHTML = `<span class="shape">${shape}</span>
-      <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span>${n.kind === "person" ? profileBlock() : ""}</span>`;
+      <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span></span>`;
     el.setAttribute("aria-label", `${n.label}. ${n.sub || ""}`);
-    // Camille: on the first view her node opens her profile; from anywhere else it brings you back to the first view
+    // Camille: on the first view her node opens her details in the index (and her photo behind it);
+    // from anywhere else it brings you back to the first view
     el.addEventListener("click", () => (n.kind === "person" ? (state.current ? go(null) : setProfile(!state.profile)) : go(n.id)));
     el.addEventListener("mouseenter", () => hintRow(n.id, true));
     el.addEventListener("mouseleave", () => hintRow(n.id, false));
@@ -109,8 +106,7 @@
 
     if (!c) {
       L.camille = { x: 0, y: 0 };
-      const rx = state.profile ? 300 : 260, ry = state.profile ? 255 : 185;   // the sections step back to make room for her profile
-      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], rx, ry)));
+      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], 260, 185)));
       return { L, focus: null };
     }
 
@@ -158,7 +154,7 @@
     const m = map.getBoundingClientRect();
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
-    const room = m.width - mediaWidth(state.current && byId.get(state.current));   // the prints take the right of the map
+    const room = m.width - (state.profile ? 170 : mediaWidth(state.current && byId.get(state.current)));   // prints or her photo take the right of the map
     const centred = room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
     return {
       x: Math.max(centred, 120 - Math.min(...xs)),   // never push a label past the left edge
@@ -318,17 +314,19 @@
     select(id);
   }
 
+  // Her details open at the top of the index; her photo slides in behind the index, like the reference's images
   function setProfile(on) {
     state.profile = on;
-    const c = byId.get("camille");
-    c.el.classList.toggle("is-profile", on);
-    c.el.querySelector(".profile").setAttribute("aria-hidden", on ? "false" : "true");
+    byId.get("camille").el.classList.toggle("is-profile", on);
+    $("#portrait").classList.toggle("is-in", on);
+    if (on) setIndexOpen(true);
+    renderIndexState();
     apply();
   }
 
   function select(id, instant = false) {
     if (id && !byId.has(id)) id = null;
-    if (id && state.profile) { state.profile = false; byId.get("camille").el.classList.remove("is-profile"); }
+    if (id && state.profile) { state.profile = false; byId.get("camille").el.classList.remove("is-profile"); $("#portrait").classList.remove("is-in"); }
     state.current = id;
     if (id) state.visited.add(id);
     renderIndexState();
@@ -371,6 +369,7 @@
   /* ---------------- index ---------------- */
 
   const groups = [
+    { key: "patient", name: "Patient · Camille M.", icon: `<i class="ico person"></i>`, items: [] },
     ...sections.map((s) => ({ key: s.id, name: s.label, icon: `<i class="ico section" style="${s.mark ? `background:var(--${s.mark})` : ""}"></i>`, items: kids(s.id) })),
     { key: "sources", name: "Details and sources", icon: `<i class="ico document"></i>`, items: orphans },
   ];
@@ -388,6 +387,10 @@
     </button>`;
 
   const bodyFor = {
+    patient: () => `<dl class="pt-facts">${[
+      ["Age", "28 · female · new patient"], ["Occupation", R.patient.occupation], ...(R.patient.profile || []),
+    ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`,
+
     know: (items) => {
       const points = items.filter((n) => n.id !== "treatments");
       const treat = items.find((n) => n.id === "treatments");
@@ -464,6 +467,7 @@
 
     indexBody.querySelectorAll(".sec-head").forEach((b) => b.addEventListener("click", () => {
       const open = b.getAttribute("aria-expanded") !== "true";
+      if (b.getAttribute("aria-controls") === "sec-patient") { if (state.current) go(null); setProfile(open); return; }
       b.setAttribute("aria-expanded", open);
       document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
     }));
@@ -498,7 +502,7 @@
     });
     // the section you are in on the map is the one unfolded in the index
     const c = state.current && byId.get(state.current);
-    const key = !c ? null : c.kind === "section" ? c.id : c.parent || "sources";
+    const key = !c ? (state.profile ? "patient" : null) : c.kind === "section" ? c.id : c.parent || "sources";
     indexBody.querySelectorAll(".sec-head").forEach((b) => {
       const open = b.getAttribute("aria-controls") === `sec-${key}`;
       b.setAttribute("aria-expanded", open);
