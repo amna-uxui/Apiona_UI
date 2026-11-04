@@ -111,7 +111,9 @@
       const a = ANGLE[c.id];
       L[c.id] = { x: 0, y: 0 };
       L.camille = polar(a + 180, 250, 175);
-      Object.assign(L, fan(kids(c.id).map((k) => k.id), a, 270, 195, 40, 200));
+      // sideways fans get more width for their longer labels; fans that open up or down keep it compact
+      const sideways = Math.abs(Math.cos((a * Math.PI) / 180)) > Math.abs(Math.sin((a * Math.PI) / 180));
+      Object.assign(L, fan(kids(c.id).map((k) => k.id), a, sideways ? 330 : 270, 225, 40, 190));
       return { L, focus: c.id, angle: a };
     }
 
