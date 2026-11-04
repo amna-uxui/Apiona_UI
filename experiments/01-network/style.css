@@ -1570,3 +1570,79 @@ h3 .cl-quiet { font-size: 15px; }
 .cl-sign { display: flex; justify-content: space-between; gap: 16px; margin-top: 10px !important; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--grey); max-width: 560px; }
 .fu-foot { margin: 8px 0 0; font-size: 12.5px; color: var(--grey); line-height: 1.4; }
 #followup .fu-bar { margin: 2px 0 8px 26px; }
+
+/* ================= Motion: one language for the whole site ================= */
+/* three speeds and one soft curve (the network's spring feel); a small overshoot only for things that pop */
+:root { --m-fast: .16s; --m-base: .38s; --m-slow: .62s; --m-ease: cubic-bezier(.22, 1, .36, 1); --m-pop: cubic-bezier(.34, 1.45, .64, 1); --dir: 1; --m-shift: 28px; }
+
+/* pages: the new one glides in from the side it comes from; the old one leaves the other way */
+.consult .reveal { transform: translateX(calc(var(--dir) * var(--m-shift)));
+  transition: opacity var(--m-base) ease calc(var(--d) * 50ms), transform var(--m-slow) var(--m-ease) calc(var(--d) * 50ms); }
+.consult .c-bar.reveal { transform: none; }
+.consult.is-in .reveal { transform: none; }
+.consult.is-out .reveal { opacity: 0; transform: translateX(calc(var(--dir) * var(--m-shift) * -1)); transition-delay: 0s; }
+.consult.is-out .c-bar.reveal { transform: none; }
+.pg { transform: none; transition: opacity var(--m-base) ease, left .45s var(--ease); }
+.pg .pg-main, .pg .pg-side { transform: translateX(calc(var(--dir) * var(--m-shift))); transition: transform var(--m-slow) var(--m-ease); }
+.pg .pg-side { transition-delay: 60ms; }
+.pg.is-in .pg-main, .pg.is-in .pg-side { transform: none; }
+.pg.is-out .pg-main, .pg.is-out .pg-side { transform: translateX(calc(var(--dir) * var(--m-shift) * -1)); transition-delay: 0s; }
+body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .brief { transform: translateX(calc(var(--dir) * var(--m-shift) * -1)); }
+.map, .brief { transition: opacity var(--m-base) ease, transform var(--m-slow) var(--m-ease), left .45s var(--ease), filter .5s ease; }
+
+/* consultation sections unfold from their header, and fold back */
+.c-sec-body { display: grid !important; grid-template-rows: 0fr; opacity: 0; visibility: hidden; padding-bottom: 0;
+  transition: grid-template-rows var(--m-base) var(--m-ease), opacity var(--m-fast) ease, padding var(--m-base) var(--m-ease), visibility 0s linear var(--m-base); }
+.c-sec.is-open .c-sec-body { grid-template-rows: 1fr; opacity: 1; visibility: visible; padding-bottom: 20px;
+  transition: grid-template-rows var(--m-slow) var(--m-ease), opacity var(--m-base) ease .08s, padding var(--m-slow) var(--m-ease), visibility 0s; }
+.c-sec-inner { min-height: 0; overflow: hidden; }
+.c-sec.is-settled .c-sec-inner { overflow: visible; }
+.c-sec-head .chev::before { display: inline-block; transition: transform var(--m-base) var(--m-pop); }
+.c-sec.is-open .c-sec-head .chev::before { transform: rotate(180deg); }
+
+/* the report grows out of the button that opened it */
+.paper, .r-review { transform: scale(.35); opacity: 0; transition: opacity var(--m-base) ease, transform var(--m-slow) var(--m-ease); }
+.r-review { transition-delay: .06s; }
+.report.is-in .paper, .report.is-in .r-review { transform: none; opacity: 1; }
+.report-actions { transition: opacity var(--m-base) ease .3s, transform var(--m-slow) var(--m-ease) .3s; }
+
+/* documents grow out of their print */
+.doc-view { transition: opacity var(--m-base) ease; }
+.doc-pages { transition: transform var(--m-slow) var(--m-ease); }
+
+/* small moments of progress */
+.rh-ok svg path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.rh-row.is-ok .rh-ok svg path { animation: m-draw .42s var(--m-ease) both; }
+.rh-row.is-ok .rh-ok { animation: m-pop .4s var(--m-pop); }
+@keyframes m-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes m-pop { 0% { transform: scale(.92); } 60% { transform: scale(1.05); } 100% { transform: none; } }
+.c-save:not(.is-saving) .c-save-dot { animation: m-settle .5s var(--m-pop); }
+@keyframes m-settle { 0% { transform: scale(.4); } 100% { transform: none; } }
+.goal-ex { transition: opacity var(--m-fast) ease; }
+.jot.is-new { animation: jot-in var(--m-base) var(--m-ease); }
+
+/* signing: a green check draws itself, then the signed report */
+.r-seal { position: fixed; left: 50%; top: 46%; z-index: 9; display: grid; justify-items: center; gap: 6px; padding: 26px 34px 22px; border-radius: 14px;
+  background: var(--white); box-shadow: 0 2px 4px rgb(0 0 0 / .06), 0 30px 60px -24px rgb(0 0 0 / .35); text-align: center;
+  transform: translate(-50%, -50%) scale(.85); opacity: 0; transition: opacity var(--m-base) ease, transform var(--m-slow) var(--m-pop); pointer-events: none; }
+.r-seal.is-in { opacity: 1; transform: translate(-50%, -50%); }
+.r-seal svg { width: 52px; height: 52px; margin-bottom: 6px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.r-seal circle { stroke: var(--voice); stroke-width: 2.5; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.r-seal path { stroke: var(--ink); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.r-seal.is-in circle { animation: m-draw .6s var(--m-ease) .1s forwards; }
+.r-seal.is-in path { animation: m-draw .45s var(--m-ease) .55s forwards; }
+.r-seal b { font-size: 17px; font-weight: 500; }
+.r-seal span { font-size: 14px; color: var(--grey); }
+
+/* back on the summary, the session tag softly takes its new state */
+#p-tags li.is-fresh { animation: m-fresh 1.6s var(--m-ease); }
+@keyframes m-fresh { 0% { box-shadow: 0 0 0 0 var(--you); transform: scale(1.06); } 40% { box-shadow: 0 0 0 6px rgb(177 204 238 / .45); } 100% { box-shadow: 0 0 0 10px rgb(177 204 238 / 0); transform: none; } }
+
+/* less motion asked for: nothing slides, grows or draws; things simply fade */
+@media (prefers-reduced-motion: reduce) {
+  .consult .reveal, .consult.is-out .reveal, .pg .pg-main, .pg .pg-side, .pg.is-out .pg-main, .pg.is-out .pg-side,
+  body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .brief, .paper, .r-review, .doc-pages, .r-seal, .r-seal.is-in { transform: none !important; }
+  .c-sec-body, .c-sec.is-open .c-sec-body { transition: opacity var(--m-fast) ease, visibility 0s; }
+  .rh-row.is-ok .rh-ok svg path, .rh-row.is-ok .rh-ok, .c-save:not(.is-saving) .c-save-dot, #p-tags li.is-fresh { animation: none; }
+  .r-seal circle, .r-seal path { animation: none !important; stroke-dashoffset: 0; }
+}
