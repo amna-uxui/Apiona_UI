@@ -1,0 +1,313 @@
+/* ABC Areal is licensed: we use the copy installed on this Mac, never ship the files. */
+@font-face { font-family: "Areal"; font-weight: 400; src: local("ABC Areal Regular"), local("ABCAreal-Regular"), local("ABC Areal"); }
+@font-face { font-family: "Areal"; font-weight: 400; font-style: italic; src: local("ABC Areal Regular Italic"), local("ABCAreal-RegularItalic"); }
+@font-face { font-family: "Areal"; font-weight: 500; src: local("ABC Areal Medium"), local("ABCAreal-Medium"); }
+@font-face { font-family: "Areal"; font-weight: 700; src: local("ABC Areal Bold"), local("ABCAreal-Bold"); }
+
+:root {
+  /* Ground and ink */
+  --bg: #FFFFFF;         /* the ground: no meaning */
+  --panel: #F4F4F1;      /* places to read: index and cards */
+  --ink: #111111;        /* the record */
+  --white: #FFFFFF;
+  --grey: #6B6B66;       /* secondary text, AA on white and panel */
+  --rule: #DADAD5;       /* dividers */
+  --dot: #8F877B;        /* "related in the record" lines */
+
+  /* Meaning: never text, always fills and halos behind black text */
+  --know: #FCD74E;       /* know before the session, by the practice's rules */
+  --voice: #97AD58;      /* her words and wishes */
+  --missing: #FFB5DE;    /* missing or waiting */
+  --you: #B1CCEE;        /* you are here: selection, focus, today */
+  --alert: #EE6E5B;      /* case type: accident (from the earlier record palette) */
+
+  --font: "Areal", "ABC Areal", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --side: 400px;
+  --ease: cubic-bezier(.65, 0, .35, 1);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; }
+ul { list-style: none; margin: 0; padding: 0; }
+p, h1, h2, h3 { margin: 0; }
+
+.eyebrow, .sub, .panel-head span, .tag {
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.stage { position: fixed; inset: 0; }
+
+/* ---------- Brief: top left, always visible ---------- */
+
+.brief {
+  position: absolute; top: 28px; left: 36px; z-index: 3;
+  width: min(560px, calc(100vw - var(--side) - 120px));
+  pointer-events: none;
+}
+.brief > * { pointer-events: auto; }
+/* map content passes behind the brief, never through its text */
+.brief::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset: -28px -60px -36px -36px;
+  background: linear-gradient(to bottom, var(--bg) 78%, rgb(255 255 255 / 0));
+}
+.logo { height: 24px; display: block; margin-bottom: 28px; }
+.who { display: flex; align-items: center; gap: 14px; }
+.who-text { display: flex; flex-direction: column; gap: 3px; }   /* name, then age and sex under it */
+.photo { position: relative; flex: none; width: 56px; height: 56px; }
+.photo img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+/* "New" sits on the top edge of the photo, in the blue that means "you / today" */
+.photo .new {
+  position: absolute; left: 50%; top: -8px; transform: translateX(-50%);
+  padding: 1px 6px; border-radius: 4px; background: var(--you); color: var(--ink);
+  font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; line-height: 15px;
+}
+.photo .new[hidden] { display: none; }
+.name { font-size: 26px; font-weight: 500; letter-spacing: -.02em; line-height: 1.1; }
+.meta { color: var(--grey); }
+.tags { display: flex; gap: 6px; margin: 14px 0 24px; flex-wrap: wrap; }
+.tag {
+  border: 1px solid var(--rule); border-radius: 4px; padding: 2px 6px 1px;
+  background: var(--bg);
+}
+.tag-session  { background: var(--you); border-color: var(--you); }
+.tag-accident { background: var(--alert); border-color: var(--alert); }
+.tag-ok       { background: var(--voice); border-color: var(--voice); }
+.brief-text { font-size: 17px; line-height: 1.45; letter-spacing: -.005em; color: var(--grey); }
+.brief-text strong { color: var(--ink); font-weight: 500; white-space: nowrap; }   /* a key fact never breaks across lines */
+.note { margin-top: 6px; font-size: 12px; color: var(--grey); }
+
+.start {
+  position: absolute; top: 28px; right: calc(var(--side) + 44px); z-index: 3;
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--ink); color: var(--white); border: 0; border-radius: 6px;
+  padding: 10px 14px 10px 16px; font-weight: 500; cursor: pointer;
+}
+.start .arrow { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
+.start:hover .arrow { transform: translateX(4px); }
+.start:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* ---------- Map ---------- */
+
+.map {
+  position: absolute; inset: 0 var(--side) 0 0;
+  overflow: hidden; cursor: grab; touch-action: none;
+}
+.map.dragging { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+.lines { position: absolute; overflow: visible; left: 0; top: 0; width: 1px; height: 1px; }
+.lines path { fill: none; stroke: var(--ink); stroke-width: 1; }
+.lines path.dashed { stroke-dasharray: 4 4; }
+.lines path.related { stroke: var(--dot); stroke-width: 2; stroke-dasharray: 1.5 7; stroke-linecap: round; }
+
+.node {
+  position: absolute; left: 0; top: 0;
+  display: flex; flex-direction: column; align-items: center;
+  border: 0; background: none; padding: 0; cursor: pointer;
+  will-change: transform, opacity;
+}
+.node:focus-visible { outline: none; }
+.node:focus-visible .label { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.shape {
+  display: block; width: 16px; height: 16px; margin-bottom: 6px;
+  background: var(--bg); border: 1.25px solid var(--ink);
+  transition: box-shadow .3s ease;
+}
+.src-patient .shape { border-radius: 50%; }
+.src-report .shape { border-radius: 2px; }
+.src-document .shape { border-radius: 2px; position: relative; }
+.src-document .shape::after { content: ""; position: absolute; inset: 4px; background: var(--ink); border-radius: 1px; }
+.src-session .shape { transform: rotate(45deg) scale(.85); border-radius: 2px; }
+
+.mark-know .shape { background: var(--know); }
+.mark-voice .shape { background: var(--voice); }
+.mark-missing .shape { background: var(--missing); border-style: dashed; }
+.mark-today .shape { background: var(--you); }
+
+/* sections: numbered hexagons */
+.kind-section .shape {
+  width: 30px; height: 26px; border: 0; background: none; margin-bottom: 6px;
+  display: grid; place-items: center; position: relative;
+  font-size: 11px; font-weight: 500;
+}
+.kind-section .shape svg { position: absolute; inset: 0; overflow: visible; }
+.kind-section .shape svg polygon { fill: var(--bg); stroke: var(--ink); stroke-width: 1.25; }
+.kind-section.mark-know .shape svg polygon { fill: var(--know); }
+.kind-section.mark-voice .shape svg polygon { fill: var(--voice); }
+.kind-section.mark-missing .shape svg polygon { fill: var(--missing); stroke-dasharray: 3 3; }
+.kind-section .shape b { position: relative; font-weight: 500; }
+
+/* Camille */
+.kind-person .shape { width: 34px; height: 34px; border: 0; background: none; margin-bottom: 8px; }
+.kind-person .shape svg { width: 100%; height: 100%; overflow: visible; }
+.kind-person .shape svg path { fill: var(--ink); }
+
+/* labels sit on a white chip so lines pass behind them */
+.label {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: var(--bg); border-radius: 5px; padding: 1px 5px 2px;
+  width: max-content; max-width: 210px;
+}
+.title { font-size: 14px; line-height: 1.3; letter-spacing: -.01em; }
+.kind-section .title, .kind-person .title { font-weight: 500; }
+.kind-person .title { font-size: 16px; }
+.sub { color: var(--grey); line-height: 1.35; margin-top: 1px; font-size: 10.5px; }
+
+/* the meaning colours reach the title as a highlighter, behind black text */
+.kind-item.mark-know .title,
+.kind-item.mark-voice .title,
+.kind-item.mark-missing .title {
+  padding: 0 3px; border-radius: 2px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.kind-item.mark-know .title { background: var(--know); }
+.kind-item.mark-voice .title { background: color-mix(in srgb, var(--voice) 55%, var(--bg)); }
+.kind-item.mark-missing .title { background: color-mix(in srgb, var(--missing) 60%, var(--bg)); }
+
+.node:hover .title { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* focus states */
+.node.is-current .shape { box-shadow: 0 0 0 5px var(--you); }
+.kind-section.is-current .shape { box-shadow: none; }
+.kind-section.is-current .shape svg polygon { filter: drop-shadow(0 0 0 var(--you)); stroke-width: 2; }
+.node.is-current .label { background: var(--you); }
+.node.is-current .title { background: transparent !important; }
+.node.is-hint .label { box-shadow: 0 0 0 1.5px var(--ink); }
+
+/* ---------- Side: index and card ---------- */
+
+.side {
+  position: absolute; top: 20px; right: 20px; bottom: 20px; width: calc(var(--side) - 20px);
+  display: flex; flex-direction: column; gap: 8px; z-index: 4;
+}
+.panel {
+  background: var(--panel); border-radius: 8px;
+  padding: 18px 22px;
+}
+.panel-head {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
+}
+.panel-head span:first-of-type { flex: 1; }
+.head-icon { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
+.chev::before { content: "−"; font-size: 14px; }
+.panel-head[aria-expanded="false"] .chev::before { content: "+"; }
+.panel-head:focus-visible, .row:focus-visible, .sec-head:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 3px;
+}
+
+.index { flex: 0 1 auto; overflow: auto; min-height: 54px; }
+.index-body { margin-top: 14px; border-top: 1px dashed var(--ink); }
+.index-body[hidden] { display: none; }
+
+.sec { border-bottom: 1px dashed var(--ink); }
+.sec-head {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 11px 0; cursor: pointer; text-align: left;
+}
+.sec-head .sec-name { flex: 1; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.sec-head .chev { width: 12px; text-align: right; }
+.sec-head[aria-expanded="false"] .chev::before { content: "+"; }
+.sec-list { padding: 0 0 12px 20px; display: grid; gap: 2px; }
+.sec-list[hidden] { display: none; }
+
+.row {
+  display: block; width: 100%; text-align: left; background: none; border: 0;
+  padding: 5px 6px; margin-left: -6px; border-radius: 4px; cursor: pointer;
+}
+.row:hover, .row.is-hover { background: var(--white); }
+.row.is-current { background: var(--you); }
+.row .r-title { display: block; font-size: 14px; line-height: 1.3; }
+.row .r-sub { display: block; font-size: 11px; color: var(--grey); letter-spacing: .04em; text-transform: uppercase; margin-top: 1px; }
+.row.mark-know .r-title > span { background: var(--know); padding: 0 3px; border-radius: 2px; }
+.row.mark-missing .r-title > span { background: color-mix(in srgb, var(--missing) 60%, var(--panel)); padding: 0 3px; border-radius: 2px; }
+.row.mark-voice .r-title > span { background: color-mix(in srgb, var(--voice) 55%, var(--panel)); padding: 0 3px; border-radius: 2px; }
+.row.visited .r-title { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+.index-foot { padding-top: 12px; font-size: 12px; color: var(--grey); }
+.index-foot a { color: var(--ink); }
+
+/* small shape icons, shared by index and card */
+.ico { width: 9px; height: 9px; border: 1.25px solid var(--ink); display: inline-block; flex: none; position: relative; }
+.ico.patient { border-radius: 50%; }
+.ico.report, .ico.document { border-radius: 1px; }
+.ico.document::after { content: ""; position: absolute; inset: 2px; background: var(--ink); }
+.ico.session { transform: rotate(45deg) scale(.85); }
+.ico.section { border: 0; width: 11px; height: 10px; background: var(--ink); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.ico.person { border: 0; background: var(--ink); border-radius: 50%; }
+.ico.know { background: var(--know); }
+.ico.voice { background: var(--voice); }
+.ico.missing { background: var(--missing); border-style: dashed; }
+.ico.today { background: var(--you); }
+
+@media (prefers-reduced-motion: reduce) {
+  .node, .shape { transition: none; }
+}
+
+/* section subtitles carry content, so they read as text, not as a label */
+.kind-section .sub, .kind-person .sub { text-transform: none; letter-spacing: 0; font-size: 12.5px; max-width: 220px; }
+.sec-head.is-current .sec-name { font-weight: 500; }
+
+/* ---------- Index: each section has its own shape ---------- */
+
+.row { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+.row .lead { display: grid; place-items: center; height: 18px; color: var(--ink); }
+.row .r-text { min-width: 0; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.row.is-doc .lead { color: var(--grey); }
+.row.is-doc .r-title { font-size: 13.5px; }
+
+.sub-head {
+  margin: 12px 0 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--grey);
+}
+
+/* Where it hurts: a quiet body with glowing pain points */
+.body-map { display: grid; grid-template-columns: 136px 1fr; gap: 18px; align-items: center; padding-top: 6px; }
+.figure { position: relative; width: 136px; aspect-ratio: 201 / 471; color: #DCDAD2; }
+.figure .silhouette, .figure .markers { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.marker { cursor: pointer; }
+.marker .core { stroke: var(--ink); stroke-width: 1; transition: r .35s cubic-bezier(.34, 1.56, .64, 1); }
+.marker .halo { opacity: .45; transform-box: fill-box; transform-origin: center; animation: pain-pulse 2.6s ease-in-out infinite; }
+.marker.tone-injury .core, .marker.tone-injury .halo { fill: var(--alert); }
+.marker.tone-other .core, .marker.tone-other .halo { fill: var(--know); }
+.marker.tone-other .halo { opacity: .7; animation-delay: -1.3s; }
+.marker.is-hover .core, .marker:hover .core { r: 8; }
+.marker.is-current .core { stroke: var(--ink); stroke-width: 2; }
+@keyframes pain-pulse { 0%, 100% { transform: scale(.7); } 50% { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .marker .halo { animation: none; } }
+
+.pain-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 30%, transparent); }
+.pain-dot.tone-injury { background: var(--alert); color: var(--alert); }
+.pain-dot.tone-other { background: var(--know); color: var(--know); }
+.body-list .r-sub { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+
+/* What happened: a vertical timeline, oldest first */
+.timeline { list-style: none; margin: 4px 0 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 4px; top: 10px; bottom: 14px; width: 1px; background: var(--ink); }
+.step { position: relative; }
+.step .row, .step.is-passive { display: grid; grid-template-columns: 9px 1fr; column-gap: 14px; padding: 5px 6px 5px 0; margin-left: 0; }
+.step .dot { grid-row: span 2; width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; background: var(--panel); border: 1.25px solid var(--ink); position: relative; z-index: 1; }
+.step .when { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--grey); }
+.step .what { font-size: 14px; line-height: 1.3; }
+.step.is-passive .what { color: var(--grey); }
+.step.is-passive .dot { border-style: dashed; }
+.step.is-today .dot { background: var(--you); border-color: var(--ink); }
+.step.is-today .when { color: var(--ink); }
+
+/* To complete: an empty dashed box, waiting to be filled in session */
+.check { width: 13px; height: 13px; margin-top: 2px; border: 1.25px dashed var(--ink); border-radius: 3px; background: color-mix(in srgb, var(--missing) 45%, var(--white)); }
+
+/* her words: plain text, no icon, no highlight */
+.row.plain-quote { grid-template-columns: 1fr; }
+.row.plain-quote .r-title { font-size: 15px; line-height: 1.4; }
