@@ -35,6 +35,7 @@
 
   $("#p-name").textContent = R.patient.name;
   $("#p-meta").textContent = R.patient.meta;
+  $("#p-occ").textContent = R.patient.occupation || "";
   $("#p-new").hidden = !R.patient.isNew;
   $("#p-new").title = "New patient";
   $("#p-brief").innerHTML = R.patient.brief.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
@@ -69,7 +70,9 @@
     el.innerHTML = `<span class="shape">${shape}</span>
       <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span></span>`;
     el.setAttribute("aria-label", `${n.label}. ${n.sub || ""}`);
-    el.addEventListener("click", () => go(n.kind === "person" ? null : n.id));
+    // Camille: on the first view her node opens her details in the index (and her photo behind it);
+    // from anywhere else it brings you back to the first view
+    el.addEventListener("click", () => (n.kind === "person" ? (state.current ? go(null) : setProfile(!state.profile)) : go(n.id)));
     el.addEventListener("mouseenter", () => hintRow(n.id, true));
     el.addEventListener("mouseleave", () => hintRow(n.id, false));
     layer.appendChild(el);
@@ -151,7 +154,7 @@
     const m = map.getBoundingClientRect();
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
-    const room = m.width - mediaWidth(state.current && byId.get(state.current));   // the prints take the right of the map
+    const room = m.width - (state.profile ? 170 : mediaWidth(state.current && byId.get(state.current)));   // prints or her photo take the right of the map
     const centred = room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
     return {
       x: Math.max(centred, 120 - Math.min(...xs)),   // never push a label past the left edge
@@ -311,8 +314,27 @@
     select(id);
   }
 
+  // Her details open at the top of the index; her photo slides in behind the index, like the reference's images
+  function setProfile(on) {
+    if (!on) setPortraitView(false);
+    state.profile = on;
+    byId.get("camille").el.classList.toggle("is-profile", on);
+    $("#portrait").classList.toggle("is-in", on);
+    if (on) setIndexOpen(true);
+    renderIndexState();
+    const rowEl = indexBody.querySelector('.row[data-id="coverage"]');
+    if (rowEl) {
+      rowEl.setAttribute("aria-expanded", on);
+      rowEl.classList.toggle("is-current", on);
+      document.getElementById("detail-coverage").hidden = !on;
+      if (on) rowEl.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+    }
+    apply();
+  }
+
   function select(id, instant = false) {
     if (id && !byId.has(id)) id = null;
+    if (id && state.profile) { setPortraitView(false); state.profile = false; byId.get("camille").el.classList.remove("is-profile"); $("#portrait").classList.remove("is-in"); }
     state.current = id;
     if (id) state.visited.add(id);
     renderIndexState();
@@ -320,7 +342,7 @@
     apply(instant);
   }
 
-  window.addEventListener("popstate", () => select(location.hash.slice(1) || null));
+  window.addEventListener("popstate", () => { if (location.hash !== "#consultation") select(location.hash.slice(1) || null); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.current) go(back(byId.get(state.current)));   // one step back
   });
@@ -346,6 +368,7 @@
   map.addEventListener("pointerleave", () => { state.cursor = null; kick(); });
   map.addEventListener("pointerup", () => {
     if (drag && !drag.moved && state.current) go(null);   // a click on the empty map goes back to the overview
+    else if (drag && !drag.moved && state.profile) setProfile(false);   // or folds her profile away
     drag = null; map.classList.remove("dragging");
   });
 
@@ -371,6 +394,7 @@
     </button>`;
 
   const bodyFor = {
+
     know: (items) => {
       const points = items.filter((n) => n.id !== "treatments");
       const treat = items.find((n) => n.id === "treatments");
@@ -418,7 +442,16 @@
 
     complete: (items) => items.map((n) => row(n, `<i class="check"></i>`)).join(""),
 
-    sources: (items) => items.map((n) => row(n, icon(n.icon))).join(""),
+    // each source unfolds in place: the few lines the record holds about it
+    sources: (items) => items.map((n) => `
+      <div class="source">
+        ${row(n, icon(n.icon)).replace('class="row', 'class="row has-detail').replace("<button", `<button aria-expanded="false" aria-controls="detail-${n.id}"`)}
+        <div class="source-detail" id="detail-${n.id}" hidden>
+          ${n.title && n.title !== n.type && n.title !== n.label && !n.list ? `<p class="sd-line">${n.title}</p>` : ""}
+          ${n.list ? `<ul class="sd-list">${n.list.map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}
+          ${n.facts ? `<dl class="sd-facts">${n.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
+        </div>
+      </div>`).join(""),
   };
 
   function buildIndex() {
@@ -441,8 +474,19 @@
       b.setAttribute("aria-expanded", open);
       document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
     }));
+    indexBody.querySelectorAll(".row.has-detail").forEach((r) => r.addEventListener("click", () => {
+      if (r.dataset.id === "coverage") return;   // handled below: her details and photo
+      const open = r.getAttribute("aria-expanded") !== "true";
+      r.setAttribute("aria-expanded", open);
+      document.getElementById(r.getAttribute("aria-controls")).hidden = !open;
+    }));
     indexBody.querySelectorAll(".row").forEach((r) => {
-      r.addEventListener("click", () => go(r.dataset.id));
+      r.addEventListener("click", () => {
+        if (r.dataset.id !== "coverage") return go(r.dataset.id);
+        const open = !state.profile;
+        if (state.current) go(null);
+        setProfile(open);
+      });
       r.addEventListener("mouseenter", () => hint(r.dataset.id, true));
       r.addEventListener("mouseleave", () => hint(r.dataset.id, false));
     });
@@ -467,7 +511,7 @@
     });
     // the section you are in on the map is the one unfolded in the index
     const c = state.current && byId.get(state.current);
-    const key = !c ? null : c.kind === "section" ? c.id : c.parent || "sources";
+    const key = !c ? (state.profile ? "sources" : null) : c.kind === "section" ? c.id : c.parent || "sources";
     indexBody.querySelectorAll(".sec-head").forEach((b) => {
       const open = b.getAttribute("aria-controls") === `sec-${key}`;
       b.setAttribute("aria-expanded", open);
@@ -573,8 +617,28 @@
       x += sizes[i].w + gap;
     });
   }
-  veil.addEventListener("click", () => setViewing(false));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && viewing) { e.stopImmediatePropagation(); setViewing(false); } }, true);
+  veil.addEventListener("click", () => { setViewing(false); setPortraitView(false); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && (viewing || portraitView)) { e.stopImmediatePropagation(); setViewing(false); setPortraitView(false); }
+  }, true);
+
+  /* Her photo works like the X-rays: click it and it glides to the middle, upright and large, while everything
+     else fades; click anywhere (or Esc) and it goes back behind the index. */
+  const portrait = $("#portrait");
+  let portraitView = false;
+  function setPortraitView(on) {
+    if (on === portraitView) return;
+    portraitView = on;
+    document.body.classList.toggle("is-viewing", on);
+    portrait.classList.toggle("is-viewing", on);
+    if (!on) { portrait.style.transform = ""; return; }
+    const left = $("#rail").getBoundingClientRect().right;
+    const H = Math.min(innerHeight * 0.72, 680), W = H * 0.8;
+    const x = left + (innerWidth - left - W) / 2, y = (innerHeight - H) / 2 - 18;
+    portrait.style.transform = `translate(${x - portrait.offsetLeft}px, ${y - portrait.offsetTop}px) scale(${W / portrait.offsetWidth})`;
+  }
+  portrait.addEventListener("click", () => setPortraitView(!portraitView));
+  window.addEventListener("resize", () => { if (portraitView) { portraitView = false; setPortraitView(true); } });
   window.addEventListener("resize", () => { if (viewing) setViewing(true); });
 
   /* ---------------- attach: drop a file onto the record ---------------- */
@@ -690,6 +754,448 @@
   // once the map has finished resizing, the network glides back to the middle of the new space
   map.addEventListener("transitionend", (e) => { if (e.propertyName === "left") apply(); });
   try { if (localStorage.getItem("apiona-rail") === "collapsed") setRail(true); } catch (e) {}
+
+  /* ---------------- consultation ---------------- */
+
+  /* Start consultation: the summary and the network step aside and the consultation slides in, in the
+     same place. The menu and the index stay: during the visit the index is the patient summary beside
+     the notes. "← Summary", the menu, or the browser's back button return to the summary. */
+  const consult = $("#consult");
+  const startBtn = $(".start");
+  const C = R.consultation;
+  let consulting = false, clockTimer = null, startedAt = 0, hideTimer = null;
+
+  function buildConsult() {
+    $("#c-steps").innerHTML = C.steps.map((st) => `
+      <li><button class="c-step state-${st.state}" data-step="${st.id}" type="button">
+        <span class="c-n">${st.n}</span>${st.label}<i class="c-state" aria-hidden="true"></i></button></li>`).join("");
+    $("#c-sections").innerHTML = C.steps.map((st, i) => `
+      <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
+        <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
+          <span class="c-n">${st.n}</span><span class="c-sec-title">${st.label}</span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="c-sec-body">${st.id === "assessment" ? `<div class="assess" id="assess"></div>`
+          : st.id === "goals" ? `<div class="goals" id="goals"></div>`
+          : `<textarea rows="${st.text ? 7 : 3}" aria-label="${st.label}" data-sec="${st.id}" placeholder="Write here, or dictate…">${st.text || ""}</textarea>
+             <div class="dict-list" data-key="${st.id}"></div>`}</div>
+      </article>`).join("");
+
+    buildAssessment();
+    buildGoals();
+    buildAsk();
+    const open = (sec, on) => {
+      sec.classList.toggle("is-open", on);
+      sec.querySelector(".c-sec-head").setAttribute("aria-expanded", on);
+      const chip = consult.querySelector(`.c-step[data-step="${sec.id.slice(3)}"]`);
+      if (chip) chip.classList.toggle("is-open", on);
+      if (on && sec.id === "cs-assessment") requestAnimationFrame(sizePills);
+      if (on) requestAnimationFrame(() => sec.querySelectorAll(".goal textarea").forEach((f) => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
+    };
+    consult.querySelectorAll(".c-sec.is-open").forEach((sec) => open(sec, true));
+    consult.querySelectorAll(".c-sec-head").forEach((h) => h.addEventListener("click", () => open(h.parentElement, !h.parentElement.classList.contains("is-open"))));
+    consult.querySelectorAll(".c-step").forEach((b) => b.addEventListener("click", () => {
+      const sec = document.getElementById(`cs-${b.dataset.step}`);
+      open(sec, true);
+      sec.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    }));
+    // segmented choices: one on at a time
+    consult.querySelectorAll(".seg").forEach((g) => g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      g.querySelectorAll("button").forEach((x) => { x.classList.toggle("is-on", x === b); x.setAttribute("aria-checked", x === b); });
+      g.querySelectorAll("button").forEach((x) => x.classList.toggle("is-ok", x === b && x.textContent.trim() === "Present"));
+    })));
+  }
+
+  /* ---------- Ask during the session: the answer is added to the record, marked "Physio, in session" ---------- */
+  function buildAsk() {
+    const box = $("#c-ask");
+    const askIcon = { allergies: "alert", doses: "pill" };
+    box.innerHTML = `<p class="c-ask-head">Ask during the session</p>
+      <div class="c-ask-list">${C.ask.map((q) => `
+        <div class="ask" data-q="${q.id}">
+          <span class="ask-label">${icon(askIcon[q.id] || "info")}${q.label}</span>
+          ${q.answer ? `<span class="ask-answer">${q.answer}<span class="ask-by">Physio, in session</span></span>`
+            : `<span class="ask-missing">Not in the record</span><button type="button" class="ask-add">Add the answer</button>`}
+        </div>`).join("")}</div>`;
+    box.querySelectorAll(".ask-add").forEach((b) => b.addEventListener("click", () => {
+      const row = b.closest(".ask"), q = C.ask.find((x) => x.id === row.dataset.q);
+      b.outerHTML = `<input class="ask-input" placeholder="Type the answer, then Enter" aria-label="${q.label}">`;
+      const inp = row.querySelector(".ask-input");
+      inp.focus();
+      const save = () => { if (inp.value.trim()) { q.answer = inp.value.trim(); } buildAsk(); };
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { e.stopPropagation(); buildAsk(); } });
+      inp.addEventListener("blur", save);
+    }));
+  }
+
+  /* ---------- Goals and methods: each goal with its methods; some answer what she asked for ---------- */
+  function buildGoals() {
+    const box = $("#goals");
+    box.innerHTML = `
+      <div class="goal-head"><span>Goal</span><span>Methods</span></div>
+      ${C.goals.map((g, i) => `
+        <div class="goal" data-i="${i}">
+          <span class="goal-n">${i + 1}</span>
+          <textarea data-k="goal" rows="1" placeholder="Goal" aria-label="Goal ${i + 1}">${esc(g.goal)}</textarea>
+          <textarea data-k="methods" rows="1" placeholder="Methods" aria-label="Methods for goal ${i + 1}">${esc(g.methods)}</textarea>
+          <button class="as-del" type="button" aria-label="Remove this goal">×</button>
+        </div>`).join("")}
+      <button class="as-add" type="button">+ Add a goal and its methods</button>
+      <div class="dict-list" data-key="goals"></div>`;
+    box.querySelectorAll(".goal").forEach((row) => {
+      const g = C.goals[+row.dataset.i];
+      // the text wraps: each field grows to show all of it
+      const fit = (f) => { f.style.height = "auto"; if (f.scrollHeight) f.style.height = f.scrollHeight + "px"; };
+      row.querySelectorAll("[data-k]").forEach((f) => {
+        f.addEventListener("input", () => { g[f.dataset.k] = f.value; fit(f); });
+        f.addEventListener("focus", () => fit(f));
+        requestAnimationFrame(() => fit(f));
+      });
+      row.querySelector(".as-del").addEventListener("click", () => { C.goals.splice(+row.dataset.i, 1); buildGoals(); });
+    });
+    box.querySelector(".as-add").addEventListener("click", () => {
+      C.goals.push({ goal: "", methods: "" });
+      buildGoals();
+      const rows = box.querySelectorAll(".goal");
+      rows[rows.length - 1].querySelector("textarea").focus();
+    });
+    renderDictated(box.querySelector(".dict-list"), "goals");
+  }
+
+  /* ---------- Dictation (simulated): sentences arrive where you are working and wait to be approved ---------- */
+  const dict = {};            // where each dictated sentence waits: key → [text]
+  let dictating = false, dictTimer = null, dictClock = null, dictStart = 0, dictNext = 0;
+
+  function dictTarget() {
+    const open = [...consult.querySelectorAll(".c-sec.is-open")].map((sec) => sec.id.slice(3));
+    if (open.includes("assessment")) {
+      const a = C.areas.find((x) => x.id === areaId);
+      return { key: `assessment:${areaId}`, label: `Assessment › ${a.label}` };
+    }
+    const id = open.find((x) => x !== "reason") || open[0] || "notes";
+    return { key: id, label: C.steps.find((x) => x.id === id).label };
+  }
+
+  function listFor(key) {
+    if (key.startsWith("assessment:")) return key === `assessment:${areaId}` ? $("#as-panel .dict-list") : null;
+    return consult.querySelector(`.dict-list[data-key="${key}"]`);
+  }
+
+  function renderDictated(el, key) {
+    if (!el) return;
+    el.innerHTML = (dict[key] || []).map((text, i) => `
+      <div class="dictated" data-i="${i}">
+        <span class="dict-text">${text}</span>
+        <span class="dict-tag">Dictated · to approve</span>
+        <button type="button" class="dict-ok">Approve</button>
+        <button type="button" class="dict-move">Move to notes</button>
+      </div>`).join("");
+    el.querySelectorAll(".dictated").forEach((row) => {
+      const i = +row.dataset.i;
+      row.querySelector(".dict-ok").addEventListener("click", () => {
+        const text = dict[key].splice(i, 1)[0];
+        if (key.startsWith("assessment:")) {
+          const a = C.areas.find((x) => `assessment:${x.id}` === key);
+          a.notes = (a.notes ? a.notes.trim() + " " : "") + text;
+          const ta = $("#as-panel .as-notes"); if (ta && key === `assessment:${areaId}`) ta.value = a.notes;
+        } else {
+          const ta = consult.querySelector(`textarea[data-sec="${key}"]`);
+          if (ta) ta.value = (ta.value.trim() ? ta.value.trim() + " " : "") + text;
+        }
+        renderDictated(el, key);
+      });
+      row.querySelector(".dict-move").addEventListener("click", () => {
+        const text = dict[key].splice(i, 1)[0];
+        (dict.notes = dict.notes || []).push(text);
+        renderDictated(el, key);
+        renderDictated(listFor("notes"), "notes");
+      });
+    });
+  }
+
+  function setDictation(on) {
+    dictating = on;
+    $("#dict-bar").hidden = !on;
+    consult.querySelector(".c-dictate").classList.toggle("is-on", on);
+    clearInterval(dictTimer); clearInterval(dictClock);
+    if (!on) return;
+    dictStart = Date.now();
+    const tick = () => {
+      const t = Math.floor((Date.now() - dictStart) / 1000);
+      $("#dict-time").textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+      $("#dict-target").textContent = dictTarget().label;
+    };
+    tick(); dictClock = setInterval(tick, 500);
+    dictTimer = setInterval(() => {
+      const tgt = dictTarget();
+      (dict[tgt.key] = dict[tgt.key] || []).push(C.dictation[dictNext++ % C.dictation.length]);
+      renderDictated(listFor(tgt.key), tgt.key);
+    }, 3200);
+  }
+
+  /* ---------- Finish: the report, assembled from what was written, shown as a paper page ---------- */
+  let reportOpen = false;
+  function openReport(on) {
+    reportOpen = on;
+    const box = $("#report");
+    document.body.classList.toggle("is-viewing", on);
+    if (!on) { box.classList.remove("is-in"); setTimeout(() => { if (!reportOpen) box.hidden = true; }, 400); return; }
+    if (dictating) setDictation(false);
+    const val = (id) => (consult.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
+    const para = (t) => (t.trim() ? `<p>${t.trim()}</p>` : `<p class="r-empty">Not written yet.</p>`);
+    const areas = C.areas.map((a) => {
+      const tests = a.tests.filter((t) => t.test && t.result);   // only tests with a result go into the report
+      if (!tests.length && !a.notes) return "";
+      return `<h4>${a.label}</h4>${tests.length ? `<ul>${tests.map((t) => `<li>${t.test} (${t.side}): ${t.result || "—"}${t.ref ? ` · other side: ${t.ref}` : ""}</li>`).join("")}</ul>` : ""}${a.notes ? `<p>${a.notes}</p>` : ""}`;
+    }).join("");
+    const type = consult.querySelector('.c-type .seg .is-on').textContent.trim();
+    const date = consult.querySelector('.c-date-field input').value;
+    const asked = C.ask.filter((q) => q.answer).map((q) => `<li>${q.label}: ${q.answer} <span class="r-by">Physio, in session</span></li>`).join("");
+    box.innerHTML = `
+      <article class="paper">
+        <p class="r-kicker">Apiona · ${type}</p>
+        <h2>Camille M. · 28 · female</h2>
+        <p class="r-meta">Session 1 of 9 · Accident · mid-foot sprain · ${date ? date.split("-").reverse().join(".") : "[assessment date]"} · prescribed by the emergency department, Clinique Bois-Cerf</p>
+        <h3>1 · Reason and history</h3>${para(val("reason"))}
+        ${asked ? `<h4>Completed in session</h4><ul>${asked}</ul>` : ""}
+        <h3>2 · Assessment</h3>${areas || `<p class="r-empty">No results entered yet.</p>`}
+        <h3>3 · Goals and methods</h3><ol>${C.goals.filter((g) => g.goal).map((g) => `<li><b>${g.goal}</b>${g.methods ? ` · ${g.methods}` : ""}</li>`).join("")}</ol>
+        <h3>4 · Notes</h3>${para(val("notes"))}
+        <h3>5 · Conclusion</h3>${para(val("conclusion"))}
+        <h3>6 · Recommendations</h3>${para(val("recommendations"))}
+        <p class="r-sign">[Physiotherapist] · draft, not signed</p>
+      </article>
+      <div class="report-actions">
+        <button type="button" class="r-back-btn">Back to the consultation</button>
+        <button type="button" class="r-sign-btn">Sign and send to Dr [Name], GP</button>
+      </div>`;
+    box.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
+    box.querySelector(".r-back-btn").addEventListener("click", () => openReport(false));
+    box.querySelector(".r-sign-btn").addEventListener("click", (e) => {
+      e.target.textContent = "Signed · ready to send (prototype)";
+      e.target.disabled = true;
+      box.querySelector(".r-sign").textContent = "[Physiotherapist] · signed";
+    });
+  }
+
+  /* Assessment by area: tabs for the areas; for each, what the record says (by the practice's rules),
+     a small table of tests to fill in, and free notes. What you type is kept when you switch areas. */
+  let areaId = "balance";
+  let bodySvgText = null;
+  fetch("../../design/illustrations/body-female.svg").then((x) => x.text()).then((t) => { bodySvgText = t; syncFigure(); });
+  const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+
+  /* The body is how you choose what to assess. Each area has a labelled hotspot (Balance at the centre of gravity,
+     Function at the hips, Muscles at the calf, Joints at the ankle). Click one to assess it: that part of the body
+     fills in blue, following the body's own outline. Hovering a hotspot or a tab lights up the other. */
+  const HOT = { balance: [100, 200], function: [122, 292], muscles: [80, 362], joints: [74, 424] };
+  function bodyFigure() {
+    if (!bodySvgText) return "";
+    const shapes = (bodySvgText.match(/<g[^>]*>([\s\S]*)<\/g>/) || [])[1] || "";
+    const zones = C.areas.map((a) => `<g class="zone" data-area="${a.id}" clip-path="url(#as-clip)">${
+      (a.zones || []).map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join("")}</g>`).join("");
+    const ground = `<line class="ground" data-area="balance" x1="20" y1="466" x2="120" y2="466"/>`;
+    const pains = kids("hurts").map((n) => `<circle class="tone-${n.tone}" cx="${n.spot[0]}" cy="${n.spot[1]}" r="5.5"><title>${n.label} · from the record</title></circle>`).join("");
+    const spots = C.areas.map((a, i) => {
+      const [x, y] = HOT[a.id];
+      return `<g class="spot" data-area="${a.id}" tabindex="0" role="button" aria-label="Assess ${a.label}">
+        <rect class="hit" x="${x - 16}" y="${y - 16}" width="${236 - x + 16}" height="32"/>
+        <line class="lead" x1="${x}" y1="${y}" x2="150" y2="${y}"/>
+        <circle class="pulse" cx="${x}" cy="${y}" r="7" style="animation-delay:${i * 0.6}s"/>
+        <circle class="ring" cx="${x}" cy="${y}" r="12"/><circle class="dot" cx="${x}" cy="${y}" r="7"/>
+        <rect class="pill" x="0" y="0" width="0" height="0"/>
+        <text x="162" y="${y}">${a.label}</text></g>`;
+    }).join("");
+    return `<svg class="as-body" viewBox="0 -10 236 481" aria-label="Choose what to assess on the body">
+      <defs><clipPath id="as-clip">${shapes}</clipPath></defs>
+      <g class="sil">${shapes}</g>${zones}${ground}${spots}
+    </svg>`;
+  }
+
+  function syncFigure() {
+    const fig = $("#as-figure");
+    if (!fig) return;
+    if (!fig.firstElementChild && bodySvgText) {
+      fig.innerHTML = bodyFigure();
+      fig.querySelectorAll(".spot").forEach((sp) => {
+        const pick = () => selectArea(sp.dataset.area);
+        sp.addEventListener("click", pick);
+        sp.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+        sp.addEventListener("mouseenter", () => hoverArea(sp.dataset.area, true));
+        sp.addEventListener("mouseleave", () => hoverArea(sp.dataset.area, false));
+      });
+      fig.querySelectorAll(".zone").forEach((z) => z.addEventListener("click", () => selectArea(z.dataset.area)));
+    }
+    fig.querySelectorAll("[data-area]").forEach((el) => el.classList.toggle("is-on", el.dataset.area === areaId));
+    sizePills();
+  }
+
+  // each label sits in a pill sized to its text, so it reads as a button (measured once it is visible)
+  function sizePills() {
+    const spots = document.querySelectorAll("#as-figure .spot");
+    if (!spots.length || spots[0].querySelector(".pill").getAttribute("width") > 30) return;
+    spots.forEach((sp) => {
+      const b = sp.querySelector("text").getBBox();
+      if (!b.width) return;
+      const h = b.height + 12, r = sp.querySelector(".pill");
+      Object.entries({ x: b.x - 11, y: b.y + b.height / 2 - h / 2, width: b.width + 22, height: h, rx: h / 2 })
+        .forEach(([k, v]) => r.setAttribute(k, v));
+    });
+  }
+
+  function hoverArea(id, on) {
+    document.querySelectorAll(`#assess [data-area="${id}"]`).forEach((el) => el.classList.toggle("is-hover", on));
+    const body = document.querySelector("#assess .as-body");
+    if (body) body.classList.toggle("has-hover", on && id !== areaId);
+  }
+
+  function selectArea(id) {
+    areaId = id;
+    renderArea();
+  }
+
+  // affected side against the other side, when both are numbers: a two-part bar and the ratio in words
+  function compareBar(t) {
+    const num = (v) => { const m = String(v || "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+    const a = num(t.result), b = num(t.ref);
+    if (a === null || b === null || b <= 0) return "";
+    const max = Math.max(a, b), unit = (String(t.result).match(/[a-z°%]+/i) || [""])[0];
+    return `<div class="cmp-bar">
+      <span class="cmp-row"><span class="cmp-k">This side</span><i style="width:${(a / max) * 100}%"></i><b>${a} ${unit}</b></span>
+      <span class="cmp-row is-ref"><span class="cmp-k">Other side</span><i style="width:${(b / max) * 100}%"></i><b>${b} ${unit}</b></span>
+      <span class="cmp-ratio">${Math.round((a / b) * 100)}% of the other side</span>
+    </div>`;
+  }
+
+  function buildAssessment() {
+    const box = $("#assess");
+    box.innerHTML = `
+      <div class="as-layout">
+        <figure class="as-figure" id="as-figure"></figure>
+        <div class="as-panel" id="as-panel"></div>
+      </div>`;
+    renderArea();
+  }
+
+  function renderArea() {
+    const a = C.areas.find((x) => x.id === areaId);
+    const panel = $("#as-panel");
+    panel.classList.remove("is-in");
+    panel.innerHTML = `
+      <div class="as-record">
+          <h4 class="as-area-name">${a.label}</h4>
+          ${a.record.length ? a.record.map((x) => `<p class="as-fact"><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src">${x.src}</span></span></p>`).join("")
+            : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
+      </div>
+      <table class="as-tests">
+        <colgroup><col style="width:32%"><col style="width:25%"><col style="width:12%"><col style="width:25%"><col style="width:6%"></colgroup>
+        <thead><tr><th>Test</th><th>Side</th><th>Result</th><th>Other side</th><th aria-label="Remove"></th></tr></thead>
+        <tbody>${a.tests.map((t, i) => `
+          <tr data-i="${i}">
+            <td><input data-k="test" value="${esc(t.test)}" aria-label="Test"></td>
+            <td><select data-k="side" aria-label="Side">${C.sides.map((sd) => `<option${sd === t.side ? " selected" : ""}>${sd}</option>`).join("")}</select></td>
+            <td><input data-k="result" value="${esc(t.result)}" placeholder="result" aria-label="Result"></td>
+            <td><input data-k="ref" value="${esc(t.ref)}" placeholder="reference" aria-label="Reference or other side"></td>
+            <td><button class="as-del" type="button" aria-label="Remove this test">×</button></td>
+          </tr>
+          <tr class="cmp" data-for="${i}"><td colspan="5">${compareBar(t)}</td></tr>`).join("")}
+        </tbody>
+      </table>
+      <button class="as-add" type="button">+ Add a test</button>
+      <div class="dict-list"></div>
+      <textarea class="as-notes" rows="3" placeholder="Specific tests and free remarks for ${a.label.toLowerCase()}…" aria-label="Notes for ${a.label}">${a.notes || ""}</textarea>`;
+    panel.querySelectorAll("tbody tr[data-i]").forEach((tr) => {
+      const t = a.tests[+tr.dataset.i];
+      tr.querySelectorAll("[data-k]").forEach((f) => f.addEventListener("input", () => {
+        t[f.dataset.k] = f.value;
+        panel.querySelector(`tr.cmp[data-for="${tr.dataset.i}"] td`).innerHTML = compareBar(t);   // the bar follows the numbers
+      }));
+      tr.querySelector(".as-del").addEventListener("click", () => { a.tests.splice(+tr.dataset.i, 1); renderArea(); });
+    });
+    panel.querySelector(".as-add").addEventListener("click", () => {
+      a.tests.push({ test: "", side: "Both sides" });
+      renderArea();
+      const rows = panel.querySelectorAll("tbody tr[data-i]");
+      rows[rows.length - 1].querySelector("textarea").focus();
+    });
+    panel.querySelector(".as-notes").addEventListener("input", (e) => { a.notes = e.target.value; });
+    renderDictated(panel.querySelector(".dict-list"), `assessment:${a.id}`);
+    syncFigure();
+    requestAnimationFrame(() => panel.classList.add("is-in"));
+  }
+
+  // the analog clock: hands for the time now; a blue arc from when the session started to now
+  (function drawTicks() {
+    const g = $(".clock .ticks");
+    g.innerHTML = Array.from({ length: 12 }, (_, i) => {
+      const a = (i * 30 * Math.PI) / 180, r1 = i % 3 ? 15.5 : 14, r2 = 17;
+      return `<line x1="${20 + r1 * Math.sin(a)}" y1="${20 - r1 * Math.cos(a)}" x2="${20 + r2 * Math.sin(a)}" y2="${20 - r2 * Math.cos(a)}"/>`;
+    }).join("");
+  })();
+  const onFace = (deg, r) => [20 + r * Math.sin((deg * Math.PI) / 180), 20 - r * Math.cos((deg * Math.PI) / 180)];
+
+  function tickClock() {
+    const now = new Date(), t = Math.floor((Date.now() - startedAt) / 1000);
+    $("#c-clock").textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+    $("#c-now").textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const mDeg = (now.getMinutes() + now.getSeconds() / 60) * 6, hDeg = ((now.getHours() % 12) + now.getMinutes() / 60) * 30;
+    const [mx, my] = onFace(mDeg, 13), [hx, hy] = onFace(hDeg, 8.5);
+    $("#c-minute").setAttribute("x2", mx); $("#c-minute").setAttribute("y2", my);
+    $("#c-hour").setAttribute("x2", hx); $("#c-hour").setAttribute("y2", hy);
+    // session arc, on the minute ring: from the start minute to now (a full turn = one hour)
+    const start = new Date(startedAt), sDeg = (start.getMinutes() + start.getSeconds() / 60) * 6;
+    const span = Math.min(359.9, Math.max(1.5, mDeg - sDeg + (mDeg < sDeg ? 360 : 0)));
+    const [ax, ay] = onFace(sDeg, 18), [bx, by] = onFace(sDeg + span, 18);
+    $("#c-arc").setAttribute("d", `M20,20 L${ax},${ay} A18,18 0 ${span > 180 ? 1 : 0} 1 ${bx},${by} Z`);
+  }
+
+  function setConsult(on, push = true) {
+    if (on === consulting) return;
+    consulting = on;
+    if (on && viewing) setViewing(false);
+    if (on && state.current) select(null);
+    document.body.classList.toggle("is-consult", on);
+    clearTimeout(hideTimer);
+    if (on) {
+      consult.hidden = false;
+      consult.scrollTop = 0;
+      requestAnimationFrame(() => requestAnimationFrame(() => consult.classList.add("is-in")));
+      startedAt = Date.now(); tickClock(); clockTimer = setInterval(tickClock, 1000);
+    } else {
+      if (dictating) setDictation(false);
+      if (reportOpen) openReport(false);
+      consult.classList.remove("is-in");
+      hideTimer = setTimeout(() => { consult.hidden = true; }, 500);
+      clearInterval(clockTimer);
+    }
+    // the menu follows
+    document.querySelectorAll(".page[data-page]").forEach((a) => {
+      const here = a.dataset.page === (on ? "consultation" : "summary");
+      a.classList.toggle("is-current", here);
+      a.classList.toggle("is-live", here && on);
+      if (here) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    // the green button becomes the next step of the visit
+    startBtn.querySelector("span").textContent = on ? "Finish and prepare the report" : "Start consultation";
+    if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
+  }
+
+  buildConsult();
+  startBtn.addEventListener("click", () => { if (!consulting) setConsult(true); else openReport(true); });
+  consult.querySelector(".c-dictate").addEventListener("click", () => setDictation(!dictating));
+  $("#dict-stop").addEventListener("click", () => setDictation(false));
+  veil.addEventListener("click", () => { if (reportOpen) openReport(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && reportOpen) { e.stopImmediatePropagation(); openReport(false); } }, true);
+  consult.querySelector("[data-to-summary]").addEventListener("click", () => setConsult(false));
+  document.querySelectorAll(".page[data-page]").forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    setConsult(a.dataset.page === "consultation");
+  }));
+  window.addEventListener("popstate", () => {
+    if (location.hash === "#consultation") setConsult(true, false);
+    else if (consulting) setConsult(false, false);
+  });
 
   /* ---------------- start ---------------- */
 

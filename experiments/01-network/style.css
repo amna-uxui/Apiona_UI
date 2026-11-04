@@ -98,7 +98,7 @@ p, h1, h2, h3 { margin: 0; }
 }
 .start .arrow { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
 .start:hover .arrow { transform: translateX(4px); }
-.start:hover { background: color-mix(in srgb, var(--voice) 88%, var(--ink)); }
+.start:hover { box-shadow: 0 0 0 2px var(--ink); }   /* same green; the hover is an outline, not a darker shade */
 .start:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* ---------- Map ---------- */
@@ -177,8 +177,8 @@ p, h1, h2, h3 { margin: 0; }
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
 .kind-item.mark-know .title { background: var(--know); }
-.kind-item.mark-voice .title { background: color-mix(in srgb, var(--voice) 55%, var(--bg)); }
-.kind-item.mark-missing .title { background: color-mix(in srgb, var(--missing) 60%, var(--bg)); }
+.kind-item.mark-voice .title { background: var(--voice); }
+.kind-item.mark-missing .title { background: var(--missing); }
 
 .node:hover .title { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
@@ -236,8 +236,8 @@ p, h1, h2, h3 { margin: 0; }
 .row .r-title { display: block; font-size: 14px; line-height: 1.3; }
 .row .r-sub { display: block; font-size: 11px; color: var(--grey); letter-spacing: .04em; text-transform: uppercase; margin-top: 1px; }
 .row.mark-know .r-title > span { background: var(--know); padding: 0 3px; border-radius: 2px; }
-.row.mark-missing .r-title > span { background: color-mix(in srgb, var(--missing) 60%, var(--panel)); padding: 0 3px; border-radius: 2px; }
-.row.mark-voice .r-title > span { background: color-mix(in srgb, var(--voice) 55%, var(--panel)); padding: 0 3px; border-radius: 2px; }
+.row.mark-missing .r-title > span { background: var(--missing); padding: 0 3px; border-radius: 2px; }
+.row.mark-voice .r-title > span { background: var(--voice); padding: 0 3px; border-radius: 2px; }
 .row.visited .r-title { text-decoration: line-through; text-decoration-thickness: 1px; }
 
 .index-foot { padding-top: 12px; font-size: 12px; color: var(--grey); }
@@ -292,7 +292,7 @@ p, h1, h2, h3 { margin: 0; }
 @keyframes pain-pulse { 0%, 100% { transform: scale(.7); } 50% { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .marker .halo { animation: none; } }
 
-.pain-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 30%, transparent); }
+.pain-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; }
 .pain-dot.tone-injury { background: var(--alert); color: var(--alert); }
 .pain-dot.tone-other { background: var(--know); color: var(--know); }
 .body-list .r-sub { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
@@ -311,7 +311,7 @@ p, h1, h2, h3 { margin: 0; }
 .step.is-today .when { color: var(--ink); }
 
 /* To complete: an empty dashed box, waiting to be filled in session */
-.check { width: 13px; height: 13px; margin-top: 2px; border: 1.25px dashed var(--ink); border-radius: 3px; background: color-mix(in srgb, var(--missing) 45%, var(--white)); }
+.check { width: 13px; height: 13px; margin-top: 2px; border: 1.25px dashed var(--ink); border-radius: 3px; background: var(--missing); }
 
 /* her words: plain text, no icon, no highlight */
 .row.plain-quote { grid-template-columns: 1fr; }
@@ -570,3 +570,498 @@ body.is-viewing .prints.is-fan .print img { aspect-ratio: auto; }
   color: var(--map-grey); text-transform: none; letter-spacing: 0;   /* sentence case: easier to scan than capitals */
 }
 .map .kind-section .sub, .map .kind-person .sub { font-size: 13px; max-width: 250px; }
+
+
+/* ---------- Patient details ---------- */
+.occupation { display: block; font-size: 13px; color: var(--grey); margin-top: 1px; }
+
+/* Details and sources: each row unfolds in place */
+.source-detail { margin: 0 0 8px 28px; padding: 2px 0 6px; font-size: 13px; line-height: 1.45; }
+.source-detail[hidden] { display: none; }
+.sd-line { margin: 0 0 6px; }
+.sd-list { margin: 0 0 6px; padding-left: 16px; }
+.sd-list li { margin: 2px 0; }
+.sd-facts { display: grid; grid-template-columns: 86px 1fr; gap: 3px 10px; margin: 0; }
+.sd-facts dt { color: var(--grey); }
+.sd-facts dd { margin: 0; }
+.row.has-detail[aria-expanded="true"] .r-sub { color: var(--ink); }
+
+
+/* =========================================================================
+   Consultation in progress
+   ========================================================================= */
+
+/* the summary and the network step aside */
+.map, .brief { transition: opacity .45s ease, transform .6s var(--ease), left .45s var(--ease); }
+body.is-consult .map, body.is-consult .brief { opacity: 0; transform: translateY(-14px); pointer-events: none; }
+body.is-consult .media { display: none; }
+
+.consult {
+  position: absolute; top: 0; bottom: 0; left: var(--rail-space); right: var(--side); z-index: 3;
+  overflow: auto; padding: 26px 44px 80px; transition: left .45s var(--ease);
+}
+.consult[hidden] { display: none; }
+/* everything arrives one after another, from just below */
+.consult .reveal { opacity: 0; transform: translateY(14px); transition: opacity .45s ease calc(var(--d) * 60ms), transform .6s var(--ease) calc(var(--d) * 60ms); }
+.consult.is-in .reveal { opacity: 1; transform: none; }
+
+/* top bar */
+.c-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 0 18px; border-bottom: 1px solid var(--rule); }
+/* "Summary" is an action: a real button (outline, black, arrow), not grey text like the session details */
+.c-back {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px 7px 10px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--rule); border-radius: 7px; font-size: 13px; color: var(--ink);
+}
+.c-back:hover { border-color: var(--ink); }
+.c-back svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
+.c-back:hover svg { transform: translateX(-3px); }
+.c-back:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.c-title h2 { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+.c-title p { font-size: 13px; color: var(--grey); margin-top: 2px; }
+.c-clock { color: var(--ink); font-variant-numeric: tabular-nums; }
+.c-tools { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+/* segmented choices */
+.seg { display: inline-flex; padding: 2px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white); }
+.seg button { background: none; border: 0; border-radius: 5px; padding: 6px 11px; cursor: pointer; font-size: 13px; color: var(--grey); }
+.seg button.is-on { background: var(--panel); color: var(--ink); font-weight: 500; }
+.seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.c-dictate {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--rule); border-radius: 7px; font-size: 13px; color: var(--ink);
+}
+.c-dictate:hover { border-color: var(--ink); }
+.c-dictate svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+
+/* assessment type and date */
+.c-type { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 20px 0 16px; }
+.c-date { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--grey); margin-left: auto; }
+.c-date input { width: 112px; border: 0; border-bottom: 1px solid var(--rule); padding: 4px 2px; font: inherit; font-size: 14px; color: var(--ink); background: none; }
+.c-date input:focus { outline: none; border-color: var(--ink); }
+
+/* the report's six steps */
+.c-steps { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.c-step {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 11px 4px 4px; cursor: pointer;
+  background: var(--white); border: 1px solid var(--rule); border-radius: 999px; font-size: 13px; color: var(--ink);
+}
+.c-step:hover { border-color: var(--ink); }
+.c-n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); font-size: 11px; font-weight: 500; flex: none; }
+.c-state { width: 8px; height: 8px; border-radius: 50%; border: 1.25px solid var(--ink); }
+.c-step.state-review .c-state { background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
+
+/* sections */
+.c-sec { border-bottom: 1px solid var(--rule); }
+.c-sec-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 0; background: none; border: 0; cursor: pointer; text-align: left; }
+.c-sec-title { font-size: 16px; font-weight: 500; }
+.c-sec-note { margin-left: auto; font-size: 13px; color: var(--grey); }
+.c-sec-head .chev::before { content: "+"; font-size: 15px; }
+.c-sec.is-open .c-sec-head .chev::before { content: "−"; }
+.c-sec-body { display: none; padding: 0 0 20px 32px; }
+.c-sec.is-open .c-sec-body { display: block; }
+.c-sec textarea {
+  width: 100%; resize: vertical; border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px;
+  font: 15px/1.55 var(--font); color: var(--ink); background: var(--white);
+}
+.c-sec textarea:focus { outline: none; border-color: var(--ink); }
+
+/* the menu: the consultation page is live while the visit runs */
+.page.is-live::before { animation: live-dot 1.6s ease-in-out infinite; }
+@keyframes live-dot { 50% { box-shadow: 0 0 0 4px rgb(177 204 238 / .55); } }
+@media (prefers-reduced-motion: reduce) { .consult .reveal { transition: none; } .page.is-live::before { animation: none; } }
+
+
+
+
+
+/* ---------- Assessment by area ---------- */
+.as-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); margin-bottom: 18px; }
+.as-tab {
+  flex: 1 1 0; display: grid; gap: 2px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 10px 10px 0;
+}
+.as-tab-name { font-size: 14.5px; font-weight: 500; color: var(--grey); }
+.as-tab-sub { font-size: 12px; color: var(--grey); line-height: 1.35; }
+.as-tab[aria-selected="true"] { border-bottom-color: var(--ink); }
+.as-tab[aria-selected="true"] .as-tab-name { color: var(--ink); }
+.as-tab:hover .as-tab-name { color: var(--ink); }
+.as-tab:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.as-panel { opacity: 0; transform: translateY(6px); transition: opacity .3s ease, transform .4s var(--ease); }
+.as-panel.is-in { opacity: 1; transform: none; }
+
+/* what the record says for this area: the practice's highlight, in the record's words */
+.as-record { padding: 12px 14px; margin-bottom: 18px; border-radius: 8px; background: var(--panel); }
+.as-record-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.as-fact { font-size: 14.5px; line-height: 1.4; margin: 0 0 6px; }
+.as-fact span { display: block; font-size: 12.5px; color: var(--grey); }
+.as-rule { font-size: 12.5px; color: var(--grey); margin-top: 8px; }
+.as-none { font-size: 14px; color: var(--grey); }
+
+/* tests: Apiona provides the fields, the physio the content */
+.as-tests { width: 100%; border-collapse: collapse; font-size: 14px; }
+.as-tests th { text-align: left; font-weight: 400; font-size: 12.5px; color: var(--grey); padding: 0 8px 6px 0; border-bottom: 1px solid var(--rule); }
+.as-tests td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--rule); }
+.as-tests input, .as-tests select {
+  width: 100%; border: 0; border-bottom: 1px dashed transparent; background: none; padding: 5px 2px;
+  font: inherit; color: var(--ink);
+}
+.as-tests input::placeholder { color: #A3A39D; }
+.as-tests input:focus, .as-tests select:focus { outline: none; border-bottom-color: var(--ink); }
+.as-tests { table-layout: fixed; }
+.as-tests td:last-child { text-align: center; }
+.as-tests select { text-overflow: ellipsis; }
+.as-del { background: none; border: 0; cursor: pointer; color: var(--grey); font-size: 16px; line-height: 1; padding: 4px; }
+.as-del:hover { color: var(--ink); }
+.as-add {
+  margin: 10px 0 16px; padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--ink);
+  background: none; border: 1px dashed var(--rule); border-radius: 7px;
+}
+.as-add:hover { border-color: var(--ink); }
+.c-sec .as-notes { font-size: 14.5px; }
+
+
+/* ---------- Patient details: in the index, with her photo behind it ---------- */
+
+.portrait {
+  position: absolute; z-index: 3; top: 112px; right: calc(var(--side) - 34px); width: 190px; aspect-ratio: 4 / 5;
+  border-radius: 4px; overflow: hidden; background: var(--you); pointer-events: none;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 18px 40px -18px rgb(0 0 0 / .4);
+  opacity: 0; transform: translateX(70px) rotate(6deg) scale(.92);
+  transition: opacity .35s ease, transform .75s cubic-bezier(.34, 1.25, .64, 1);
+}
+.portrait.is-in { opacity: 1; transform: translateX(0) rotate(-3deg); }
+.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portrait.no-photo .initials { font-size: 40px; }
+body.is-consult .portrait { display: none; }
+.kind-person.is-profile .shape svg path { fill: var(--ink); }
+.kind-person.is-profile .label { background: var(--you); }
+@media (prefers-reduced-motion: reduce) { .portrait { transition: none; } }
+
+/* her photo can be viewed large, like the X-rays */
+.portrait { transform-origin: 0 0; }
+.portrait.is-in { pointer-events: auto; cursor: zoom-in; }
+.portrait.is-viewing { z-index: 6; cursor: zoom-out; transition: transform .75s cubic-bezier(.34, 1.2, .64, 1), box-shadow .3s; box-shadow: 0 2px 4px rgb(0 0 0 / .1), 0 30px 60px -20px rgb(0 0 0 / .45); }
+.portrait-cap {
+  position: fixed; left: var(--rail-space); right: 0; bottom: 6vh; margin: 0; z-index: 6; pointer-events: none;
+  display: grid; gap: 4px; justify-items: center; text-align: center;
+  opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .5s var(--ease);
+}
+.portrait-cap span:first-child { font-size: 15px; }
+.portrait-cap span:last-child { font-size: 13px; color: var(--grey); }
+body.is-viewing .portrait.is-viewing ~ .portrait-cap { opacity: 1; transform: none; transition-delay: .35s; }
+
+
+/* ---------- Consultation: icons and colour, only where they mean something ---------- */
+/* the time: a small analog clock (now) with a blue arc (this session, blue = you / now) */
+.c-time { display: flex; align-items: center; gap: 10px; }
+.clock { width: 40px; height: 40px; flex: none; }
+.clock .face { fill: var(--white); stroke: var(--ink); stroke-width: 1.2; }
+.clock .session-arc { fill: var(--you); opacity: .9; }
+.clock .ticks line { stroke: var(--ink); stroke-width: 1; stroke-linecap: round; }
+.clock .hand { stroke: var(--ink); stroke-linecap: round; }
+.clock .hand.hour { stroke-width: 2; }
+.clock .hand.minute { stroke-width: 1.3; }
+.clock .pin { fill: var(--ink); }
+.c-time-text { display: grid; line-height: 1.25; }
+.c-time-text b { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.c-time-text > span { font-size: 12.5px; color: var(--grey); }
+.c-time-text #c-clock { color: var(--ink); }
+
+/* present = ok, in green */
+.seg button.is-on.is-ok { background: var(--voice); }
+
+/* the date: a calendar icon, the browser's own date picker underneath */
+.c-date-field { position: relative; display: inline-flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--rule); padding: 2px 2px 4px; }
+.c-date-field:focus-within { border-color: var(--ink); }
+.c-date-field .i { width: 16px; height: 16px; color: var(--ink); }
+.c-date-field input { width: 132px; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink); background: none; }
+.c-date-field input:focus { outline: none; }
+.c-date-field input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
+
+/* the open report steps, in blue (you are here) */
+.c-step.is-open { background: var(--you); border-color: var(--you); }
+.c-step.is-open .c-n { background: var(--white); }
+
+.as-fact .hl { background: var(--know); padding: 0 3px; border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+
+/* ---------- Assessment visuals ---------- */
+/* the body is a column of its own, large, and the way to choose the area */
+.as-layout { display: grid; grid-template-columns: 250px 1fr; gap: 26px; align-items: start; }
+.as-figure { margin: 0; position: sticky; top: 12px; display: grid; gap: 10px; }
+.as-body { width: 250px; height: auto; overflow: visible; display: block; }
+.as-body .sil { fill: #DCDAD2; }
+.as-body .zone rect { fill: var(--you); opacity: 0; transition: opacity .45s ease; }
+.as-body .zone.is-on rect { opacity: 1; }
+.as-body .zone { cursor: pointer; }
+.as-body .ground { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; opacity: 0; transition: opacity .45s ease; }
+.as-body .ground.is-on { opacity: 1; }
+.as-body .pain circle { stroke: var(--white); stroke-width: 2; pointer-events: auto; }
+.as-body .pain .tone-injury { fill: var(--alert); }
+.as-body .pain .tone-other { fill: var(--know); }
+
+/* hotspots: a dot on the body, a thin leader line, the area's name */
+.as-body .spot { cursor: pointer; outline: none; }
+.as-body .spot .lead { stroke: var(--rule); stroke-width: 1; transition: stroke .25s; }
+.as-body .spot .ring { fill: var(--white); stroke: var(--ink); stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(.5); transition: opacity .25s, transform .4s cubic-bezier(.34, 1.56, .64, 1); }
+.as-body .spot .dot { fill: var(--white); stroke: var(--ink); stroke-width: 1.5; transition: fill .25s; }
+.as-body .spot text { font: 15px var(--font); fill: var(--grey); dominant-baseline: middle; transition: fill .25s; }
+.as-body .spot.is-hover .ring, .as-body .spot:focus-visible .ring { opacity: 1; transform: none; }
+.as-body .spot.is-hover text, .as-body .spot.is-hover .lead { fill: var(--ink); stroke: var(--ink); }
+.as-body .spot.is-on .dot { fill: var(--ink); }
+.as-body .spot.is-on text { fill: var(--ink); font-weight: 500; }
+.as-body .spot.is-on .lead { stroke: var(--ink); }
+.as-tab.is-hover .as-tab-name { color: var(--ink); }
+.as-key { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--grey); margin: 0; }
+.as-key i { width: 10px; height: 10px; border-radius: 2px; background: var(--you); flex: none; }
+.as-what { font-size: 13px; color: var(--grey); margin: 0 0 10px; }
+.as-record-head { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.as-fact .src { display: block; font-size: 12.5px; color: var(--grey); margin-top: 2px; }
+
+/* side by side: this side in black, the other side in grey, and the ratio in words */
+.as-tests tr.cmp td { padding: 0 0 8px; border-bottom: 1px solid var(--rule); }
+.as-tests tr[data-i] td { border-bottom: 0; }
+.as-tests tr.cmp td:empty { padding: 0; }
+.cmp-bar { display: grid; gap: 4px; padding: 2px 30px 4px 0; }
+.cmp-row { grid-template-columns: 70px 1fr 56px !important; }
+.cmp-row { display: grid; grid-template-columns: 74px 1fr 64px; align-items: center; gap: 10px; font-size: 12px; color: var(--grey); }
+.cmp-row i { display: block; height: 6px; border-radius: 3px; background: var(--ink); min-width: 4px; }
+.cmp-row.is-ref i { background: var(--rule); }
+.cmp-row b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cmp-ratio { font-size: 12.5px; color: var(--ink); margin-top: 2px; }
+
+/* ---------- Ask during the session (missing in the record: pink, dashed) ---------- */
+.c-ask { margin: 4px 0 18px; padding: 12px 14px; border: 1px dashed var(--ink); border-radius: 8px; }
+.c-ask-head { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.c-ask-list { display: grid; gap: 6px; }
+.ask { display: flex; align-items: center; gap: 12px; min-height: 32px; font-size: 14.5px; }
+.ask-label { width: 150px; }
+.ask-missing { background: var(--missing); padding: 0 4px; border-radius: 2px; font-size: 13px; }
+.ask-add, .ask-input {
+  margin-left: auto; padding: 6px 11px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white);
+  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.ask-add:hover { border-color: var(--ink); }
+.ask-input { cursor: text; width: 260px; }
+.ask-input:focus { outline: none; border-color: var(--ink); }
+.ask-answer { display: flex; align-items: center; gap: 10px; }
+.ask-by { font-size: 12px; padding: 1px 6px; border-radius: 3px; background: var(--you); }
+
+/* ---------- Goals and methods ---------- */
+.goal-head, .goal { display: grid; grid-template-columns: 22px 1fr 1fr 28px; gap: 12px; align-items: start; }
+.goal-head { font-size: 12.5px; color: var(--grey); padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.goal-head span:first-child { grid-column: 2; }
+.goal { padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+.goal-n { font-size: 13px; color: var(--grey); padding-top: 6px; }
+.goal input { width: 100%; border: 0; border-bottom: 1px dashed transparent; padding: 5px 2px; font: inherit; color: var(--ink); background: none; }
+.goal input:focus { outline: none; border-bottom-color: var(--ink); }
+.goal-main { display: grid; gap: 2px; }
+.goal-link { font-size: 12.5px; color: var(--grey); padding-left: 2px; }
+.hl-voice { background: var(--voice); color: var(--ink); padding: 0 4px; border-radius: 2px; }
+
+/* ---------- Dictation ---------- */
+.c-dictate.is-on { border-color: var(--ink); }
+.c-dictate.is-on svg { color: var(--alert); }
+.dict-bar {
+  position: sticky; bottom: 0; z-index: 2; margin: 24px 0 0;
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px;
+  background: var(--ink); color: var(--white); font-size: 14px;
+}
+.dict-bar[hidden] { display: none; }
+.dict-bar b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.dict-where { color: #CFCFC9; }
+.dict-bar #dict-stop { margin-left: auto; padding: 6px 12px; border-radius: 7px; border: 1px solid #55554F; background: none; color: var(--white); font: inherit; font-size: 13px; cursor: pointer; }
+.dict-bar #dict-stop:hover { border-color: var(--white); }
+.rec { width: 10px; height: 10px; border-radius: 50%; background: var(--alert); animation: rec 1.2s ease-in-out infinite; }
+@keyframes rec { 50% { opacity: .35; } }
+
+.dict-list { display: grid; gap: 6px; margin: 8px 0; }
+.dict-list:empty { display: none; }
+.dictated {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 12px; border-radius: 8px;
+  border: 1px dashed var(--ink); font-size: 14.5px; animation: dict-in .5s var(--ease);
+}
+@keyframes dict-in { from { opacity: 0; transform: translateY(6px); } }
+.dict-text { flex: 1 1 220px; }
+.dict-tag { font-size: 12px; color: var(--grey); }
+.dictated button { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--white); font: inherit; font-size: 12.5px; cursor: pointer; }
+.dictated button:hover { border-color: var(--ink); }
+.dictated .dict-ok { border-color: var(--ink); }
+
+/* ---------- The report: a paper page in the middle ---------- */
+.report {
+  position: fixed; inset: 0 0 0 var(--rail-space); z-index: 7; overflow: auto; padding: 40px 0 120px;
+  display: grid; justify-items: center; pointer-events: none;
+}
+.report[hidden] { display: none; }
+.report .paper, .report .report-actions { pointer-events: auto; }
+.paper {
+  width: min(680px, 90%); background: var(--white); border: 1px solid var(--rule); border-radius: 4px; padding: 44px 52px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / .06), 0 30px 60px -24px rgb(0 0 0 / .35);
+  font-size: 14.5px; line-height: 1.55;
+  opacity: 0; transform: translateY(40px) scale(.97); transition: opacity .4s ease, transform .7s cubic-bezier(.34, 1.2, .64, 1);
+}
+.report.is-in .paper { opacity: 1; transform: none; }
+.paper .r-kicker { font-size: 12px; color: var(--grey); margin-bottom: 6px; }
+.paper h2 { font-size: 22px; font-weight: 500; letter-spacing: -.01em; }
+.paper .r-meta { font-size: 13px; color: var(--grey); margin: 4px 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.paper h3 { font-size: 15px; font-weight: 500; margin: 18px 0 6px; }
+.paper h4 { font-size: 13.5px; font-weight: 500; margin: 10px 0 2px; }
+.paper ul, .paper ol { margin: 4px 0; padding-left: 20px; }
+.paper .r-empty { color: var(--grey); }
+.paper .r-by { font-size: 11.5px; padding: 0 5px; border-radius: 3px; background: var(--you); }
+.paper .r-sign { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--grey); }
+.report-actions {
+  display: flex; gap: 10px; margin-top: 18px;
+  opacity: 0; transform: translateY(10px); transition: opacity .4s ease .25s, transform .5s var(--ease) .25s;
+}
+.report.is-in .report-actions { opacity: 1; transform: none; }
+.r-back-btn, .r-sign-btn { padding: 10px 16px; border-radius: 7px; font: inherit; font-size: 14px; cursor: pointer; }
+.r-back-btn { background: var(--white); border: 1px solid var(--rule); color: var(--ink); }
+.r-back-btn:hover { border-color: var(--ink); }
+.r-sign-btn { background: var(--voice); border: 0; color: var(--ink); font-weight: 500; }
+.r-sign-btn:disabled { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .paper, .report-actions, .dictated, .rec { transition: none; animation: none; } }
+
+/* while the report is open, the consultation behind steps away like everything else */
+.consult { transition: left .45s var(--ease), opacity .45s ease, filter .45s ease; }
+body.is-viewing .consult { opacity: 0; filter: blur(4px); pointer-events: none; }
+
+/* Ask during the session: a question icon on the title, a meaningful icon for each question */
+.c-ask-head { display: flex; align-items: center; gap: 8px; }
+.c-ask-head .i, .ask-label .i { width: 16px; height: 16px; flex: none; }
+.ask-label { display: inline-flex; align-items: center; gap: 9px; width: 190px; }
+
+
+/* ---------- Consultation: readability ---------- */
+/* larger text, a darker grey for secondary text, sentence case, more air between lines */
+.consult { --grey: #55554F; font-size: 15.5px; }
+.c-title h2 { font-size: 21px; }
+.c-title p { font-size: 14px; }
+.c-time-text b { font-size: 16px; }
+.c-time-text > span { font-size: 13.5px; }
+.seg button { font-size: 14px; padding: 7px 12px; }
+.c-dictate, .c-back { font-size: 14px; }
+.c-date { font-size: 14px; }
+.c-date-field input { font-size: 15px; }
+
+.c-ask-head { font-size: 15px; margin-bottom: 10px; }
+.ask { font-size: 15.5px; min-height: 36px; }
+.ask-missing { font-size: 14px; }
+.ask-add, .ask-input { font-size: 14px; }
+
+.c-step { font-size: 14px; padding: 5px 12px 5px 5px; }
+.c-n { width: 22px; height: 22px; font-size: 12px; }
+.c-sec-head { padding: 18px 0; }
+.c-sec-title { font-size: 17.5px; }
+.c-sec-note { font-size: 14px; }
+.c-sec textarea { font-size: 16px; line-height: 1.6; }
+
+.as-tab-name { font-size: 16px; }
+.as-tab-sub { font-size: 13px; }
+.as-what { font-size: 14px; }
+.as-record-head { font-size: 14px; }
+.as-fact { font-size: 15.5px; line-height: 1.45; margin-bottom: 8px; }
+.as-fact .src, .as-rule, .as-none { font-size: 13.5px; }
+.as-tests { font-size: 15px; }
+.as-tests th { font-size: 13.5px; }
+.as-tests input, .as-tests select { padding: 7px 2px; }
+.as-key { font-size: 13px; }
+.as-body .spot text { font-size: 16px; }
+.cmp-row { font-size: 13px; }
+.cmp-ratio { font-size: 13.5px; }
+.as-add { font-size: 14px; }
+
+.goal-head { font-size: 13.5px; }
+.goal { font-size: 15.5px; }
+.goal-link { font-size: 13.5px; }
+.dictated { font-size: 15.5px; }
+.dict-tag { font-size: 13px; }
+.dictated button { font-size: 13.5px; }
+.dict-bar { font-size: 15px; }
+
+
+/* ---------- Assessment, calmer: one thing at a time ---------- */
+.as-tab { padding: 10px 10px 12px 0; }
+.as-layout { gap: 34px; }
+.as-record { background: none; padding: 0; border-radius: 0; margin-bottom: 26px; }
+.as-record-head { font-size: 13.5px; font-weight: 400; color: var(--grey); margin-bottom: 10px; }
+.as-fact { display: grid; grid-template-columns: 10px 1fr; gap: 12px; align-items: start; margin: 0 0 12px; }
+.as-mark { width: 10px; height: 10px; margin-top: 6px; border-radius: 2px; background: var(--know); }
+.as-fact-text { font-size: 15.5px; line-height: 1.45; }
+.as-fact .src { display: block; font-size: 13px; color: var(--grey); margin-top: 1px; }
+.as-rule { margin: 4px 0 0 22px; font-size: 13px; }
+.as-none { font-size: 14px; }
+.as-tests { margin-top: 4px; }
+.as-add { margin: 14px 0 22px; }
+.as-body .spot .lead { stroke: #EAEAE5; }
+.as-layout { grid-template-columns: 210px 1fr; gap: 28px; }
+.as-body { width: 210px; }
+.as-tests { font-size: 14.5px; }
+.as-tests select { padding-right: 0; }
+/* no tabs: the body chooses the area; its name heads the panel */
+.as-layout { margin-top: 8px; }
+.as-area-name { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+/* table cells start exactly under their column title */
+.as-tests input, .as-tests select { padding-left: 0; }
+.as-tests select {
+  appearance: none; -webkit-appearance: none; padding-right: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%2355554F' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 2px center / 12px;
+}
+.c-sec-head .chev { margin-left: auto; }
+/* bigger body, clearer points to click, more air before the panel */
+.as-layout { grid-template-columns: 260px 1fr; gap: 56px; }
+.as-body { width: 260px; }
+.as-body .spot .hit { fill: transparent; }
+.as-body .spot .ring { opacity: 1; transform: none; fill: none; stroke: #C9C7BF; stroke-width: 1.2; }
+.as-body .spot .dot { stroke-width: 2; }
+.as-body .spot .lead { stroke: #DCDAD2; }
+.as-body .spot text { font-size: 15px; fill: var(--ink); }
+.as-body .spot .pulse { fill: none; stroke: var(--ink); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: as-pulse 2.4s ease-out infinite; pointer-events: none; }
+.as-body .spot.is-on .pulse { display: none; }
+@keyframes as-pulse { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.6); opacity: 0; } }
+.as-body .spot.is-hover .ring, .as-body .spot:focus-visible .ring { stroke: var(--ink); }
+.as-body .spot.is-hover .dot { fill: var(--you); }
+.as-body .spot.is-on .ring { stroke: var(--ink); }
+.as-body .spot.is-on text { font-weight: 500; }
+.as-body .zone.is-hover rect { opacity: 1; }
+.as-key { font-size: 13.5px; }
+@media (prefers-reduced-motion: reduce) { .as-body .spot .pulse { animation: none; opacity: 0; } }
+/* hover: no outlines or darkening lines; the area lights up on the body and the point fills */
+.as-body .spot text, .as-body .spot.is-hover text { stroke: none; }
+.as-body .spot.is-hover .lead, .as-body .spot.is-on .lead { stroke: #DCDAD2; }
+.as-body .spot .ring { transition: none; }
+.as-body .spot.is-hover .ring { stroke: #C9C7BF; }
+.as-body .spot.is-on .ring { stroke: var(--ink); }
+.as-body .spot .dot { transition: fill .2s ease; }
+.as-body .spot.is-hover .dot { fill: var(--you); }
+.as-body .spot.is-on .dot { fill: var(--ink); }
+.as-body .spot.is-hover .pulse { animation-play-state: paused; opacity: 0; }
+.as-body .ground.is-hover { opacity: 1; }
+.as-layout { grid-template-columns: 250px 1fr; gap: 48px; }
+.as-body { width: 250px; }
+.as-tests { font-size: 14px; }
+/* while hovering another point, only that area shows on the body */
+.as-body.has-hover .zone.is-on:not(.is-hover) rect, .as-body.has-hover .ground.is-on:not(.is-hover) { opacity: 0; }
+/* smaller body, wider gap; the area on the body is shown in the pain red */
+.as-layout { grid-template-columns: 215px 1fr; gap: 80px; }
+.as-body { width: 215px; }
+.as-body .zone rect { fill: var(--alert); }
+.as-body .spot.is-hover .dot { fill: var(--alert); }
+.as-key i { background: var(--alert); }
+/* the labels are buttons: a pill outline, filled when chosen */
+.as-body .spot .pill { fill: var(--white); stroke: #C9C7BF; stroke-width: 1; transition: fill .2s, stroke .2s; }
+.as-body .spot text { font-weight: 400; transition: fill .2s; }
+.as-body .spot.is-on text { font-weight: 400; }
+.as-body .spot.is-hover .pill, .as-body .spot:focus-visible .pill { stroke: var(--ink); }
+.as-body .spot.is-on .pill { fill: var(--ink); stroke: var(--ink); }
+.as-body .spot.is-on text { fill: var(--white); }
+.as-body .spot.is-hover:not(.is-on) .pill { fill: #F4F4F1; stroke: var(--ink); }
+.as-area-name { margin-bottom: 14px; }
+/* goals and methods wrap onto as many lines as they need */
+.goal textarea { width: 100%; border: 0; border-bottom: 1px dashed transparent; padding: 5px 2px; font: inherit; line-height: 1.4; color: var(--ink); background: none; resize: none; overflow: hidden; field-sizing: content; min-height: 0; }
+.goal textarea:focus { outline: none; border-bottom-color: var(--ink); }
+.goal-head, .goal { grid-template-columns: 22px 1fr 1.3fr 28px; }
+.goal .as-del { margin-top: 4px; }
