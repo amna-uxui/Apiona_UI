@@ -16,6 +16,13 @@ window.RECORD = {
     name: "Camille M.",
     meta: "28 · female",
     occupation: "Architectural draughtswoman, 60% · mostly seated, site visits",   // from Patient and coverage
+    // shown when you click her in the middle of the network: what the header doesn't already say
+    profile: [
+      ["Address", "[Street], Vevey"],
+      ["Case", "Accident · claim no. provided"],
+      ["Insurance", "[Insurer] · supplementary cover"],
+      ["GP", "Dr [Name] · consent to inform signed"],
+    ],
     isNew: true,   // shown as a "New" tag on her photo
     tags: [
       { text: "Initial assessment · session 1 of 9", tone: "session" },

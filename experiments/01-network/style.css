@@ -663,3 +663,27 @@ body.is-consult .media { display: none; }
 .page.is-live::before { animation: live-dot 1.6s ease-in-out infinite; }
 @keyframes live-dot { 50% { box-shadow: 0 0 0 4px rgb(177 204 238 / .55); } }
 @media (prefers-reduced-motion: reduce) { .consult .reveal { transition: none; } .page.is-live::before { animation: none; } }
+
+
+/* ---------- Camille's profile, opened from the middle of the network ---------- */
+.kind-person .shape { position: relative; transition: width .5s var(--ease), height .5s var(--ease), margin .5s var(--ease); }
+.kind-person .shape svg { transition: opacity .3s ease, transform .5s var(--ease); }
+.node-photo {
+  position: absolute; inset: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  opacity: 0; transform: scale(.4); transition: opacity .35s ease, transform .55s cubic-bezier(.34, 1.4, .64, 1);
+}
+.node-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.node-photo .initials { font-size: 18px; }
+.kind-person.is-profile .shape svg { opacity: 0; transform: scale(.4) rotate(40deg); }
+.kind-person.is-profile .node-photo { opacity: 1; transform: none; box-shadow: 0 0 0 3px var(--white), 0 0 0 4px var(--rule); }
+
+.profile {
+  display: grid; gap: 3px; max-height: 0; overflow: hidden; opacity: 0; text-align: left;
+  width: 300px; margin-top: 0; transition: max-height .55s var(--ease), opacity .35s ease, margin .4s var(--ease);
+}
+.kind-person.is-profile .label { max-width: 300px; }
+.kind-person.is-profile .profile { max-height: 220px; opacity: 1; margin-top: 10px; transition-delay: .08s; }
+.pf-line { font-size: 13px; color: var(--grey); text-align: center; margin-bottom: 6px; }
+.pf-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; font-size: 13px; line-height: 1.4; white-space: nowrap; }
+.pf-k { color: var(--grey); }
+.kind-person.is-profile .shape { width: 64px; height: 64px; }

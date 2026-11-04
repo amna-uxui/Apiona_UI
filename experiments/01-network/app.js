@@ -59,18 +59,23 @@
     <rect class="f-paper f-paper2" x="7" y="5" width="21" height="14" rx="1"/>
     <path class="f-front" d="M1.5 10a2 2 0 0 1 2-2h27a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2h-27a2 2 0 0 1-2-2z"/>
   </svg>`;
-  const half = (n) => (n.kind === "person" ? 17 : n.kind === "section" ? 13 : n.folder ? 13 : 8);
+  const half = (n) => (n.kind === "person" ? (state.profile ? 32 : 17) : n.kind === "section" ? 13 : n.folder ? 13 : 8);
+
+  const profileBlock = () => `<span class="profile" aria-hidden="true">
+    ${(R.patient.profile || []).map(([k, v]) => `<span class="pf-row"><span class="pf-k">${k}</span><span class="pf-v">${v}</span></span>`).join("")}
+  </span>`;
 
   function makeNode(n) {
     const el = document.createElement("button");
     el.type = "button";
     el.className = ["node", `kind-${n.kind}`, n.source && `src-${n.source}`, n.mark && `mark-${n.mark}`, n.folder && "is-folder"].filter(Boolean).join(" ");
     el.dataset.id = n.id;
-    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? STAR : n.folder ? FOLDER : "";
+    const shape = n.kind === "section" ? `${HEX}<b>${n.n}</b>` : n.kind === "person" ? `${STAR}<span class="node-photo"><img src="../../ui/assets/patient.jpg" alt="" data-initials="CM"></span>` : n.folder ? FOLDER : "";
     el.innerHTML = `<span class="shape">${shape}</span>
-      <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span></span>`;
+      <span class="label"><span class="title">${n.label}</span><span class="sub">${n.sub || ""}</span>${n.kind === "person" ? profileBlock() : ""}</span>`;
     el.setAttribute("aria-label", `${n.label}. ${n.sub || ""}`);
-    el.addEventListener("click", () => go(n.kind === "person" ? null : n.id));
+    // Camille: on the first view her node opens her profile; from anywhere else it brings you back to the first view
+    el.addEventListener("click", () => (n.kind === "person" ? (state.current ? go(null) : setProfile(!state.profile)) : go(n.id)));
     el.addEventListener("mouseenter", () => hintRow(n.id, true));
     el.addEventListener("mouseleave", () => hintRow(n.id, false));
     layer.appendChild(el);
@@ -104,7 +109,8 @@
 
     if (!c) {
       L.camille = { x: 0, y: 0 };
-      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], 260, 185)));
+      const rx = state.profile ? 300 : 260, ry = state.profile ? 255 : 185;   // the sections step back to make room for her profile
+      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], rx, ry)));
       return { L, focus: null };
     }
 
@@ -312,8 +318,17 @@
     select(id);
   }
 
+  function setProfile(on) {
+    state.profile = on;
+    const c = byId.get("camille");
+    c.el.classList.toggle("is-profile", on);
+    c.el.querySelector(".profile").setAttribute("aria-hidden", on ? "false" : "true");
+    apply();
+  }
+
   function select(id, instant = false) {
     if (id && !byId.has(id)) id = null;
+    if (id && state.profile) { state.profile = false; byId.get("camille").el.classList.remove("is-profile"); }
     state.current = id;
     if (id) state.visited.add(id);
     renderIndexState();
@@ -347,6 +362,7 @@
   map.addEventListener("pointerleave", () => { state.cursor = null; kick(); });
   map.addEventListener("pointerup", () => {
     if (drag && !drag.moved && state.current) go(null);   // a click on the empty map goes back to the overview
+    else if (drag && !drag.moved && state.profile) setProfile(false);   // or folds her profile away
     drag = null; map.classList.remove("dragging");
   });
 
