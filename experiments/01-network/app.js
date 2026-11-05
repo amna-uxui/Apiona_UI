@@ -1713,6 +1713,7 @@
         <div class="fu-m-sessions">
           <div class="fu-bar" aria-label="${done} of 9 sessions done">${Array.from({ length: 9 }, (_, k) => `<i class="${k < done ? "is-done" : k === 0 ? "is-today" : ""}"></i>`).join("")}</div>
           <p><b>${done} of 9 sessions done</b></p>
+          <p class="cl-quiet">Prescribed by the emergency department, Bois-Cerf</p>
         </div>
         <ol class="cl-list">
           <li class="cl-item is-next">

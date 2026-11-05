@@ -1930,3 +1930,5 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
   .fu-m-goals li { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
   .fu-m-goals li .cl-quiet { font-size: 13px; white-space: nowrap; }
 }
+@media (max-width: 760px) { .fu-m-sessions p + p { margin-top: 2px; font-size: 13.5px; } }
+@media (max-width: 760px) { #followup .fu-m-sessions .fu-bar { margin: 0 0 10px; } .fu-m-sessions p + p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
