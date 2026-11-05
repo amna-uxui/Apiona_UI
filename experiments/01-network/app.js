@@ -1446,7 +1446,7 @@
     drawWeb(performance.now());
     svg.classList.toggle("is-drawn", !animate);
     if (animate) requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add("is-drawn")));
-    if (!web.raf && !reduceMotion) web.raf = requestAnimationFrame(floatWeb);
+    if (!web.raf && !reduceMotion && !isPhone()) web.raf = requestAnimationFrame(floatWeb);   // on a phone there are no lines, so the facts stay still
   }
 
   function drawWeb(t) {
@@ -1470,6 +1470,7 @@
 
   function floatWeb(t) {
     web.raf = 0;
+    if (isPhone()) { web.facts.concat(web.docs || []).forEach((f) => { f.el.style.transform = ""; }); return; }
     if (!web.lay || !web.lay.isConnected || !web.lay.offsetWidth || !web.facts.length) return;   // restarts on the next linkFacts
     web.facts.concat(web.docs || []).forEach((f) => {
       // a slow drift around its place, plus a lean towards the pointer when it is near
