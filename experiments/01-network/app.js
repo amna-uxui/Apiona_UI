@@ -100,7 +100,19 @@
     return out;
   };
 
+  // on a phone the same layout is drawn narrower: points closer together side to side, so little shrinking is needed
   function layout(currentId) {
+    if (isPhone() && !currentId) {
+      // the overview on a phone runs top to bottom: Camille, then her five sections in a gentle zig-zag
+      const L = { camille: { x: 0, y: 0 } };
+      ["know", "wants", "hurts", "happened", "complete"].forEach((id, i) => { L[id] = { x: i % 2 ? 72 : -72, y: 118 + i * 96 }; });
+      return { L, focus: null };
+    }
+    const out = layoutWide(currentId);
+    if (isPhone()) Object.values(out.L).forEach((p) => { p.x *= 0.5; });
+    return out;
+  }
+  function layoutWide(currentId) {
     const L = {};
     const c = currentId && byId.get(currentId);
 
@@ -148,10 +160,18 @@
 
   const cam = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0 };
 
+  let mapScale = 1;
   function cameraTarget(L) {
     const pts = Object.values(L);
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
     const m = map.getBoundingClientRect();
+    if (isPhone()) {
+      // on a phone the whole web is scaled down to fit the width, and centred in the map's own box
+      const spanX = Math.max(...xs) - Math.min(...xs) + 190, spanY = Math.max(...ys) - Math.min(...ys) + 110;
+      mapScale = Math.min(1, m.width / spanX, (m.height - 10) / spanY);
+      return { x: m.width / 2 - mapScale * (Math.min(...xs) + Math.max(...xs)) / 2, y: m.height / 2 - mapScale * (Math.min(...ys) + Math.max(...ys) + 40) / 2 };
+    }
+    mapScale = 1;
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
     const room = m.width - (state.profile ? 170 : mediaWidth(state.current && byId.get(state.current)));   // prints or her photo take the right of the map
@@ -311,7 +331,7 @@
       n.el.style.opacity = n.p.o;
       n.el.style.visibility = n.p.o <= 0.01 ? "hidden" : "visible";
     });
-    world.style.transform = `translate(${cam.x + state.pan.x}px, ${cam.y + state.pan.y}px)`;
+    world.style.transform = `translate(${cam.x + state.pan.x}px, ${cam.y + state.pan.y}px)${mapScale !== 1 ? ` scale(${mapScale})` : ""}`;
   }
 
   /* ---------------- navigation ---------------- */
@@ -549,7 +569,8 @@
   // one after another, and leave when you move on. Hover or click brings a print to the front.
   const media = $("#media");
   // the room the prints take on the right: a loose pile of films, or a tight stack of paper pages
-  const mediaWidth = (n) => (n && n.media ? (n.media.fan ? 340 : n.media.kind === "paper" ? 230 : 310) : 0);
+  const isPhone = () => matchMedia("(max-width: 760px)").matches;
+  const mediaWidth = (n) => (!isPhone() && n && n.media ? (n.media.fan ? 340 : n.media.kind === "paper" ? 230 : 310) : 0);
   const mediaShown = () => !!(state.current && byId.get(state.current).media);
   let mediaTimer = null;
 
@@ -782,11 +803,19 @@
     const today = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long" });
     $("#c-notes").innerHTML = `
       <p class="c-notes-date"><span class="tag tag-session">${today} · session 1</span></p>
+      <button type="button" class="c-notes-handle" aria-expanded="false"><b>Notes</b><span class="c-notes-count">tap to write</span></button>
       <ol class="jots" aria-label="Notes"></ol>
       <div class="dict-list" data-key="notes"></div>
       <textarea class="jot-input" rows="1" aria-label="Write a note" placeholder="Write a note…"></textarea>
       <textarea data-sec="notes" hidden aria-hidden="true">${notesStep.text || ""}</textarea>`;
     wireJots();
+    const handle = $("#c-notes .c-notes-handle");
+    handle.addEventListener("click", () => {   // phone: the notes slide up as a sheet
+      const on = !$("#c-notes").classList.contains("is-open");
+      $("#c-notes").classList.toggle("is-open", on); handle.setAttribute("aria-expanded", on);
+      document.body.classList.toggle("m-notes", on);   // the open sheet hides the green button behind it
+      if (on) setTimeout(() => $("#c-notes .jot-input").focus(), 300);
+    });
     $("#c-sections").innerHTML = C.steps.filter((st) => st.id !== "notes").map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
@@ -1230,6 +1259,7 @@
       li.querySelector(".jot-del").addEventListener("click", () => { jots.splice(+li.dataset.i, 1); renderJots(); syncNotes(); });
     });
     list.scrollTop = list.scrollHeight;
+    const cnt = $("#c-notes .c-notes-count"); if (cnt) cnt.textContent = jots.length ? `${jots.length} · tap to write` : "tap to write";
   }
   function addJot(text) {
     text = text.trim();
@@ -1279,7 +1309,7 @@
   function applySigned() {
     R.patient.tags[0].text = C.signed ? "Session 1 of 9 · done today" : sessionTag;
     renderTags();
-    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : consulting ? "Finish and prepare the report" : "Start consultation";
+    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : consulting ? (isPhone() ? "Finish report" : "Finish and prepare the report") : "Start consultation";
     const save = $("#c-save");
     if (C.signed) { save.classList.remove("is-saving"); save.querySelector("span").textContent = `Signed and sent · ${C.signed.at}`; }
   }
@@ -1583,9 +1613,18 @@
     }
     syncMenu(on ? "consultation" : "summary");
     // the green button becomes the next step of the visit
-    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : on ? "Finish and prepare the report" : "Start consultation";
+    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : on ? (isPhone() ? "Finish report" : "Finish and prepare the report") : "Start consultation";
     if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
   }
+
+  /* ---------- Phone: the menu opens as a sheet from the ☰ button ---------- */
+  const burger = $("#m-burger");
+  const setMenu = (on) => { document.body.classList.toggle("m-menu", on); burger.setAttribute("aria-expanded", on); };
+  burger.addEventListener("click", () => setMenu(!document.body.classList.contains("m-menu")));
+  $("#m-scrim").addEventListener("click", () => setMenu(false));
+  $("#rail").addEventListener("click", (e) => { if (e.target.closest("a[href]")) setMenu(false); });
+  let wasPhone = isPhone();
+  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); } apply(); });
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown
@@ -1687,7 +1726,7 @@
   }
 
   /* Documents: only what really exists in her record, plus what the practice created */
-  let docSel = "emergency", docFilter = "all", reminded = null;
+  let docSel = "emergency", docFilter = "all", reminded = null, docSheet = false;
   function docList() {
     const emer = byId.get("emergency").media, heds = byId.get("heds").media;
     return [
@@ -1739,7 +1778,10 @@
           ${sel.id === "report" ? `<button type="button" class="pg-chip" data-go="report">Open the report</button>` : ""}
           ${sel.id === "notes" ? `<button type="button" class="pg-chip" data-go="consultation">Open the notes</button>` : ""}</div>`}
       </aside>`;
-    box.querySelectorAll(".pr-item").forEach((b) => b.addEventListener("click", () => { docSel = b.dataset.doc; renderDocuments(); }));
+    box.querySelectorAll(".pr-item").forEach((b) => b.addEventListener("click", () => { docSel = b.dataset.doc; docSheet = true; renderDocuments(); }));
+    const pv = box.querySelector(".doc-preview");
+    pv.classList.toggle("is-open", docSheet);
+    pv.querySelector("h3").addEventListener("click", () => { docSheet = !docSheet; pv.classList.toggle("is-open", docSheet); });
     box.querySelector("[data-view]")?.addEventListener("click", (e) => openDoc(docSel, e.currentTarget));
     box.querySelector("[data-remind]")?.addEventListener("click", () => { reminded = hm(); renderDocuments(); });
     wireGo(box);
