@@ -1907,3 +1907,4 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .c-ask .ask .ask-add { grid-column: 2; grid-row: 1 / span 2; justify-self: end; align-self: start; }
   .c-ask .ask .ask-input { grid-column: 1 / -1; grid-row: 3; }
 }
+@media (max-width: 760px) { .c-ask .c-ask-list { gap: 14px; } }
