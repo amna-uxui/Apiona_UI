@@ -1729,18 +1729,19 @@
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
               ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">${g.example ? "example" : "set today"}</span></li>`).join("")}</ol>` : ""}
-              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}
-                · <button type="button" data-go="report">${C.signed ? "view it" : "finish it"}</button></p>
+              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}</p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
               ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
-              <p class="cl-sign"><span>Lena Keller · ${C.signed ? "validated and signed" : C.changedAfterSign ? "changed after signing" : "in progress"}</span><button type="button" data-go="consultation">Open the consultation</button></p>
+              <p class="cl-quiet fu-m-by">Lena Keller · ${C.signed ? "validated and signed" : C.changedAfterSign ? "changed after signing" : "in progress"}</p>
+              <div class="fu-m-actions"><button type="button" class="fu-m-btn" data-go="report">${C.signed ? "View the report" : "Finish the report"}</button><button type="button" class="fu-m-btn" data-go="consultation">Open the consultation</button></div>
             </div>
           </li>
           <li class="cl-item is-before">
             <div class="cl-when">Sunday<span>1 Nov</span></div>
             <div class="cl-body">
               <h3><i class="cl-dot is-prep" aria-hidden="true"></i>Preparation received</h3>
-              <p class="cl-quiet">Her summary and 2 documents · <button type="button" data-go="summary">view the summary</button></p>
+              <p class="cl-quiet">Her summary and 2 documents</p>
+              <div class="fu-m-actions"><button type="button" class="fu-m-btn" data-go="summary">View the summary</button></div>
             </div>
           </li>
         </ol>

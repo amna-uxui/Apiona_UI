@@ -1932,3 +1932,12 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
 }
 @media (max-width: 760px) { .fu-m-sessions p + p { margin-top: 2px; font-size: 13.5px; } }
 @media (max-width: 760px) { #followup .fu-m-sessions .fu-bar { margin: 0 0 10px; } .fu-m-sessions p + p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+@media (max-width: 760px) {
+  /* follow-up actions as buttons, like "Add the answer" */
+  .fu-m-by { margin-top: 10px !important; padding-top: 10px; border-top: 1px solid var(--rule); }
+  .fu-m-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cl-body .fu-m-btn { padding: 8px 14px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white); font: inherit; font-size: 14px; color: var(--ink);
+    text-decoration: none; cursor: pointer; transition: border-color var(--m-fast); }
+  .cl-body .fu-m-btn:hover, .cl-body .fu-m-btn:active { border-color: var(--ink); }
+}
+@media (max-width: 760px) { .fu-m-actions { flex-direction: column; } .cl-body .fu-m-btn { width: 100%; text-align: center; } }
