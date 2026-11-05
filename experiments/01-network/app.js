@@ -1065,7 +1065,7 @@
       if (!tests.length && !a.notes) return "";
       return `<h4>${a.label}</h4>${tests.length ? `<ul>${tests.map((t) => `<li>${t.test} (${t.side}): ${t.result || "—"}${t.ref ? ` · other side: ${t.ref}` : ""}</li>`).join("")}</ul>` : ""}${a.notes ? `<p>${a.notes}</p>` : ""}`;
     }).join("");
-    const type = consult.querySelector('.c-type .seg .is-on').textContent.trim();
+    const type = consult.querySelector('.seg[aria-label="Assessment type"] .is-on').textContent.trim();
     const date = consult.querySelector('.c-date-field input').value;
 
     // what still needs a look before signing; each item takes you back to its place
@@ -1208,7 +1208,7 @@
     const text = (id) => (document.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
     const data = {
       date: consult.querySelector(".c-date-field input").value,
-      type: segIndex(".c-type .seg"), attendance: segIndex(".c-tools .seg"),
+      type: segIndex('.seg[aria-label="Assessment type"]'), attendance: segIndex('.seg[aria-label="Attendance"]'),
       areas: C.areas.map((a) => ({ tests: a.tests, notes: a.notes || "" })),
       goals: C.goals, fields: C.fieldVals,
       texts: { conclusion: text("conclusion"), recommendations: text("recommendations") }, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
@@ -1240,7 +1240,7 @@
     restoring = true;
     const pick = (sel, i) => { const b = consult.querySelectorAll(`${sel} button`)[i]; if (b && i >= 0) b.click(); };
     if (stored.date) consult.querySelector(".c-date-field input").value = stored.date;
-    pick(".c-type .seg", stored.type); pick(".c-tools .seg", stored.attendance);
+    pick('.seg[aria-label="Assessment type"]', stored.type); pick('.seg[aria-label="Attendance"]', stored.attendance);
     if (jots.length) renderJots();
     // the conclusion and recommendations, as plain text (older saves kept them as labelled fields)
     ["conclusion", "recommendations"].forEach((id) => {
@@ -1700,7 +1700,7 @@
   /* Follow-up: a calm list, newest first. Dates on the left, plain text, a thin line; colour only in small dots. */
   function renderFollowup() {
     const box = $("#followup");
-    const attendance = ((consult.querySelector(".c-tools .seg .is-on") || {}).textContent || "Present").trim();
+    const attendance = ((consult.querySelector('.seg[aria-label="Attendance"] .is-on') || {}).textContent || "Present").trim();
     const goals = C.goals.filter((g) => g.goal);
     const kept = goals.filter((g) => !g.example), examples = goals.filter((g) => g.example);
     const asked = C.ask.filter((q) => q.answer);
