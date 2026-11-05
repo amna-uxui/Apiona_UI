@@ -1899,3 +1899,11 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .report-actions button { flex: 1; padding: 11px 10px; font-size: 13.5px; }
   body.is-viewing .start, body.is-viewing .c-notes { display: none !important; }
 }
+@media (max-width: 760px) {
+  /* ask rows: the question with "Not in the record" under it; the button on the right, level with the question */
+  .c-ask .ask { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 4px 12px; align-items: start; }
+  .c-ask .ask .ask-label { grid-column: 1; grid-row: 1; }
+  .c-ask .ask .ask-missing { grid-column: 1; grid-row: 2; justify-self: start; }
+  .c-ask .ask .ask-add { grid-column: 2; grid-row: 1 / span 2; justify-self: end; align-self: start; }
+  .c-ask .ask .ask-input { grid-column: 1 / -1; grid-row: 3; }
+}
