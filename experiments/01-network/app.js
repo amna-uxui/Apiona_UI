@@ -39,7 +39,25 @@
   $("#p-new").hidden = !R.patient.isNew;
   $("#p-new").title = "New patient";
   $("#p-brief").innerHTML = R.patient.brief.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  $("#p-tags").innerHTML = R.patient.tags.map((t) => `<li class="tag tag-${t.tone}">${t.text}</li>`).join("");
+  // on a phone the tags are shorter, so all three fit on one row
+  function shortTag(t) {
+    if (t.tone === "session") return /done/.test(t.text) ? "Session 1 · done" : "Session 1 of 9";
+    return t.text;
+  }
+  $("#p-tags").innerHTML = R.patient.tags.map((t) => `<li class="tag tag-${t.tone}"><span class="t-long">${t.text}</span><span class="t-short">${shortTag(t)}</span></li>`).join("");
+  $(".m-sum-text").innerHTML = $("#p-brief").innerHTML;
+  // phone: the summary card grows out of its button, and folds back into it
+  (() => {
+    const btn = $("#m-sum-btn"), card = $("#m-sum-card");
+    const set = (on) => {
+      btn.setAttribute("aria-expanded", on); btn.classList.toggle("is-on", on);
+      if (on) { card.hidden = false; void card.offsetWidth; card.classList.add("is-in"); }
+      else { card.classList.remove("is-in"); setTimeout(() => { if (!card.classList.contains("is-in")) card.hidden = true; }, 380); }
+    };
+    btn.addEventListener("click", (e) => { e.stopPropagation(); set(!card.classList.contains("is-in")); });
+    document.addEventListener("click", (e) => { if (card.classList.contains("is-in") && !card.contains(e.target)) set(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && card.classList.contains("is-in")) set(false); });
+  })();
 
   /* ---------------- nodes ---------------- */
 
@@ -1305,7 +1323,7 @@
 
   /* ---------- After signing: the visit is done, and the summary says so ---------- */
   const sessionTag = R.patient.tags[0].text;
-  function renderTags() { $("#p-tags").innerHTML = R.patient.tags.map((t) => `<li class="tag tag-${t.tone}">${t.text}</li>`).join(""); }
+  function renderTags() { $("#p-tags").innerHTML = R.patient.tags.map((t) => `<li class="tag tag-${t.tone}"><span class="t-long">${t.text}</span><span class="t-short">${shortTag(t)}</span></li>`).join(""); }
   function applySigned() {
     R.patient.tags[0].text = C.signed ? "Session 1 of 9 · done today" : sessionTag;
     renderTags();

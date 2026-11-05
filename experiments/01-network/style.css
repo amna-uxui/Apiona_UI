@@ -1798,3 +1798,41 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .consult.is-stuck .c-time { margin-left: 0; }
 }
 @media (max-width: 760px) { .cl-body h3 { flex-wrap: wrap; gap: 4px 10px; } .cl-body h3 .cl-quiet { flex-basis: 100%; padding-left: 19px; font-size: 14px; } }
+
+/* ---------- Phone, round 2: no web, no bottom tabs, short tags, the summary as a card ---------- */
+.t-short, .m-sum-btn, .m-sum-card { display: none; }
+@media (max-width: 760px) {
+  :root, body.rail-collapsed { --tabs: 0px; }
+  .m-tabs { display: none !important; }
+  .map { display: none !important; }
+  .stage { padding-bottom: 96px; }
+  .t-long { display: none; }
+  .t-short { display: inline; }
+  .tags { flex-wrap: nowrap; gap: 6px; }
+  .tags .tag { white-space: nowrap; }
+  .tags .tag-session { order: 1; } .tags .tag-ok { order: 2; } .tags .tag-accident { order: 3; }
+  .brief-text { display: none; }
+  .brief { position: relative; }
+  .who { position: relative; padding-right: 52px; }
+  .m-sum-btn { display: grid; place-items: center; position: absolute; right: 0; top: 2px; width: 42px; height: 42px; padding: 0; border: 1px solid var(--rule);
+    border-radius: 50%; background: var(--white); color: var(--ink); cursor: pointer; transition: background var(--m-fast), border-color var(--m-fast), transform var(--m-base) var(--m-pop); }
+  .m-sum-btn .i { width: 19px; height: 19px; }
+  .m-sum-btn.is-on { background: var(--ink); border-color: var(--ink); color: var(--white); transform: rotate(-8deg); }
+  .m-sum-card { display: block; position: absolute; z-index: 15; right: 16px; left: 16px; top: 72px; padding: 18px 20px 20px; border-radius: 14px; background: var(--white);
+    border: 1px solid var(--rule); box-shadow: 0 2px 4px rgb(0 0 0 / .06), 0 26px 50px -22px rgb(0 0 0 / .35);
+    transform-origin: calc(100% - 20px) -40px; transform: scale(.15) translateY(-10px); opacity: 0;
+    transition: transform var(--m-slow) var(--m-pop), opacity var(--m-base) ease; }
+  .m-sum-card[hidden] { display: none; }
+  .m-sum-card.is-in { transform: none; opacity: 1; }
+  .m-sum-card > * { opacity: 0; transform: translateY(6px); transition: opacity var(--m-base) ease .12s, transform var(--m-slow) var(--m-ease) .12s; }
+  .m-sum-card.is-in > * { opacity: 1; transform: none; }
+  .m-sum-kicker { margin: 0 0 6px; font-size: 12.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--grey); }
+  .m-sum-text { margin: 0; font-size: 17px; line-height: 1.45; color: var(--grey); }
+  .m-sum-text strong { color: var(--ink); font-weight: 500; }
+  .side { margin-top: 18px; }
+  .start { bottom: 16px; }
+  .c-save { bottom: 70px; }
+  body.is-consult .start { bottom: 6px; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) { .m-sum-card, .m-sum-card > * { transform: none !important; } }
+@media (max-width: 760px) { .brief { z-index: 16; } }

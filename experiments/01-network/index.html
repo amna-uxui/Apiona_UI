@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=mobile-61">
+  <link rel="stylesheet" href="style.css?v=mobile-65">
 </head>
 <body>
   <main class="stage">
@@ -71,9 +71,12 @@
           <span class="meta" id="p-meta"></span>
           <span class="occupation" id="p-occ"></span>
         </span>
+        <!-- phone: the brief opens as a card from this button -->
+        <button class="m-sum-btn" id="m-sum-btn" type="button" aria-label="Show the summary" aria-expanded="false" aria-controls="m-sum-card"><svg class="i" aria-hidden="true"><use href="#i-clipboard"/></svg></button>
       </div>
       <ul class="tags" id="p-tags"></ul>
       <p class="brief-text" id="p-brief"></p>
+      <div class="m-sum-card" id="m-sum-card" role="dialog" aria-label="Summary" hidden><p class="m-sum-kicker">Summary</p><p class="m-sum-text"></p></div>
     </header>
 
     <!-- The network: a few nodes at a time, re-arranged around what you select -->
@@ -179,8 +182,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=mobile-61"></script>
-  <script src="data.js?v=mobile-61"></script>
-  <script src="app.js?v=mobile-61"></script>
+  <script src="../../design/icons.js?v=mobile-65"></script>
+  <script src="data.js?v=mobile-65"></script>
+  <script src="app.js?v=mobile-65"></script>
 </body>
 </html>
