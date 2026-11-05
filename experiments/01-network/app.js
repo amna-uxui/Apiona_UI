@@ -899,6 +899,7 @@
     };
     const markChanged = () => {
       if (restoring) return;   // putting back what was saved is not a change
+      C.begun = true;          // something was done: from now on the button says "Resume consultation"
       if (C.signed) { C.signed = null; C.changedAfterSign = true; applySigned(); }   // a change after signing needs a new signature
       save.classList.add("is-saving");
       save.querySelector("span").textContent = "Saving…";
@@ -1214,7 +1215,7 @@
       texts: { conclusion: text("conclusion"), recommendations: text("recommendations") }, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
       ask: C.ask.map((q) => q.answer || ""),
       reason: (C.steps.find((x) => x.id === "reason").rows || []).map((r) => ({ text: r.text, ok: !!r.ok, edited: !!r.edited })),
-      jots, started: !!C.started,
+      jots, begun: !!C.begun,
     };
     try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
   }
@@ -1228,7 +1229,7 @@
     stored.areas?.forEach((x, i) => { if (C.areas[i]) { C.areas[i].tests = x.tests; C.areas[i].notes = x.notes; } });
     if (stored.goals) C.goals.splice(0, C.goals.length, ...stored.goals);
     if (stored.fields) Object.keys(C.fieldVals).forEach((id) => { if (Array.isArray(stored.fields[id])) C.fieldVals[id] = stored.fields[id]; });
-    C.signed = stored.signed || null; C.changedAfterSign = !!stored.changedAfterSign; C.started = !!stored.started;
+    C.signed = stored.signed || null; C.changedAfterSign = !!stored.changedAfterSign; C.begun = !!stored.begun;   // only real work counts; merely opening the consultation does not
     stored.ask?.forEach((a, i) => { if (C.ask[i] && a) C.ask[i].answer = a; });
     const rows = C.steps.find((x) => x.id === "reason").rows || [];
     stored.reason?.forEach((x, i) => { if (rows[i]) Object.assign(rows[i], x); });
@@ -1618,11 +1619,11 @@
   function startLabel(inConsult) {
     if (C.signed) return "View the signed report";
     if (inConsult) return isPhone() ? "Finish report" : "Finish and prepare the report";
-    return C.started ? "Resume consultation" : "Start consultation";
+    return C.begun ? "Resume consultation" : "Start consultation";
   }
   function setConsult(on, push = true) {
     if (on === consulting) return;
-    if (on && !C.started) { C.started = true; saveConsult(); }
+
     setDir(on ? "consultation" : "summary");
     consulting = on;
     if (on && viewing) setViewing(false);
