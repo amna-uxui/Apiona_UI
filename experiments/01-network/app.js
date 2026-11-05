@@ -1853,7 +1853,17 @@
     box.querySelectorAll(".pr-item").forEach((b) => b.addEventListener("click", () => { docSel = b.dataset.doc; docSheet = true; renderDocuments(); }));
     const pv = box.querySelector(".doc-preview");
     pv.classList.toggle("is-open", docSheet);
-    pv.querySelector("h3").addEventListener("click", () => { docSheet = !docSheet; pv.classList.toggle("is-open", docSheet); });
+    // phone: the details sheet is gone until a print is tapped; Done, a tap outside or Esc puts it away
+    const closeSheet = () => { docSheet = false; pv.classList.remove("is-open"); };
+    const done = document.createElement("button");
+    done.type = "button"; done.className = "dp-done"; done.textContent = "Done";
+    done.addEventListener("click", closeSheet);
+    pv.prepend(done);
+    if (!box.dataset.sheetWired) {
+      box.dataset.sheetWired = "1";
+      box.addEventListener("click", (e) => { if (docSheet && !e.target.closest(".doc-preview, .pr-item")) { docSheet = false; box.querySelector(".doc-preview").classList.remove("is-open"); } });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && docSheet) { docSheet = false; box.querySelector(".doc-preview").classList.remove("is-open"); } });
+    }
     box.querySelector("[data-view]")?.addEventListener("click", (e) => openDoc(docSel, e.currentTarget));
     box.querySelector("[data-remind]")?.addEventListener("click", () => { reminded = hm(); renderDocuments(); });
     wireGo(box);
