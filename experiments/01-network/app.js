@@ -1653,7 +1653,7 @@
     if (seg) (isPhone() ? consult.querySelector(".c-type") : consult.querySelector(".c-tools")).prepend(seg);
   }
   placeAttendance();
-  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); } apply(); });
+  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); if (aux === "followup") renderFollowup(); } apply(); });
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown
@@ -1706,6 +1706,47 @@
     const kept = goals.filter((g) => !g.example), examples = goals.filter((g) => g.example);
     const asked = C.ask.filter((q) => q.answer);
     const done = C.signed ? 1 : 0;
+    if (isPhone()) {
+      // phone: one timeline that holds everything; what is next sits on top, then today, then before
+      box.innerHTML = pageBar("Follow-up", `Session 1 of 9 · ${C.signed ? "done today" : "today, in progress"}`) + `
+      <div class="pg-main">
+        <div class="fu-m-sessions">
+          <div class="fu-bar" aria-label="${done} of 9 sessions done">${Array.from({ length: 9 }, (_, k) => `<i class="${k < done ? "is-done" : k === 0 ? "is-today" : ""}"></i>`).join("")}</div>
+          <p><b>${done} of 9 sessions done</b> <span class="cl-quiet">· prescribed by the emergency department, Clinique Bois-Cerf</span></p>
+        </div>
+        <ol class="cl-list">
+          <li class="cl-item is-next">
+            <div class="cl-when">Next</div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-next" aria-hidden="true"></i>Session 2 of 9</h3>
+              <p class="cl-quiet">Not booked yet</p>
+              <p class="cl-quiet">After session 9 · final report to the GP</p>
+            </div>
+          </li>
+          <li class="cl-item">
+            <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
+              ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">${g.example ? "example" : "set today"}</span></li>`).join("")}</ol>` : ""}
+              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}
+                · <button type="button" data-go="report">${C.signed ? "view it" : "finish it"}</button></p>
+              ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
+              ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
+              <p class="cl-sign"><span>Lena Keller · ${C.signed ? "validated and signed" : C.changedAfterSign ? "changed after signing" : "in progress"}</span><button type="button" data-go="consultation">Open the consultation</button></p>
+            </div>
+          </li>
+          <li class="cl-item is-before">
+            <div class="cl-when">Sunday<span>1 Nov</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-prep" aria-hidden="true"></i>Preparation received</h3>
+              <p class="cl-quiet">Her summary and 2 documents · <button type="button" data-go="summary">view the summary</button></p>
+            </div>
+          </li>
+        </ol>
+      </div>`;
+      wireGo(box);
+      return;
+    }
     box.innerHTML = pageBar("Follow-up", `Session 1 of 9 · ${C.signed ? "done today" : "today, in progress"}`) + `
       <div class="pg-main">
         <ol class="cl-list">

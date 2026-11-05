@@ -1917,3 +1917,16 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
 /* the summary's header is faded out on other pages; it must not catch taps there (it sits above them on phones) */
 body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-page .brief * { pointer-events: none !important; }
 @media (max-width: 760px) { body.is-consult .brief, body.is-page .brief { visibility: hidden; transition: visibility 0s linear .4s, opacity var(--m-base) ease; } }
+@media (max-width: 760px) {
+  /* follow-up on a phone: one timeline */
+  .fu-m-sessions { margin: 4px 0 22px; }
+  .fu-m-sessions .fu-bar { margin: 0 0 8px; }
+  .fu-m-sessions p { margin: 0; font-size: 14.5px; line-height: 1.45; }
+  .fu-m-sessions b { font-weight: 500; }
+  .cl-item.is-next .cl-body { border-left-style: dashed; }
+  .cl-item.is-next .cl-when { color: var(--grey); }
+  .cl-dot.is-next { border: 1px solid var(--grey); background: var(--white); }
+  .fu-m-goals { list-style: none; margin: 4px 0 12px; padding: 0; display: grid; gap: 6px; }
+  .fu-m-goals li { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .fu-m-goals li .cl-quiet { font-size: 13px; white-space: nowrap; }
+}
