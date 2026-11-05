@@ -1544,8 +1544,9 @@
     panel.innerHTML = `
       <div class="as-record">
           <h4 class="as-area-name">${a.label}</h4>
-          ${a.record.length ? a.record.map((x) => `<p class="as-fact"${x.doc ? ` data-doc="${x.doc}"` : ""}><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src"><span class="src-t">${x.src}</span></span></span></p>`).join("")
-            + docNodes(a)
+          ${a.record.length ? `<details class="as-ctx"${isPhone() ? "" : " open"}><summary><span>From the record · ${a.record.length}</span></summary>`
+            + a.record.map((x) => `<p class="as-fact"${x.doc ? ` data-doc="${x.doc}"` : ""}><i class="as-mark" aria-hidden="true"></i><span class="as-fact-text">${x.text}<span class="src"><span class="src-t">${x.src}</span></span></span></p>`).join("")
+            + docNodes(a) + `</details>`
             : `<p class="as-none">Nothing highlighted by your rules for this area.</p>`}
       </div>`;
     const work = $("#as-work");
@@ -1660,7 +1661,7 @@
     if (seg) (isPhone() ? consult.querySelector(".c-type") : consult.querySelector(".c-tools")).prepend(seg);
   }
   placeAttendance();
-  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); if (aux === "followup") renderFollowup(); } apply(); });
+  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); if (aux === "followup") renderFollowup(); if (!isPhone()) document.querySelectorAll(".as-ctx").forEach((d) => { d.open = true; }); } apply(); });
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown
