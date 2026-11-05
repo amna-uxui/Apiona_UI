@@ -1954,3 +1954,27 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
 /* network descriptions: a little larger and darker, closer to the consultation's reading text */
 .map .sub { font-size: 14px; color: #45453F; }
 .map .kind-section .sub, .map .kind-person .sub { font-size: 14px; }
+
+/* the record's context for an area: always open on the desktop; a folding bar on phones */
+.as-ctx > summary { display: none; }
+@media (max-width: 760px) {
+  .as-ctx > summary { display: flex; align-items: center; justify-content: space-between; list-style: none; cursor: pointer;
+    margin: 0 0 12px; padding: 11px 14px; border-radius: 7px; background: var(--panel); font-size: 15px; font-weight: 500; }
+  .as-ctx > summary::-webkit-details-marker { display: none; }
+  .as-ctx > summary::before { content: ""; width: 9px; height: 9px; border-radius: 2px; background: var(--know); margin-right: 10px; flex: none; }
+  .as-ctx > summary span { flex: 1; }
+  .as-ctx > summary::after { content: "+"; font-weight: 400; font-size: 18px; line-height: 1; transition: transform var(--m-base) var(--m-pop); }
+  .as-ctx[open] > summary::after { content: "−"; }
+
+  /* history rows: the confirmation under the text, so the text keeps the full width */
+  .rh-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .rh-row .rh-ok { justify-self: start; margin-top: 6px; }
+
+  /* assessment fields: clearly editable, easy to tap */
+  .as-tests input, .as-tests select { min-height: 40px; padding: 8px 10px !important; border: 1px solid #C9C7BF !important; border-radius: 6px; background-color: var(--white); }
+  .as-tests select { padding-right: 28px !important; background-position: right 8px center; }
+  .as-tests input:focus, .as-tests select:focus { border-color: var(--ink) !important; }
+  .as-tests td { padding: 6px 6px 6px 0; }
+  .as-tests { min-width: 560px; }
+}
+@media (max-width: 760px) { .as-tests { min-width: 640px; } }
