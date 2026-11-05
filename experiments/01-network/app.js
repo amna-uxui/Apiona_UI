@@ -1712,7 +1712,7 @@
       <div class="pg-main">
         <div class="fu-m-sessions">
           <div class="fu-bar" aria-label="${done} of 9 sessions done">${Array.from({ length: 9 }, (_, k) => `<i class="${k < done ? "is-done" : k === 0 ? "is-today" : ""}"></i>`).join("")}</div>
-          <p><b>${done} of 9 sessions done</b> <span class="cl-quiet">· prescribed by the emergency department, Clinique Bois-Cerf</span></p>
+          <p><b>${done} of 9 sessions done</b></p>
         </div>
         <ol class="cl-list">
           <li class="cl-item is-next">
