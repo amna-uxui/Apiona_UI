@@ -1941,3 +1941,12 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
   .cl-body .fu-m-btn:hover, .cl-body .fu-m-btn:active { border-color: var(--ink); }
 }
 @media (max-width: 760px) { .fu-m-actions { flex-direction: column; } .cl-body .fu-m-btn { width: 100%; text-align: center; } }
+.dp-done { display: none; }
+@media (max-width: 760px) {
+  /* document details: hidden until a print is tapped */
+  .doc-preview { transform: translateY(105%); visibility: hidden; transition: transform var(--m-slow) var(--m-ease), visibility 0s linear var(--m-slow); }
+  .doc-preview.is-open { transform: none; visibility: visible; transition: transform var(--m-slow) var(--m-ease), visibility 0s; }
+  .doc-preview h3 { cursor: default; padding-right: 90px; }
+  .dp-done { display: block; position: sticky; top: 14px; float: right; z-index: 2; margin: 12px 0 -46px; padding: 6px 14px; border: 0; border-radius: 999px;
+    background: var(--ink); color: var(--white); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+}
