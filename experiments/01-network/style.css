@@ -1914,3 +1914,6 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .report-actions button, .report-actions .r-done-btn, .report-actions .r-sign-btn { flex: 1 1 0; min-width: 0; padding: 10px 12px; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .report-actions { padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
 }
+/* the summary's header is faded out on other pages; it must not catch taps there (it sits above them on phones) */
+body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-page .brief * { pointer-events: none !important; }
+@media (max-width: 760px) { body.is-consult .brief, body.is-page .brief { visibility: hidden; transition: visibility 0s linear .4s, opacity var(--m-base) ease; } }
