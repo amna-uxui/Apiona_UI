@@ -1836,3 +1836,10 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { .m-sum-card, .m-sum-card > * { transform: none !important; } }
 @media (max-width: 760px) { .brief { z-index: 16; } }
+@media (max-width: 760px) {
+  /* the summary card: square corners, pink */
+  .m-sum-card { border-radius: 0; background: var(--missing); border-color: var(--missing); }
+  .m-sum-text, .m-sum-kicker { color: #3D3D39; }
+  .m-sum-text strong { color: var(--ink); }
+}
+@media (max-width: 760px) { .m-sum-card { border-radius: 4px; } }
