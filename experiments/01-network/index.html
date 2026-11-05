@@ -4,10 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=text-52">
+  <link rel="stylesheet" href="style.css?v=mobile-61">
 </head>
 <body>
   <main class="stage">
+
+    <!-- Phone only: a top bar with the logo and the menu, and her pages as tabs at the bottom -->
+    <header class="m-top">
+      <a class="m-logo" href="./"><img src="../../design/logo/colours/apiona-logo-teal.svg" alt="Apiona"></a>
+      <button class="m-burger" id="m-burger" type="button" aria-label="Open the menu" aria-expanded="false" aria-controls="rail"><span></span><span></span><span></span></button>
+    </header>
+    <nav class="m-tabs" aria-label="Camille's pages">
+      <a class="page m-tab is-current" href="./" data-page="summary">Summary</a>
+      <a class="page m-tab" href="#consultation" data-page="consultation">Consult</a>
+      <a class="page m-tab" href="#follow-up" data-page="followup">Follow-up</a>
+      <a class="page m-tab" href="#documents" data-page="documents">Docs</a>
+    </nav>
+    <div class="m-scrim" id="m-scrim" aria-hidden="true"></div>
 
     <!-- Left: where am I in the product. Plain text on white, full height, so it never reads like the index. -->
     <nav class="rail" id="rail" aria-label="Main">
@@ -166,8 +179,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=text-52"></script>
-  <script src="data.js?v=text-52"></script>
-  <script src="app.js?v=text-52"></script>
+  <script src="../../design/icons.js?v=mobile-61"></script>
+  <script src="data.js?v=mobile-61"></script>
+  <script src="app.js?v=mobile-61"></script>
 </body>
 </html>
