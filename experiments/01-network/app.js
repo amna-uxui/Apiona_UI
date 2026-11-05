@@ -841,7 +841,7 @@
     $("#c-sections").innerHTML = C.steps.filter((st) => st.id !== "notes").map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
-          <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${st.n}</span></span><span class="c-sec-title">${st.label}</span>
+          <span class="c-n c-dot" data-sec="${st.id}"><span class="sr">${i + 1}</span></span><span class="c-sec-title">${st.label}</span>
           <span class="chev" aria-hidden="true"></span>
         </button>
         <div class="c-sec-body"><div class="c-sec-inner">${st.fields ? `<div class="fields" data-fields="${st.id}">${st.fields.map((f, k) => `
@@ -1214,7 +1214,7 @@
       texts: { conclusion: text("conclusion"), recommendations: text("recommendations") }, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
       ask: C.ask.map((q) => q.answer || ""),
       reason: (C.steps.find((x) => x.id === "reason").rows || []).map((r) => ({ text: r.text, ok: !!r.ok, edited: !!r.edited })),
-      jots,
+      jots, started: !!C.started,
     };
     try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
   }
@@ -1228,7 +1228,7 @@
     stored.areas?.forEach((x, i) => { if (C.areas[i]) { C.areas[i].tests = x.tests; C.areas[i].notes = x.notes; } });
     if (stored.goals) C.goals.splice(0, C.goals.length, ...stored.goals);
     if (stored.fields) Object.keys(C.fieldVals).forEach((id) => { if (Array.isArray(stored.fields[id])) C.fieldVals[id] = stored.fields[id]; });
-    C.signed = stored.signed || null; C.changedAfterSign = !!stored.changedAfterSign;
+    C.signed = stored.signed || null; C.changedAfterSign = !!stored.changedAfterSign; C.started = !!stored.started;
     stored.ask?.forEach((a, i) => { if (C.ask[i] && a) C.ask[i].answer = a; });
     const rows = C.steps.find((x) => x.id === "reason").rows || [];
     stored.reason?.forEach((x, i) => { if (rows[i]) Object.assign(rows[i], x); });
@@ -1332,7 +1332,7 @@
   function applySigned() {
     R.patient.tags[0].text = C.signed ? "Session 1 of 9 · done today" : sessionTag;
     renderTags();
-    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : consulting ? (isPhone() ? "Finish report" : "Finish and prepare the report") : "Start consultation";
+    startBtn.querySelector("span").textContent = startLabel(consulting);
     const save = $("#c-save");
     if (C.signed) { save.classList.remove("is-saving"); save.querySelector("span").textContent = `Signed and sent · ${C.signed.at}`; }
   }
@@ -1350,19 +1350,19 @@
         <span class="rh-label">${r.label}</span>
         <span class="rh-body"><span class="rh-text" contenteditable="plaintext-only" spellcheck="true" aria-label="${r.label}">${r.text}</span>
           <span class="rh-src">${r.src}<span class="rh-today"> · corrected today</span></span></span>
-        <button type="button" class="rh-ok" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" pathLength="1"/></svg><span>Confirm</span></button>
+        <button type="button" class="rh-ok" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" pathLength="1"/></svg><span>Confirm with her</span></button>
       </div>`).join("");
     box.querySelectorAll(".rh-row").forEach((row) => {
       const r = rows[+row.dataset.i], text = row.querySelector(".rh-text"), ok = row.querySelector(".rh-ok");
       row.classList.toggle("is-edited", !!r.edited);
       row.classList.toggle("is-ok", !!r.ok); ok.setAttribute("aria-pressed", !!r.ok);
-      if (r.ok) ok.querySelector("span").textContent = "Confirmed";
+      if (r.ok) ok.querySelector("span").textContent = "Confirmed with her";
       text.addEventListener("input", () => { r.text = text.textContent; r.edited = true; row.classList.add("is-edited"); sync(); });
       ok.addEventListener("click", () => {
         const on = !row.classList.contains("is-ok");
         r.ok = on;
         row.classList.toggle("is-ok", on); ok.setAttribute("aria-pressed", on);
-        ok.querySelector("span").textContent = on ? "Confirmed" : "Confirm";
+        ok.querySelector("span").textContent = on ? "Confirmed with her" : "Confirm with her";
       });
     });
     ta.value = rows.map((r) => `${r.label}: ${r.text}`).join("\n\n");
@@ -1613,8 +1613,15 @@
     $("#c-arc").setAttribute("d", `M20,20 L${ax},${ay} A18,18 0 ${span > 180 ? 1 : 0} 1 ${bx},${by} Z`);
   }
 
+  // the green button says where the visit stands
+  function startLabel(inConsult) {
+    if (C.signed) return "View the signed report";
+    if (inConsult) return isPhone() ? "Finish report" : "Finish and prepare the report";
+    return C.started ? "Resume consultation" : "Start consultation";
+  }
   function setConsult(on, push = true) {
     if (on === consulting) return;
+    if (on && !C.started) { C.started = true; saveConsult(); }
     setDir(on ? "consultation" : "summary");
     consulting = on;
     if (on && viewing) setViewing(false);
@@ -1637,7 +1644,7 @@
     }
     syncMenu(on ? "consultation" : "summary");
     // the green button becomes the next step of the visit
-    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : on ? (isPhone() ? "Finish report" : "Finish and prepare the report") : "Start consultation";
+    startBtn.querySelector("span").textContent = startLabel(on);
     if (push) history.pushState(null, "", on ? "#consultation" : location.pathname + location.search);
   }
 
@@ -1692,7 +1699,7 @@
     if (p !== "summary" && state.current) select(null);
     showAux(p === "summary" ? null : p);
     syncMenu(p);
-    startBtn.querySelector("span").textContent = C.signed ? "View the signed report" : "Start consultation";
+    startBtn.querySelector("span").textContent = startLabel(false);
     if (push) history.pushState(null, "", { followup: "#follow-up", documents: "#documents" }[p] || location.pathname + location.search);
   }
   const hm = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; };
@@ -1728,7 +1735,7 @@
             <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
-              ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">${g.example ? "example" : "set today"}</span></li>`).join("")}</ol>` : ""}
+              ${kept.length ? `<ol class="fu-m-goals">${kept.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">set today</span></li>`).join("")}</ol>` : `<p class="cl-quiet">Goals not set yet</p>`}
               <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}</p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
               ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
@@ -1756,7 +1763,7 @@
             <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 of 9 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
-              ${goals.length ? `<p>${goals.length} goal${goals.length > 1 ? "s" : ""} set${examples.length ? ` <span class="cl-quiet">· ${examples.length} still example${examples.length > 1 ? "s" : ""}</span>` : ""}</p>` : ""}
+              <p>${kept.length ? `${kept.length} goal${kept.length > 1 ? "s" : ""} set` : `<span class="cl-quiet">Goals not set yet</span>`}</p>
               <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}
                 · <button type="button" data-go="report">${C.signed ? "view the report" : "finish it"}</button></p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
@@ -1779,8 +1786,8 @@
         <p class="fu-strong">${done} of 9 done${done ? "" : " · session 1 today"}</p>
         <p class="fu-sub">Prescribed by the emergency department, Clinique Bois-Cerf</p>
         <h4><svg class="i" aria-hidden="true"><use href="#i-flag"/></svg>Goals of the initial assessment</h4>
-        ${goals.length ? `<ol class="fu-side-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="fu-sub">${g.example ? "example" : "0 sessions"}</span></li>`).join("")}</ol>
-          <p class="fu-foot">Sessions where the goal was worked on, from the session notes</p>` : `<p class="fu-sub">Set in the consultation</p>`}
+        ${kept.length ? `<ol class="fu-side-goals">${kept.map((g) => `<li><span>${g.goal}</span><span class="fu-sub">0 sessions</span></li>`).join("")}</ol>
+          <p class="fu-foot">Sessions where the goal was worked on, from the session notes</p>` : `<p class="fu-sub">Not set yet</p>`}
         ${C.signed ? `<h4><svg class="i" aria-hidden="true"><use href="#i-send"/></svg>Sent to other carers</h4>
           <p class="fu-row"><span>Initial assessment report</span><span class="fu-sub">GP · today ${C.signed.at}</span></p>` : ""}
         <h4><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg>Still to come</h4>
