@@ -1065,7 +1065,7 @@
       if (!tests.length && !a.notes) return "";
       return `<h4>${a.label}</h4>${tests.length ? `<ul>${tests.map((t) => `<li>${t.test} (${t.side}): ${t.result || "—"}${t.ref ? ` · other side: ${t.ref}` : ""}</li>`).join("")}</ul>` : ""}${a.notes ? `<p>${a.notes}</p>` : ""}`;
     }).join("");
-    const type = consult.querySelector('.c-type .seg .is-on').textContent.trim();
+    const type = consult.querySelector('.seg[aria-label="Assessment type"] .is-on').textContent.trim();
     const date = consult.querySelector('.c-date-field input').value;
 
     // what still needs a look before signing; each item takes you back to its place
@@ -1090,7 +1090,7 @@
     ].filter(Boolean);
     const asked = C.ask.filter((q) => q.answer).map((q) => `<li>${q.label}: ${q.answer} <span class="r-by">Physio, in session</span></li>`).join("");
     box.innerHTML = `
-      ${C.signed ? `<aside class="r-review is-done"><p class="r-review-head"><i aria-hidden="true"></i>Signed and sent to Dr Marc Favre, GP · ${C.signed.at}</p></aside>`
+      ${C.signed ? `<aside class="r-review is-done"><p class="r-review-head"><i aria-hidden="true"></i>Signed and sent to Dr Favre, GP · ${C.signed.at}</p></aside>`
       : todo.length ? `<aside class="r-review" aria-label="Still to review">
         <p class="r-review-head">Still to review before signing</p>
         <ul>${todo.map((t, i) => `<li><button type="button" data-i="${i}"><i aria-hidden="true"></i>${t.text}<span aria-hidden="true">→</span></button></li>`).join("")}</ul>
@@ -1106,12 +1106,12 @@
         <h3>4 · Notes</h3>${para(val("notes"))}
         <h3>5 · Conclusion</h3>${para(val("conclusion"))}
         <h3>6 · Recommendations</h3>${para(val("recommendations"))}
-        <p class="r-sign">${C.signed ? `Signed by Lena Keller, physiotherapist · sent to Dr Marc Favre, GP · ${C.signed.at}` : "Lena Keller, physiotherapist · draft, not signed"}</p>
+        <p class="r-sign">${C.signed ? `Signed by Lena Keller, physiotherapist · sent to Dr Favre, GP · ${C.signed.at}` : "Lena Keller, physiotherapist · draft, not signed"}</p>
       </article>
       <div class="report-actions">
-        <button type="button" class="r-back-btn">Back to the consultation</button>${C.signed ? `
-        <button type="button" class="r-done-btn">Done · back to the summary</button>` : `
-        <button type="button" class="r-sign-btn">Sign and send to Dr Marc Favre, GP</button>`}
+        <button type="button" class="r-back-btn">${isPhone() ? "← Consultation" : "Back to the consultation"}</button>${C.signed ? `
+        <button type="button" class="r-done-btn">${isPhone() ? "Done" : "Done · back to the summary"}</button>` : `
+        <button type="button" class="r-sign-btn">${isPhone() ? "Sign and send" : "Sign and send to Dr Favre, GP"}</button>`}
       </div>`;
     box.hidden = false;
     const o = (from && from.isConnected ? from : startBtn).getBoundingClientRect();
@@ -1127,7 +1127,7 @@
       // with things left to review, the first click says so; a second click signs anyway
       if (todo.length && !e.target.dataset.sure) {
         e.target.dataset.sure = "1";
-        e.target.textContent = `${todo.length} still to review · click again to sign anyway`;
+        e.target.textContent = isPhone() ? `${todo.length} to review · tap again` : `${todo.length} still to review · click again to sign anyway`;
         e.target.classList.add("is-warn");
         return;
       }
@@ -1138,7 +1138,7 @@
       // one calm moment: a green check draws itself, then the report shows as signed
       const seal = document.createElement("div");
       seal.className = "r-seal";
-      seal.innerHTML = `<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" pathLength="1"/><path d="M15 27l7 7 15-16" pathLength="1"/></svg><b>Signed and sent</b><span>to Dr Marc Favre, GP</span>`;
+      seal.innerHTML = `<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" pathLength="1"/><path d="M15 27l7 7 15-16" pathLength="1"/></svg><b>Signed and sent</b><span>to Dr Favre, GP</span>`;
       box.appendChild(seal);
       void seal.offsetWidth;   // start from the hidden state, then draw
       seal.classList.add("is-in");
@@ -1208,7 +1208,7 @@
     const text = (id) => (document.querySelector(`textarea[data-sec="${id}"]`) || {}).value || "";
     const data = {
       date: consult.querySelector(".c-date-field input").value,
-      type: segIndex(".c-type .seg"), attendance: segIndex(".c-tools .seg"),
+      type: segIndex('.seg[aria-label="Assessment type"]'), attendance: segIndex('.seg[aria-label="Attendance"]'),
       areas: C.areas.map((a) => ({ tests: a.tests, notes: a.notes || "" })),
       goals: C.goals, fields: C.fieldVals,
       texts: { conclusion: text("conclusion"), recommendations: text("recommendations") }, signed: C.signed || null, changedAfterSign: !!C.changedAfterSign,
@@ -1240,7 +1240,7 @@
     restoring = true;
     const pick = (sel, i) => { const b = consult.querySelectorAll(`${sel} button`)[i]; if (b && i >= 0) b.click(); };
     if (stored.date) consult.querySelector(".c-date-field input").value = stored.date;
-    pick(".c-type .seg", stored.type); pick(".c-tools .seg", stored.attendance);
+    pick('.seg[aria-label="Assessment type"]', stored.type); pick('.seg[aria-label="Attendance"]', stored.attendance);
     if (jots.length) renderJots();
     // the conclusion and recommendations, as plain text (older saves kept them as labelled fields)
     ["conclusion", "recommendations"].forEach((id) => {
@@ -1446,7 +1446,7 @@
     drawWeb(performance.now());
     svg.classList.toggle("is-drawn", !animate);
     if (animate) requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add("is-drawn")));
-    if (!web.raf && !reduceMotion) web.raf = requestAnimationFrame(floatWeb);
+    if (!web.raf && !reduceMotion && !isPhone()) web.raf = requestAnimationFrame(floatWeb);   // on a phone there are no lines, so the facts stay still
   }
 
   function drawWeb(t) {
@@ -1470,6 +1470,7 @@
 
   function floatWeb(t) {
     web.raf = 0;
+    if (isPhone()) { web.facts.concat(web.docs || []).forEach((f) => { f.el.style.transform = ""; }); return; }
     if (!web.lay || !web.lay.isConnected || !web.lay.offsetWidth || !web.facts.length) return;   // restarts on the next linkFacts
     web.facts.concat(web.docs || []).forEach((f) => {
       // a slow drift around its place, plus a lean towards the pointer when it is near
@@ -1652,7 +1653,7 @@
     if (seg) (isPhone() ? consult.querySelector(".c-type") : consult.querySelector(".c-tools")).prepend(seg);
   }
   placeAttendance();
-  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); } apply(); });
+  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); if (aux === "followup") renderFollowup(); } apply(); });
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown
@@ -1700,11 +1701,54 @@
   /* Follow-up: a calm list, newest first. Dates on the left, plain text, a thin line; colour only in small dots. */
   function renderFollowup() {
     const box = $("#followup");
-    const attendance = ((consult.querySelector(".c-tools .seg .is-on") || {}).textContent || "Present").trim();
+    const attendance = ((consult.querySelector('.seg[aria-label="Attendance"] .is-on') || {}).textContent || "Present").trim();
     const goals = C.goals.filter((g) => g.goal);
     const kept = goals.filter((g) => !g.example), examples = goals.filter((g) => g.example);
     const asked = C.ask.filter((q) => q.answer);
     const done = C.signed ? 1 : 0;
+    if (isPhone()) {
+      // phone: one timeline that holds everything; what is next sits on top, then today, then before
+      box.innerHTML = pageBar("Follow-up", `Session 1 of 9 · ${C.signed ? "done today" : "today, in progress"}`) + `
+      <div class="pg-main">
+        <div class="fu-m-sessions">
+          <div class="fu-bar" aria-label="${done} of 9 sessions done">${Array.from({ length: 9 }, (_, k) => `<i class="${k < done ? "is-done" : k === 0 ? "is-today" : ""}"></i>`).join("")}</div>
+          <p><b>${done} of 9 sessions done</b></p>
+          <p class="cl-quiet">Prescribed by the emergency department, Bois-Cerf</p>
+        </div>
+        <ol class="cl-list">
+          <li class="cl-item is-next">
+            <div class="cl-when">Next</div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-next" aria-hidden="true"></i>Session 2 of 9</h3>
+              <p class="cl-quiet">Not booked yet</p>
+              <p class="cl-quiet">After session 9 · final report to the GP</p>
+            </div>
+          </li>
+          <li class="cl-item">
+            <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
+              ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">${g.example ? "example" : "set today"}</span></li>`).join("")}</ol>` : ""}
+              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}</p>
+              ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
+              ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
+              <p class="cl-quiet fu-m-by">Lena Keller · ${C.signed ? "validated and signed" : C.changedAfterSign ? "changed after signing" : "in progress"}</p>
+              <div class="fu-m-actions"><button type="button" class="fu-m-btn" data-go="report">${C.signed ? "View the report" : "Finish the report"}</button><button type="button" class="fu-m-btn" data-go="consultation">Open the consultation</button></div>
+            </div>
+          </li>
+          <li class="cl-item is-before">
+            <div class="cl-when">Sunday<span>1 Nov</span></div>
+            <div class="cl-body">
+              <h3><i class="cl-dot is-prep" aria-hidden="true"></i>Preparation received</h3>
+              <p class="cl-quiet">Her summary and 2 documents</p>
+              <div class="fu-m-actions"><button type="button" class="fu-m-btn" data-go="summary">View the summary</button></div>
+            </div>
+          </li>
+        </ol>
+      </div>`;
+      wireGo(box);
+      return;
+    }
     box.innerHTML = pageBar("Follow-up", `Session 1 of 9 · ${C.signed ? "done today" : "today, in progress"}`) + `
       <div class="pg-main">
         <ol class="cl-list">
@@ -1713,7 +1757,7 @@
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 of 9 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
               ${goals.length ? `<p>${goals.length} goal${goals.length > 1 ? "s" : ""} set${examples.length ? ` <span class="cl-quiet">· ${examples.length} still example${examples.length > 1 ? "s" : ""}</span>` : ""}</p>` : ""}
-              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Marc Favre, GP · ${C.signed.at}` : "Report not signed yet"}
+              <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}
                 · <button type="button" data-go="report">${C.signed ? "view the report" : "finish it"}</button></p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
               ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
@@ -1764,7 +1808,7 @@
         meta: [["From", "GP"], ["Shared by", "Her, in the preparation"], ["Added", "1 November 2026"], ["Used in", "Know before the session · Assessment › Joints, Balance"], ["Seen by", "The practice"]] },
       { id: "report", group: "practice", name: "Initial assessment report", type: "Report", from: C.signed ? `GP · sent today ${C.signed.at}` : "Not sent yet",
         by: `Lena Keller · ${C.signed ? "signed" : "draft"}`, added: "Today",
-        meta: [["Written by", "Lena Keller, physiotherapist"], ["State", C.signed ? `Signed and sent · ${C.signed.at}` : "Draft, not signed"], ["Shared with", C.signed ? "Dr Marc Favre, GP" : "Nobody yet"], ["Seen by", "The practice"]] },
+        meta: [["Written by", "Lena Keller, physiotherapist"], ["State", C.signed ? `Signed and sent · ${C.signed.at}` : "Draft, not signed"], ["Shared with", C.signed ? "Dr Favre, GP" : "Nobody yet"], ["Seen by", "The practice"]] },
       ...(jots.length ? [{ id: "notes", group: "practice", name: "Session 1 notes", type: "Session notes", from: "Practice only", by: `${jots.length} timed note${jots.length > 1 ? "s" : ""}`, added: "Today",
         meta: [["Written by", "Lena Keller, physiotherapist"], ["Shared with", "Nobody · practice only"], ["Also in", "Follow-up"]] }] : []),
     ];

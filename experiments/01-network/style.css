@@ -1882,3 +1882,62 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .consult .c-dictate { height: 38px; border-radius: 999px; }
   .consult .c-back { height: 38px; border-radius: 999px; }
 }
+@media (max-width: 760px) { .c-notes .c-notes-handle .c-notes-done { color: var(--white); font-size: 14px; } }
+@media (max-width: 760px) {
+  /* two lines: what this is, then who it is for */
+  .consult .c-title h2 { white-space: normal; overflow: visible; line-height: 1.2; display: grid; }
+  .consult .c-title .c-sep { display: none; }
+  .consult .c-title .c-what { font-size: 12.5px; font-weight: 400; color: var(--grey); }
+  .consult .c-title .c-who { font-size: 16.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 760px) {
+  /* the report on a phone: a full screen under the top bar that scrolls anywhere, with its buttons always in reach */
+  .report { top: 56px; z-index: 19; pointer-events: auto; background: var(--panel); padding: 16px 0 0; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .report .paper { width: 92%; }
+  .report-actions { position: sticky; bottom: 0; z-index: 2; width: 100%; box-sizing: border-box; justify-content: center; gap: 8px;
+    margin-top: 16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--rule); }
+  .report-actions button { flex: 1; padding: 11px 10px; font-size: 13.5px; }
+  body.is-viewing .start, body.is-viewing .c-notes { display: none !important; }
+}
+@media (max-width: 760px) {
+  /* ask rows: the question with "Not in the record" under it; the button on the right, level with the question */
+  .c-ask .ask { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 4px 12px; align-items: start; }
+  .c-ask .ask .ask-label { grid-column: 1; grid-row: 1; }
+  .c-ask .ask .ask-missing { grid-column: 1; grid-row: 2; justify-self: start; }
+  .c-ask .ask .ask-add { grid-column: 2; grid-row: 1 / span 2; justify-self: end; align-self: start; }
+  .c-ask .ask .ask-input { grid-column: 1 / -1; grid-row: 3; }
+}
+@media (max-width: 760px) { .c-ask .c-ask-list { gap: 14px; } }
+@media (max-width: 760px) { .c-ask .ask .ask-add { align-self: center; } }
+@media (max-width: 760px) {
+  /* report buttons: short labels, one line, a normal height */
+  .report-actions button, .report-actions .r-done-btn, .report-actions .r-sign-btn { flex: 1 1 0; min-width: 0; padding: 10px 12px; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .report-actions { padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+}
+/* the summary's header is faded out on other pages; it must not catch taps there (it sits above them on phones) */
+body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-page .brief * { pointer-events: none !important; }
+@media (max-width: 760px) { body.is-consult .brief, body.is-page .brief { visibility: hidden; transition: visibility 0s linear .4s, opacity var(--m-base) ease; } }
+@media (max-width: 760px) {
+  /* follow-up on a phone: one timeline */
+  .fu-m-sessions { margin: 4px 0 22px; }
+  .fu-m-sessions .fu-bar { margin: 0 0 8px; }
+  .fu-m-sessions p { margin: 0; font-size: 14.5px; line-height: 1.45; }
+  .fu-m-sessions b { font-weight: 500; }
+  .cl-item.is-next .cl-body { border-left-style: dashed; }
+  .cl-item.is-next .cl-when { color: var(--grey); }
+  .cl-dot.is-next { border: 1px solid var(--grey); background: var(--white); }
+  .fu-m-goals { list-style: none; margin: 4px 0 12px; padding: 0; display: grid; gap: 6px; }
+  .fu-m-goals li { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .fu-m-goals li .cl-quiet { font-size: 13px; white-space: nowrap; }
+}
+@media (max-width: 760px) { .fu-m-sessions p + p { margin-top: 2px; font-size: 13.5px; } }
+@media (max-width: 760px) { #followup .fu-m-sessions .fu-bar { margin: 0 0 10px; } .fu-m-sessions p + p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+@media (max-width: 760px) {
+  /* follow-up actions as buttons, like "Add the answer" */
+  .fu-m-by { margin-top: 10px !important; padding-top: 10px; border-top: 1px solid var(--rule); }
+  .fu-m-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cl-body .fu-m-btn { padding: 8px 14px; border: 1px solid var(--rule); border-radius: 7px; background: var(--white); font: inherit; font-size: 14px; color: var(--ink);
+    text-decoration: none; cursor: pointer; transition: border-color var(--m-fast); }
+  .cl-body .fu-m-btn:hover, .cl-body .fu-m-btn:active { border-color: var(--ink); }
+}
+@media (max-width: 760px) { .fu-m-actions { flex-direction: column; } .cl-body .fu-m-btn { width: 100%; text-align: center; } }
