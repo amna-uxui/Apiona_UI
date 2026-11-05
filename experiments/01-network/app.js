@@ -821,19 +821,23 @@
     const today = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long" });
     $("#c-notes").innerHTML = `
       <p class="c-notes-date"><span class="tag tag-session">${today} · session 1</span></p>
-      <button type="button" class="c-notes-handle" aria-expanded="false"><b>Notes</b><span class="c-notes-count">tap to write</span></button>
+      <button type="button" class="c-notes-handle" aria-expanded="false"><b>Notes</b><span class="c-notes-count">tap to write</span><span class="c-notes-done">Done</span></button>
       <ol class="jots" aria-label="Notes"></ol>
       <div class="dict-list" data-key="notes"></div>
       <textarea class="jot-input" rows="1" aria-label="Write a note" placeholder="Write a note…"></textarea>
       <textarea data-sec="notes" hidden aria-hidden="true">${notesStep.text || ""}</textarea>`;
     wireJots();
     const handle = $("#c-notes .c-notes-handle");
-    handle.addEventListener("click", () => {   // phone: the notes slide up as a sheet
-      const on = !$("#c-notes").classList.contains("is-open");
+    // phone: the notes slide up as a sheet; Done, a tap on the dimmed page, or Esc puts them away
+    const setNotes = (on) => {
       $("#c-notes").classList.toggle("is-open", on); handle.setAttribute("aria-expanded", on);
       document.body.classList.toggle("m-notes", on);   // the open sheet hides the green button behind it
-      if (on) setTimeout(() => $("#c-notes .jot-input").focus(), 300);
-    });
+      if (!on && document.activeElement && document.activeElement.closest("#c-notes")) document.activeElement.blur();
+    };
+    handle.addEventListener("click", () => setNotes(!$("#c-notes").classList.contains("is-open")));
+    consult.appendChild($("#m-notes-scrim"));   // same layer as the sheet: it dims the page, not the notes
+    $("#m-notes-scrim").addEventListener("click", () => setNotes(false));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("m-notes")) setNotes(false); });
     $("#c-sections").innerHTML = C.steps.filter((st) => st.id !== "notes").map((st, i) => `
       <article class="c-sec reveal ${i === 0 ? "is-open" : ""}" style="--d:${3 + i}" id="cs-${st.id}">
         <button class="c-sec-head" type="button" aria-expanded="${i === 0}">
@@ -878,6 +882,7 @@
     consult.querySelectorAll("textarea.c-grow").forEach((f) => f.addEventListener("input", () => { f.style.height = "auto"; f.style.height = f.scrollHeight + "px"; }));
     // the header condenses once you scroll (a little slack both ways, so it doesn't flicker at the edge)
     consult.addEventListener("scroll", () => {
+      if (isPhone()) { consult.classList.remove("is-stuck"); return; }   // on a phone the header is always compact: nothing jumps
       const y = consult.scrollTop, stuck = consult.classList.contains("is-stuck");
       if (!stuck && y > 70) consult.classList.add("is-stuck");
       else if (stuck && y < 12) consult.classList.remove("is-stuck");
@@ -1642,7 +1647,12 @@
   $("#m-scrim").addEventListener("click", () => setMenu(false));
   $("#rail").addEventListener("click", (e) => { if (e.target.closest("a[href]")) setMenu(false); });
   let wasPhone = isPhone();
-  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); } apply(); });
+  function placeAttendance() {   // phone: Present / Absent sits in the page, next to the assessment type; desktop: in the header
+    const seg = consult.querySelector('.seg[aria-label="Attendance"]');
+    if (seg) (isPhone() ? consult.querySelector(".c-type") : consult.querySelector(".c-tools")).prepend(seg);
+  }
+  placeAttendance();
+  addEventListener("resize", () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); setMenu(false); placeAttendance(); } apply(); });
 
   /* ---------- Pages: Summary · Consultation · Follow-up · Documents ---------- */
   let aux = null;   // "followup" or "documents" while one of them is shown

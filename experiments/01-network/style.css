@@ -1836,3 +1836,49 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { .m-sum-card, .m-sum-card > * { transform: none !important; } }
 @media (max-width: 760px) { .brief { z-index: 16; } }
+@media (max-width: 760px) {
+  /* the summary card: square corners, pink */
+  .m-sum-card { border-radius: 0; background: var(--missing); border-color: var(--missing); }
+  .m-sum-text, .m-sum-kicker { color: #3D3D39; }
+  .m-sum-text strong { color: var(--ink); }
+}
+@media (max-width: 760px) { .m-sum-card { border-radius: 4px; } }
+
+/* ---------- Phone consultation: a steady compact header, attendance in the page, a notes sheet that closes ---------- */
+.m-notes-scrim, .c-notes-done { display: none; }
+@media (max-width: 760px) {
+  .consult > .c-bar, .consult.is-stuck > .c-bar { flex-wrap: nowrap; gap: 8px; padding-top: 16px; padding-bottom: 12px; transition: none; }
+  .consult .c-title { min-width: 0; flex: 1; }
+  .consult .c-title h2 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: none; }
+  .consult .c-title p { display: none; }
+  .consult .c-back { padding: 7px 9px; font-size: 0; gap: 0; }
+  .consult .c-back svg { width: 16px; height: 16px; }
+  .consult .c-time { order: 4; margin-left: 0; }
+  .consult .c-time-text { display: none; }
+  .consult .c-tools { order: 5; flex-basis: auto; flex-wrap: nowrap; }
+  .consult .c-dictate { font-size: 0; gap: 0; padding: 8px 10px; }
+  .consult .c-dictate svg { width: 16px; height: 16px; }
+  .consult .c-type { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .consult .c-type .seg { justify-self: start; max-width: 100%; }
+  .consult .c-type .seg button { padding: 6px 9px; font-size: 13px; }
+
+  .m-notes-scrim { display: block; position: fixed; inset: 0; z-index: 17; background: rgb(17 17 17 / .18); opacity: 0; pointer-events: none; transition: opacity var(--m-base) ease; }
+  body.m-notes .m-notes-scrim { opacity: 1; pointer-events: auto; }
+  .c-notes-done { display: none; margin-left: auto; padding: 6px 12px; border-radius: 999px; background: var(--ink); color: var(--white); font-size: 13.5px; font-weight: 500; }
+  .c-notes.is-open .c-notes-done { display: inline-block; }
+  .c-notes.is-open .c-notes-count { display: none; }
+  .c-notes.is-open .c-notes-handle { width: 100%; }
+}
+@media (max-width: 760px) {
+  /* the session timer is back, at the far right, as one pill (like the summary button on the summary page) */
+  .consult .c-tools { order: 4; }
+  .consult .c-time { order: 5; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px 0 8px;
+    border: 1px solid var(--rule); border-radius: 999px; background: var(--white); }
+  .consult .c-time .clock { width: 20px; height: 20px; }
+  .consult .c-time-text { display: inline-grid !important; }
+  .consult .c-time-text b { display: none; }
+  .consult .c-time-text > span { display: inline !important; font-size: 0; }
+  .consult .c-time-text #c-clock { font-size: 14px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .consult .c-dictate { height: 38px; border-radius: 999px; }
+  .consult .c-back { height: 38px; border-radius: 999px; }
+}
