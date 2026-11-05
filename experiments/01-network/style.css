@@ -1883,3 +1883,10 @@ body.is-consult .map, body.is-consult .brief, body.is-page .map, body.is-page .b
   .consult .c-back { height: 38px; border-radius: 999px; }
 }
 @media (max-width: 760px) { .c-notes .c-notes-handle .c-notes-done { color: var(--white); font-size: 14px; } }
+@media (max-width: 760px) {
+  /* two lines: what this is, then who it is for */
+  .consult .c-title h2 { white-space: normal; overflow: visible; line-height: 1.2; display: grid; }
+  .consult .c-title .c-sep { display: none; }
+  .consult .c-title .c-what { font-size: 12.5px; font-weight: 400; color: var(--grey); }
+  .consult .c-title .c-who { font-size: 16.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
