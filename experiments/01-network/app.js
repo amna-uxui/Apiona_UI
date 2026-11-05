@@ -1728,7 +1728,7 @@
             <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
-              ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="cl-quiet">${g.example ? "example" : "set today"}</span></li>`).join("")}</ol>` : ""}
+              ${goals.length ? `<ol class="fu-m-goals">${goals.map((g) => `<li><span>${g.goal}</span>${g.example ? "" : `<span class="cl-quiet">set today</span>`}</li>`).join("")}</ol>` : ""}
               <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}</p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
               ${jots.length ? `<p class="cl-quiet">${jots.length} timed note${jots.length > 1 ? "s" : ""}</p>` : ""}
@@ -1756,7 +1756,7 @@
             <div class="cl-when">Today<span>${C.signed ? C.signed.at : "in progress"}</span></div>
             <div class="cl-body">
               <h3><i class="cl-dot is-session" aria-hidden="true"></i>Session 1 of 9 · initial assessment <span class="cl-quiet">· ${attendance.toLowerCase()}</span></h3>
-              ${goals.length ? `<p>${goals.length} goal${goals.length > 1 ? "s" : ""} set${examples.length ? ` <span class="cl-quiet">· ${examples.length} still example${examples.length > 1 ? "s" : ""}</span>` : ""}</p>` : ""}
+              ${goals.length ? `<p>${goals.length} goal${goals.length > 1 ? "s" : ""} set</p>` : ""}
               <p class="cl-line"><i class="cl-dot ${C.signed ? "is-ok" : "is-wait"}" aria-hidden="true"></i>${C.signed ? `Report sent to Dr Favre, GP · ${C.signed.at}` : "Report not signed yet"}
                 · <button type="button" data-go="report">${C.signed ? "view the report" : "finish it"}</button></p>
               ${asked.length ? `<p>${asked.map((q) => `${q.label}: ${q.answer.toLowerCase()}`).join(" · ")} <span class="cl-mark">Physio, in session</span></p>` : ""}
@@ -1779,7 +1779,7 @@
         <p class="fu-strong">${done} of 9 done${done ? "" : " · session 1 today"}</p>
         <p class="fu-sub">Prescribed by the emergency department, Clinique Bois-Cerf</p>
         <h4><svg class="i" aria-hidden="true"><use href="#i-flag"/></svg>Goals of the initial assessment</h4>
-        ${goals.length ? `<ol class="fu-side-goals">${goals.map((g) => `<li><span>${g.goal}</span><span class="fu-sub">${g.example ? "example" : "0 sessions"}</span></li>`).join("")}</ol>
+        ${goals.length ? `<ol class="fu-side-goals">${goals.map((g) => `<li><span>${g.goal}</span>${g.example ? "" : `<span class="fu-sub">0 sessions</span>`}</li>`).join("")}</ol>
           <p class="fu-foot">Sessions where the goal was worked on, from the session notes</p>` : `<p class="fu-sub">Set in the consultation</p>`}
         ${C.signed ? `<h4><svg class="i" aria-hidden="true"><use href="#i-send"/></svg>Sent to other carers</h4>
           <p class="fu-row"><span>Initial assessment report</span><span class="fu-sub">GP · today ${C.signed.at}</span></p>` : ""}
