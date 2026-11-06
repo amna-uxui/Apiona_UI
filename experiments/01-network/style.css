@@ -2126,3 +2126,10 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
 .hb-link.is-on circle.from { transition-delay: 0s; }
 @media (max-width: 760px) { .hb-link { display: none; } }
 body.is-consult .hb-link, body.is-page .hb-link { display: none; }
+
+/* side menu without Camille's row: her pages hang straight under Patients, aligned with its label,
+   and the icons keep one constant step between them (open or folded) */
+.patient-tree { margin-bottom: 0; padding: 0 0 4px; }
+.pages { padding-left: 13px; }
+.page.is-current::before { left: -17px; }
+body.rail-collapsed .patient-tree { display: none; }   /* folded: only the icons, one step apart */

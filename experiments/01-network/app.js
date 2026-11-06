@@ -509,6 +509,7 @@
         ${rest.map((n) => row(n, icon(n.icon), n.label, "")).join("")}`;
     },
 
+    // listed from head to feet, as on her body: wrist, knee, then mid-foot
     hurts: (items) => `
       <div class="body-map">
         <div class="figure" id="figure">
@@ -517,7 +518,7 @@
               <circle class="halo" r="13"/><circle class="core" r="6"/></g>`).join("")}
           </svg>
         </div>
-        <div class="body-list">${items.map((n) => row(n, `<i class="pain-dot tone-${n.tone}"></i>`, n.label, n.explain || n.quote)).join("")}</div>
+        <div class="body-list">${items.slice().sort((a, b) => a.spot[1] - b.spot[1]).map((n) => row(n, `<i class="pain-dot tone-${n.tone}"></i>`, n.label, n.explain || n.quote)).join("")}</div>
       </div>`,
 
     happened: (items) => {
