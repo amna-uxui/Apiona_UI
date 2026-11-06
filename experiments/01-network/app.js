@@ -91,7 +91,10 @@
     <rect class="f-paper f-paper2" x="7" y="5" width="21" height="14" rx="1"/>
     <path class="f-front" d="M1.5 10a2 2 0 0 1 2-2h27a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2h-27a2 2 0 0 1-2-2z"/>
   </svg>`;
-  const half = (n) => (n.kind === "person" ? 17 : n.kind === "section" ? 13 : n.folder ? 13 : 8);
+  // half the height of each shape (the node sits on its centre); on desktop the network is drawn larger
+  const half = (n) => isPhone()
+    ? (n.kind === "person" ? 17 : n.kind === "section" ? 13 : n.folder ? 13 : 8)
+    : (n.kind === "person" ? 24 : n.kind === "section" ? 20 : n.folder ? 13 : 10);
 
   function makeNode(n) {
     const el = document.createElement("button");
@@ -140,6 +143,11 @@
       ["know", "wants", "hurts", "happened", "complete"].forEach((id, i) => { L[id] = { x: i % 2 ? 72 : -72, y: 118 + i * 96 }; });
       return { L, focus: null };
     }
+    // desktop, Where it hurts: the pain points live on her body beside the network, so the web keeps only its path
+    const cur = currentId && byId.get(currentId);
+    if (!isPhone() && inHurts(cur)) {
+      return { L: { hurts: { x: 0, y: 0 }, camille: { x: -70, y: -190 } }, focus: "hurts", angle: ANGLE.hurts };   // Camille just above: the web stays narrow beside the body
+    }
     const out = layoutWide(currentId);
     if (isPhone()) Object.values(out.L).forEach((p) => { p.x *= 0.5; });
     return out;
@@ -150,7 +158,8 @@
 
     if (!c) {
       L.camille = { x: 0, y: 0 };
-      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], 260, 185)));
+      const k = isPhone() ? 1 : Math.min(1.18, Math.max(1, (map.clientWidth - 230) / 520));   // desktop: spreads into the space it has
+      sections.forEach((s) => (L[s.id] = polar(ANGLE[s.id], 260 * k, 185 * k)));
       return { L, focus: null };
     }
 
@@ -203,14 +212,16 @@
       mapScale = Math.min(1, m.width / spanX, (m.height - 10) / spanY);
       return { x: m.width / 2 - mapScale * (Math.min(...xs) + Math.max(...xs)) / 2, y: m.height / 2 - mapScale * (Math.min(...ys) + Math.max(...ys) + 40) / 2 };
     }
-    mapScale = 1;
     const top = $(".brief").getBoundingClientRect().bottom + 30;
     const bottom = m.height - 40;
     const room = m.width - (state.profile ? 170 : mediaWidth(state.current && byId.get(state.current)));   // prints or her photo take the right of the map
-    const centred = room / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
+    // when the network is wider or taller than its room (a narrower window), it is drawn a little smaller to fit
+    const spanX = Math.max(...xs) - Math.min(...xs) + 250, spanY = Math.max(...ys) - Math.min(...ys) + 110;
+    mapScale = Math.max(0.72, Math.min(1, room / spanX, (bottom - top) / spanY));
+    const centred = room / 2 - mapScale * (Math.min(...xs) + Math.max(...xs)) / 2;
     return {
-      x: Math.max(centred, 120 - Math.min(...xs)),   // never push a label past the left edge
-      y: (top + bottom) / 2 - (Math.min(...ys) + Math.max(...ys) + 40) / 2,   // labels hang below
+      x: Math.max(centred, 120 * mapScale - mapScale * Math.min(...xs)),   // never push a label past the left edge
+      y: (top + bottom) / 2 - mapScale * (Math.min(...ys) + Math.max(...ys) + 40) / 2,   // labels hang below
     };
   }
 
@@ -330,11 +341,16 @@
 
   /* ---------------- drawing ---------------- */
 
-  function elbow(a, b) {
+  // ra, rb: how far from each shape's centre the line stops, so it never touches the shapes
+  function elbow(a, b, ra = 0, rb = 0) {
     const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     const j = Math.min(Math.abs(b.x - a.x) * 0.14, 16) * Math.sign(b.x - a.x || 1);
-    return `M${a.x},${a.y} L${mx - j},${my} L${mx + j},${my} L${b.x},${b.y}`;
+    const p1 = { x: mx - j, y: my }, p2 = { x: mx + j, y: my };
+    const trim = (from, to, r) => { const dx = to.x - from.x, dy = to.y - from.y, d = Math.hypot(dx, dy); const k = d > r * 1.4 ? r / d : 0; return { x: from.x + dx * k, y: from.y + dy * k }; };
+    const s0 = trim(a, p1, ra), e0 = trim(b, p2, rb);
+    return `M${s0.x},${s0.y} L${p1.x},${p1.y} L${p2.x},${p2.y} L${e0.x},${e0.y}`;
   }
+  const gap = (n) => half(n) + (isPhone() ? 4 : n.kind === "person" ? 16 : 10);   // a clear space around every shape
 
   function draw() {
     let out = "";
@@ -346,7 +362,7 @@
       if (path && !path.has(n.id) && n.t.o > 0) return;
       const p = byId.get(n.parent);
       if (p.p.o <= 0.01) return;
-      out += `<path class="${n.mark === "missing" ? "dashed" : ""}" style="opacity:${Math.min(n.p.o, p.p.o)}" d="${elbow(at(p), at(n))}"/>`;
+      out += `<path class="${n.mark === "missing" ? "dashed" : ""}" style="opacity:${Math.min(n.p.o, p.p.o)}" d="${elbow(at(p), at(n), gap(p), gap(n))}"/>`;
     });
     if (c) {
       related.get(c.id).forEach((id) => {
@@ -373,7 +389,7 @@
   // A click, on the map or in the index, moves the map. The index stays as it is: no detail card.
   function go(id) {
     const hash = id ? `#${id}` : "";
-    if (location.hash !== hash) history.pushState(null, "", hash || location.pathname);
+    if (location.hash !== hash) history.pushState(null, "", hash || location.pathname + location.search);   // keeps ?demo / ?fresh in the address
     select(id);
   }
 
@@ -402,6 +418,8 @@
     if (id) state.visited.add(id);
     renderIndexState();
     renderMedia();
+    renderBody();
+    relink();
     apply(instant);
   }
 
@@ -499,7 +517,7 @@
               <circle class="halo" r="13"/><circle class="core" r="6"/></g>`).join("")}
           </svg>
         </div>
-        <div class="body-list">${items.map((n) => row(n, `<i class="pain-dot tone-${n.tone}"></i>`, n.label, n.quote)).join("")}</div>
+        <div class="body-list">${items.map((n) => row(n, `<i class="pain-dot tone-${n.tone}"></i>`, n.label, n.explain || n.quote)).join("")}</div>
       </div>`,
 
     happened: (items) => {
@@ -618,6 +636,7 @@
   function hintNode(id, on) { byId.get(id).el.classList.toggle("is-hint", on); }
   function hintRow(id, on) {
     indexBody.querySelectorAll(`.row[data-id="${id}"]:not([data-doc]), .marker[data-for="${id}"]`).forEach((r) => r.classList.toggle("is-hover", on));
+    hurtBody.querySelectorAll(`[data-for="${id}"]`).forEach((r) => r.classList.toggle("is-hover", on));
   }
 
   /* ---------------- media: a pile of prints ---------------- */
@@ -627,7 +646,7 @@
   const media = $("#media");
   // the room the prints take on the right: a loose pile of films, or a tight stack of paper pages
   const isPhone = () => matchMedia("(max-width: 760px)").matches;
-  const mediaWidth = (n) => (!isPhone() && n && n.media ? (n.media.fan ? 340 : n.media.kind === "paper" ? 230 : 310) : 0);
+  const mediaWidth = (n) => (isPhone() || !n ? 0 : inHurts(n) ? 320 : n.media ? (n.media.fan ? 340 : n.media.kind === "paper" ? 230 : 310) : 0);
   const mediaShown = () => !!(state.current && byId.get(state.current).media);
   let mediaTimer = null;
 
@@ -645,6 +664,66 @@
       <span class="dp-lines">${"<i></i>".repeat(p.lines)}</span>
     </span>`;
   }
+
+  /* Where it hurts: on desktop her body appears large beside the network, on its own (it is not part of the web).
+     Each pain point sits on the body, with what she said about it to the left; a click on one selects it. */
+  function inHurts(n) { return !!n && (n.id === "hurts" || n.parent === "hurts"); }
+  const hurtBody = $("#hurt-body");
+  let hurtSvg = null;
+  fetch("../../design/illustrations/body-female.svg").then((r) => r.text()).then((t) => { hurtSvg = t; renderBody(); });
+  function renderBody() {
+    const n = state.current && byId.get(state.current);
+    clearTimeout(hurtBody._t);
+    if (isPhone() || !inHurts(n) || !hurtSvg) {
+      hurtBody.classList.remove("is-in");
+      hurtBody._t = setTimeout(() => { if (!hurtBody.classList.contains("is-in")) hurtBody.hidden = true; }, 450);
+      return;
+    }
+    if (!hurtBody.firstElementChild) {
+      const items = kids("hurts");
+      const pct = (n) => `left:${(n.spot[0] / 201) * 100}%;top:${((n.spot[1] + 10) / 471) * 100}%`;
+      const dl = (n) => `--d:${(0.18 + (1 - (n.spot[1] + 10) / 471) * 0.55).toFixed(2)}s`;   // the body rises from the feet: lower points come first
+      hurtBody.innerHTML = `<div class="hb-fig">
+        ${hurtSvg.replace("<svg", '<svg class="hb-sil" aria-hidden="true"')}
+        ${items.map((k) => `<button type="button" class="hb-spot marker tone-${k.tone}" data-for="${k.id}" style="${pct(k)};${dl(k)}" aria-label="${k.label}" title="${k.label}"><i class="halo"></i><i class="core"></i></button>`).join("")}
+      </div>`;
+      hurtBody.querySelectorAll("[data-for]").forEach((b) => {
+        b.addEventListener("mouseenter", () => hintRow(b.dataset.for, true));
+        b.addEventListener("mouseleave", () => hintRow(b.dataset.for, false));
+      });
+      hurtBody.querySelectorAll("[data-for]").forEach((b) => b.addEventListener("click", () => go(b.dataset.for)));
+    }
+    hurtBody.querySelectorAll("[data-for]").forEach((b) => b.classList.toggle("is-current", b.dataset.for === state.current));
+    hurtBody.style.top = `${$(".brief").getBoundingClientRect().bottom - 6}px`;   // sits high, close under the header
+    hurtBody.hidden = false;
+    void hurtBody.offsetWidth;   // start from the hidden state, then fade in
+    hurtBody.classList.add("is-in");
+  }
+
+  /* the chosen point on the body and its row in the index, tied by one soft line (it draws itself out each time) */
+  const hbLink = $("#hb-link");
+  let linkFor = null;
+  function linkRow() {
+    const id = state.current, n = id && byId.get(id);
+    const dot = n && n.parent === "hurts" && !hurtBody.hidden && hurtBody.querySelector(`.hb-spot[data-for="${id}"] .core`);
+    const row = dot && indexBody.querySelector(`.body-list .row[data-id="${id}"] .pain-dot`);
+    const panel = indexBody.getBoundingClientRect();
+    const r = row && row.getBoundingClientRect();
+    if (!dot || !r || !r.width || r.top < panel.top - 4 || r.bottom > panel.bottom + 4) { hbLink.classList.remove("is-on"); linkFor = null; return; }
+    const d = dot.getBoundingClientRect();
+    const a = { x: d.right + 6, y: d.top + d.height / 2 }, b = { x: r.left - 7, y: r.top + r.height / 2 };
+    const dx = b.x - a.x;
+    hbLink.querySelector("path").setAttribute("d", `M${a.x},${a.y} C${a.x + dx * 0.5},${a.y} ${b.x - dx * 0.5},${b.y} ${b.x},${b.y}`);
+    const c = hbLink.querySelector("circle.to"); c.setAttribute("cx", b.x); c.setAttribute("cy", b.y);
+    const f = hbLink.querySelector("circle.from"); f.setAttribute("cx", a.x); f.setAttribute("cy", a.y);   // like the assessment web: a dot at each end
+    if (linkFor !== id) {   // a new point: the line draws out from the body to the index
+      hbLink.classList.remove("is-on"); void hbLink.getBoundingClientRect(); linkFor = id;
+    }
+    hbLink.classList.add("is-on");
+  }
+  const relink = () => { linkRow(); setTimeout(linkRow, 380); setTimeout(linkRow, 900); };   // again once the body and the row have settled
+  addEventListener("resize", linkRow);
+  addEventListener("scroll", linkRow, true);
 
   function renderMedia() {
     const n = state.current && byId.get(state.current);
