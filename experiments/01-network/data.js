@@ -131,12 +131,14 @@ window.RECORD = {
     },
 
     /* 3 · Where it hurts */
-    { id: "hurts", kind: "section", n: 3, parent: "camille", label: "Where it hurts", sub: "Mid-foot · right knee · right wrist", x: 300, y: 10, open: true },
+    { id: "hurts", kind: "section", n: 3, mark: "alert", parent: "camille", label: "Where it hurts", sub: "Mid-foot · right knee · right wrist", x: 300, y: 10, open: true },
     {
       id: "midfoot", spot: [76, 440], tone: "injury", kind: "item", parent: "hurts", source: "patient",
       label: "Mid-foot", sub: "", x: 520, y: -70,
       type: "Where it hurts", title: "Mid-foot, right",
       quote: "Swollen, limping, pain when walking, at night and sitting",
+      // shown beside her body: one full sentence
+      explain: "This is the sprain from Saturday's fall.",
       links: ["heds", "fall", "lesspain"],
     },
     {
@@ -144,6 +146,7 @@ window.RECORD = {
       label: "Right knee", sub: "", x: 560, y: 40,
       type: "Where it hurts", title: "Right knee",
       quote: "Since she started compensating",
+      explain: "Her knee started to hurt once she began limping to spare her foot.",
       links: ["otherpain"],
     },
     {
@@ -151,6 +154,7 @@ window.RECORD = {
       label: "Right wrist", sub: "", x: 500, y: 140,
       type: "Where it hurts", title: "Right wrist",
       quote: "From the crutches",
+      explain: "Her wrist hurts from leaning on her crutches.",
       links: ["otherpain"],
     },
 

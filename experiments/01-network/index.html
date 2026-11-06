@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=src-111">
+  <link rel="stylesheet" href="style.css?v=link-137">
 </head>
 <body>
   <main class="stage">
@@ -89,6 +89,10 @@
 
     <!-- Images of the selected record, shown as a small pile of prints (after the reference) -->
     <figure class="media" id="media" aria-live="polite" hidden></figure>
+    <!-- Where it hurts: her body, large, beside the network (not part of it) -->
+    <figure class="hurt-body" id="hurt-body" aria-label="Where it hurts, on her body" hidden></figure>
+    <!-- a chosen point on her body is tied to its row in the index by a line -->
+    <svg class="hb-link" id="hb-link" aria-hidden="true"><path pathLength="1"/><circle class="from" r="2.5"/><circle class="to" r="3"/></svg>
     <div class="veil" id="veil" aria-hidden="true"></div>
 
     <!-- while a file is dragged over the page -->
@@ -184,8 +188,9 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=src-111"></script>
-  <script src="data.js?v=src-111"></script>
-  <script src="app.js?v=src-111"></script>
+  <script src="../../design/icons.js?v=link-137"></script>
+  <script src="data.js?v=link-137"></script>
+  <script src="demo.js?v=link-137"></script>   <!-- does nothing unless the address has ?demo -->
+  <script src="app.js?v=link-137"></script>
 </body>
 </html>
