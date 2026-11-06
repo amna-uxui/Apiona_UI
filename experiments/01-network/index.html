@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Camille M. · Apiona</title>
-  <link rel="stylesheet" href="style.css?v=begun-93">
+  <link rel="stylesheet" href="style.css?v=src-111">
 </head>
 <body>
   <main class="stage">
@@ -68,14 +68,14 @@
         <span class="photo"><img src="../../ui/assets/patient.jpg" alt="" data-initials="CM"><span class="new" id="p-new">New</span></span>
         <span class="who-text">
           <h1 class="name" id="p-name"></h1>
-          <span class="meta" id="p-meta"></span>
-          <span class="occupation" id="p-occ"></span>
         </span>
         <!-- phone: the brief opens as a card from this button -->
         <button class="m-sum-btn" id="m-sum-btn" type="button" aria-label="Show the summary" aria-expanded="false" aria-controls="m-sum-card"><svg class="i" aria-hidden="true"><use href="#i-clipboard"/></svg></button>
       </div>
+      <ul class="p-facts" id="p-facts"></ul>
       <ul class="tags" id="p-tags"></ul>
-      <p class="brief-text" id="p-brief"></p>
+      <!-- why she is here: beside who she is when there is room, under it otherwise -->
+      <div class="brief-side"><p class="brief-text" id="p-brief"></p></div>
       <div class="m-sum-card" id="m-sum-card" role="dialog" aria-label="Summary" hidden><p class="m-sum-kicker">Summary</p><p class="m-sum-text"></p></div>
     </header>
 
@@ -184,8 +184,8 @@
 
   </main>
 
-  <script src="../../design/icons.js?v=begun-93"></script>
-  <script src="data.js?v=begun-93"></script>
-  <script src="app.js?v=begun-93"></script>
+  <script src="../../design/icons.js?v=src-111"></script>
+  <script src="data.js?v=src-111"></script>
+  <script src="app.js?v=src-111"></script>
 </body>
 </html>

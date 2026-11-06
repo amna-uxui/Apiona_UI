@@ -14,8 +14,13 @@
 window.RECORD = {
   patient: {
     name: "Camille M.",
-    meta: "28 · female",
-    occupation: "Architectural draughtswoman, 60% · mostly seated, site visits",   // from Patient and coverage
+    // who she is, one fact per line under her name (icon, text); work comes from Patient and coverage
+    facts: [
+      ["user", "28 · female"],
+      ["cake", "14 March 1998"],
+      ["briefcase", "Architectural draughtswoman, 60%"],
+      ["armchair", "Mostly seated, site visits"],
+    ],
     isNew: true,   // shown as a "New" tag on her photo
     tags: [
       { text: "Initial assessment · session 1 of 9", tone: "session" },
@@ -107,24 +112,21 @@ window.RECORD = {
     { id: "wants", kind: "section", n: 2, mark: "voice", parent: "camille", label: "What she wants", sub: "“Above all, less pain.”", x: 170, y: -210, open: true },
     {
       id: "lesspain", kind: "item", parent: "wants", mark: "voice", source: "patient", open: true,
-      label: "“Above all, less pain.”", sub: "Her words · preparation", x: 150, y: -360,
+      label: "“Above all, less pain.”", sub: "", x: 150, y: -360,
       type: "Her words", title: "“Above all, less pain. I sleep badly and it hurts even sitting at my desk.”",
       quote: null,
-      facts: [["Source", "Patient’s words · preparation of 1 November 2026"]],
       links: ["midfoot"],
     },
     {
       id: "howlong", icon: "history", kind: "item", parent: "wants", mark: "voice", source: "patient",
       label: "To know how long it will take", sub: "Expects from this visit", x: 360, y: -330,
       type: "Her expectation", title: "To know how long it will take",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: [],
     },
     {
       id: "exercises", icon: "home", kind: "item", parent: "wants", mark: "voice", source: "patient",
       label: "To leave with home exercises", sub: "Expects from this visit", x: 400, y: -220,
       type: "Her expectation", title: "To leave with home exercises",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: [],
     },
 
@@ -132,26 +134,23 @@ window.RECORD = {
     { id: "hurts", kind: "section", n: 3, parent: "camille", label: "Where it hurts", sub: "Mid-foot · right knee · right wrist", x: 300, y: 10, open: true },
     {
       id: "midfoot", spot: [76, 440], tone: "injury", kind: "item", parent: "hurts", source: "patient",
-      label: "Mid-foot", sub: "Patient · preparation", x: 520, y: -70,
+      label: "Mid-foot", sub: "", x: 520, y: -70,
       type: "Where it hurts", title: "Mid-foot, right",
       quote: "Swollen, limping, pain when walking, at night and sitting",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["heds", "fall", "lesspain"],
     },
     {
       id: "knee", spot: [77, 317], tone: "other", kind: "item", parent: "hurts", source: "patient",
-      label: "Right knee", sub: "Patient · preparation", x: 560, y: 40,
+      label: "Right knee", sub: "", x: 560, y: 40,
       type: "Where it hurts", title: "Right knee",
       quote: "Since she started compensating",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["otherpain"],
     },
     {
       id: "wrist", spot: [33, 221], tone: "other", kind: "item", parent: "hurts", source: "patient",
-      label: "Right wrist", sub: "Patient · preparation", x: 500, y: 140,
+      label: "Right wrist", sub: "", x: 500, y: 140,
       type: "Where it hurts", title: "Right wrist",
       quote: "From the crutches",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["otherpain"],
     },
 
@@ -167,9 +166,8 @@ window.RECORD = {
 
     {
       id: "fall", when: "Saturday", event: "Misses a step on the stairs of her building", kind: "item", parent: "happened", source: "patient",
-      label: "Saturday · the fall", sub: "Patient", x: 210, y: 440,
+      label: "Saturday · the fall", sub: "", x: 210, y: 440,
       type: "What happened", title: "Saturday · misses a step on the stairs of her building",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["midfoot", "emergency"],
     },
     {
@@ -189,9 +187,8 @@ window.RECORD = {
     },
     {
       id: "employer", when: "Monday", event: "The employer reports the accident", kind: "item", parent: "happened", source: "patient",
-      label: "Monday · accident reported", sub: "Patient", x: 560, y: 400,
+      label: "Monday · accident reported", sub: "", x: 560, y: 400,
       type: "What happened", title: "Monday · the employer reports the accident",
-      facts: [["Source", "Patient · preparation of 1 November 2026"]],
       links: ["coverage"],
     },
     {

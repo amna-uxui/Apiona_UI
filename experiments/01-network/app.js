@@ -22,8 +22,8 @@
   const orphans = R.nodes.filter((n) => n.kind === "item" && !n.parent);
 
   // links are stored one way in the data; the map shows them both ways
-  const related = new Map(R.nodes.map((n) => [n.id, new Set(n.links || [])]));
-  R.nodes.forEach((n) => (n.links || []).forEach((l) => related.get(l) && related.get(l).add(n.id)));
+  // no clinician defined links between the points, so none are drawn; only a file you attach yourself is linked to its point
+  const related = new Map(R.nodes.map((n) => [n.id, new Set()]));
 
   const $ = (s) => document.querySelector(s);
   const map = $("#map"), world = $("#world"), svg = $("#lines"), layer = $("#nodes");
@@ -34,11 +34,25 @@
   /* ---------------- brief ---------------- */
 
   $("#p-name").textContent = R.patient.name;
-  $("#p-meta").textContent = R.patient.meta;
-  $("#p-occ").textContent = R.patient.occupation || "";
+  $("#p-facts").innerHTML = (R.patient.facts || []).map(([ic, t]) => `<li><svg class="i" aria-hidden="true"><use href="#i-${ic}"/></svg><span>${t}</span></li>`).join("");
+  /* icons in one list should look the same size: each drawing is framed on its own outline, so a small glyph
+     (armchair, person) is not lost next to a wide one (cake, briefcase) */
+  function evenIcons(root) {
+    root.querySelectorAll("svg.i").forEach((svg) => {
+      const u = svg.querySelector("use"); if (!u || svg.dataset.even) return;
+      const b = u.getBBox(), box = svg.getBoundingClientRect().width; if (!b.width || !box) return;
+      u.setAttribute("width", box); u.setAttribute("height", box);   // the drawing keeps its size; only the frame moves
+      const S = Math.max(b.width, b.height) * 1.22;
+      svg.setAttribute("viewBox", `${b.x + b.width / 2 - S / 2} ${b.y + b.height / 2 - S / 2} ${S} ${S}`);
+      svg.dataset.even = "1";
+    });
+  }
+  evenIcons($("#p-facts"));
+  window.addEventListener("load", () => evenIcons($("#p-facts")));   // again once fonts and sprites are surely in
   $("#p-new").hidden = !R.patient.isNew;
   $("#p-new").title = "New patient";
-  $("#p-brief").innerHTML = R.patient.brief.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  // the last two words always stay together, so no word sits alone on the last line
+  $("#p-brief").innerHTML = R.patient.brief.replace(/ (\S+)$/, "\u00a0$1").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   // on a phone the tags are shorter, so all three fit on one row
   function shortTag(t) {
     if (t.tone === "session") return /done/.test(t.text) ? "Session 1 · done" : "Session 1 of 9";
@@ -443,14 +457,22 @@
       <span class="r-text"><span class="r-title"><span>${title}</span></span><span class="r-sub">${sub || ""}</span></span>
     </button>`;
 
+  // a point to know: its name, the record's own words, then where it comes from
+  const knowLine = (n) => (n.quote && n.quote !== n.label ? `“${n.quote}”` : n.title && n.title !== n.label ? n.title : "");
+  const rowKnow = (n) => `
+    <button class="row mark-know" data-id="${n.id}">
+      <span class="lead">${icon(n.icon)}</span>
+      <span class="r-text"><span class="r-title"><span>${n.label}</span></span>${knowLine(n) ? `<span class="r-quote">${knowLine(n)}</span>` : ""}<span class="r-sub">${n.sub || ""}</span></span>
+    </button>`;
+
   const bodyFor = {
 
     know: (items) => {
       const points = items.filter((n) => n.id !== "treatments");
       const treat = items.find((n) => n.id === "treatments");
       return `
-        ${points.map((n) => row(n, icon(n.icon))).join("")}
-        ${treat ? row(treat, icon(treat.icon)) : ""}
+        ${points.map((n) => rowKnow(n)).join("")}
+        ${treat ? rowKnow(treat) : ""}
         <p class="sub-head">Documents</p>
         ${R.knowDocs.map((d) => `
           <button class="row is-doc" data-id="${d.opens}" data-doc>
@@ -561,13 +583,30 @@
     });
     // the section you are in on the map is the one unfolded in the index
     const c = state.current && byId.get(state.current);
-    const key = !c ? (state.profile ? "sources" : null) : c.kind === "section" ? c.id : c.parent || "sources";
+    const key = !c ? (state.profile ? "sources" : "know") : c.kind === "section" ? c.id : c.parent || "sources";   // the overview opens on what to know
     indexBody.querySelectorAll(".sec-head").forEach((b) => {
       const open = b.getAttribute("aria-controls") === `sec-${key}`;
       b.setAttribute("aria-expanded", open);
       b.classList.toggle("is-current", open);
       document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
     });
+    // clicking a point shows what the record says about it, under its row in the index
+    indexBody.querySelectorAll(".row-detail").forEach((d) => d.remove());
+    if (c && c.kind === "item" && c.parent !== undefined) {
+      const r = indexBody.querySelector(`.row[data-id="${c.id}"]:not([data-doc]):not(.has-detail)`);
+      const lines = [];
+      if (c.title && c.title !== c.label && c.title !== knowLine(c)) lines.push(`<p class="rd-line">${c.title}</p>`);
+      if (c.quote && c.quote !== c.label && c.parent !== "know") lines.push(`<p class="rd-quote">“${c.quote}”</p>`);
+      if (c.facts) lines.push(`<dl class="sd-facts">${c.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`);
+      if (r && lines.length) {
+        const d = document.createElement("div");
+        d.className = "row-detail";
+        d.innerHTML = lines.join("");
+        (r.closest(".step") || r).after(d);
+        requestAnimationFrame(() => d.classList.add("is-in"));
+        r.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      }
+    }
   }
 
   function setIndexOpen(open) {

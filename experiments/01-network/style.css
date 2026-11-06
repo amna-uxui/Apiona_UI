@@ -1978,3 +1978,51 @@ body.is-consult .brief, body.is-page .brief, body.is-consult .brief *, body.is-p
   .as-tests { min-width: 560px; }
 }
 @media (max-width: 760px) { .as-tests { min-width: 640px; } }
+
+/* index: a point to know shows the record's own words; the current point's details open under its row */
+.row .r-quote { display: block; font-size: 14px; line-height: 1.35; color: var(--ink); margin-top: 2px; }
+.row-detail { margin: 0 0 8px 34px; padding: 8px 12px; border-left: 2px solid var(--you); font-size: 13.5px; line-height: 1.45;
+  opacity: 0; transform: translateY(-4px); transition: opacity var(--m-base) ease, transform var(--m-base) var(--m-ease); }
+.row-detail.is-in { opacity: 1; transform: none; }
+.row-detail p { margin: 0 0 4px; }
+.row-detail .rd-quote { color: var(--ink); }
+.row-detail .sd-facts { margin: 4px 0 0; }
+.timeline + .row-detail, .step + .row-detail { margin-left: 28px; }
+
+/* profile: one fact per line under the name and photo, each with its icon (option A1) */
+.p-facts { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 7px; font-size: 14px; line-height: 1.35; color: var(--ink); }
+.p-facts li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+.p-facts .i { width: 17px; height: 17px; margin-top: 1px; color: var(--grey); }
+.p-facts + .tags { margin-top: 16px; }
+
+/* desktop: one block. Photo on the left; name, facts in a row, tags, then the brief, all aligned on the name */
+@media (min-width: 761px) {
+  .brief { width: min(760px, calc(100vw - var(--side) - var(--rail-space) - 100px));
+    display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  .brief .who, .brief .who-text { display: contents; }
+  .brief .photo { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+  .brief .name { grid-column: 2; grid-row: 1; align-self: end; }
+  .brief .p-facts { grid-column: 2; grid-row: 2; margin: 8px 0 0; display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 28px; }   /* two by two, never one alone */
+  .brief .p-facts li { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .brief .p-facts .i { margin-top: 0; }
+  .brief .tags { grid-column: 2; margin: 14px 0 0; flex-wrap: nowrap; }
+  .brief .tags .tag { white-space: nowrap; }
+  .brief-side { grid-column: 2; margin-top: 14px; }
+  .brief-side .brief-text { max-width: 600px; }
+}
+/* no single word alone on the last line */
+.brief-text, .m-sum-text, .row .r-quote, .row-detail { text-wrap: pretty; }
+/* desktop: a larger photo, and her facts easier to read (bigger text, more air, icons a step darker) */
+@media (min-width: 761px) {
+  .brief { grid-template-columns: 76px minmax(0, 1fr); column-gap: 18px; }
+  .brief .photo { width: 76px; height: 76px; }
+  .brief .p-facts { margin-top: 10px; font-size: 15px; line-height: 1.4; gap: 8px 32px; }
+  .brief .p-facts li { gap: 9px; }
+  .brief .p-facts .i { width: 18px; height: 18px; color: #5f5f5f; }
+}
+@media (min-width: 761px) and (max-width: 1339px) {   /* narrower desktop: the short session tag, so the tags stay on one line */
+  .brief .t-long { display: none; } .brief .t-short { display: inline; }
+  .brief .p-facts { grid-template-columns: max-content; }   /* one fact per line when two would not fit */
+  .brief .photo { align-self: start; margin-top: 4px; }
+}
+.r-sub:empty, .label .sub:empty { display: none; }
