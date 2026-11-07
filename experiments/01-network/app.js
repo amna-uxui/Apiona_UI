@@ -221,7 +221,8 @@
     const centred = room / 2 - mapScale * (Math.min(...xs) + Math.max(...xs)) / 2;
     return {
       x: Math.max(centred, 120 * mapScale - mapScale * Math.min(...xs)),   // never push a label past the left edge
-      y: (top + bottom) / 2 - mapScale * (Math.min(...ys) + Math.max(...ys) + 40) / 2,   // labels hang below
+      y: Math.max(top + 6 - mapScale * Math.min(...ys),   // never under the header
+        (top + bottom) / 2 - mapScale * (Math.min(...ys) + Math.max(...ys) + 40) / 2 - 70),   // centred, then raised towards the summary
     };
   }
 
@@ -350,7 +351,7 @@
     const s0 = trim(a, p1, ra), e0 = trim(b, p2, rb);
     return `M${s0.x},${s0.y} L${p1.x},${p1.y} L${p2.x},${p2.y} L${e0.x},${e0.y}`;
   }
-  const gap = (n) => half(n) + (isPhone() ? 4 : n.kind === "person" ? 16 : 10);   // a clear space around every shape
+  const gap = (n) => half(n) + (isPhone() ? 2 : 1);   // the line ends where the shape begins, so each branch visibly meets its node
 
   function draw() {
     let out = "";
