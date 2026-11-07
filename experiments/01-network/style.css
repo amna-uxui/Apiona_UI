@@ -1,8 +1,4 @@
-/* ABC Areal is licensed: we use the copy installed on this Mac, never ship the files. */
-@font-face { font-family: "Areal"; font-weight: 400; src: local("ABC Areal Regular"), local("ABCAreal-Regular"), local("ABC Areal"); }
-@font-face { font-family: "Areal"; font-weight: 400; font-style: italic; src: local("ABC Areal Regular Italic"), local("ABCAreal-RegularItalic"); }
-@font-face { font-family: "Areal"; font-weight: 500; src: local("ABC Areal Medium"), local("ABCAreal-Medium"); }
-@font-face { font-family: "Areal"; font-weight: 700; src: local("ABC Areal Bold"), local("ABCAreal-Bold"); }
+/* Work Sans, from Google Fonts (loaded in index.html): open licence, so it shows the same on every machine */
 
 :root {
   /* Ground and ink */
@@ -21,7 +17,7 @@
   --you: #B1CCEE;        /* you are here: selection, focus, today */
   --alert: #EE6E5B;      /* case type: accident (from the earlier record palette) */
 
-  --font: "Areal", "ABC Areal", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font: "Work Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --side: 400px;
   --rail-w: 208px;      /* the left menu, expanded */
   --rail-space: 208px;  /* what it takes from the page */
