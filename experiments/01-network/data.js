@@ -60,7 +60,7 @@ window.RECORD = {
       quote: "Ligament laxity, joint instability, repeated sprains, proprioception problems",
       facts: [["Diagnosed by", "GP"], ["Added to the record", "Medical report attached"]],
       rule: "balance and falls",
-      links: ["midfoot", "history", "docs"],
+      links: [["h7", "h2"], ["h7", "h10"], ["h7", "h21"], ["h9", "h18"], ["h5", "h8"], ["h16", "h17"], ["h16", "h21"], ["h3", "h7"]],
     },
     {
       id: "dizzy", icon: "dizzy", kind: "item", parent: "know", mark: "know", source: "patient", open: true,
@@ -350,4 +350,42 @@ window.RECORD = {
       { id: "recommendations", n: 6, label: "Recommendations", state: "empty" },
     ],
   },
+};
+
+/* Her history: the record as a garden that grows one ring per year, one branch per member of her care team.
+   EXAMPLE DATA: the years before this record are invented to show the idea; they are plausible for hEDS, not real.
+   from: "her" = she reported it (in a preparation or a visit), "clinician" = written by a clinician,
+         "dismissed" = a visit that ended without a diagnosis, "you" = this practice. docs = documents attached. */
+window.RECORD.history = {
+  start: 2010, end: 2026,
+  branches: [
+    { id: "gp", label: "GP", who: "Dr Favre" },
+    { id: "neuro", label: "Neurology", who: "Neurology clinic" },
+    { id: "nsurg", label: "Neurosurgery", who: "University hospital" },
+    { id: "pulmo", label: "Pulmonology", who: "Pulmonologist" },
+    { id: "hand", label: "Hand centre", who: "Hand centre · S. Weber" },
+    { id: "ortho", label: "Orthopaedics", who: "Emergency, Bois-Cerf and others" },
+    { id: "physio", label: "Physiotherapy", who: "A. Rossi, then you" },
+  ],
+  // a key finding drawn as a circle off the spiral, holding the earlier or later events it explains
+  clusters: { h7: ["h3", "h2", "h10"], h9: ["h15", "h18"], h16: ["h17"] },
+  // threads across branches: one finding that explains or leads to another (drawn as faint curves)
+  links: [["h7", "h2"], ["h7", "h4"], ["h7", "h10"], ["h7", "h21"], ["h10", "h11"], ["h9", "h18"], ["h5", "h8"], ["h16", "h17"], ["h16", "h21"], ["h3", "h7"]],
+  events: [
+    { id: "h1", year: 2010, branch: "pulmo", from: "clinician", docs: 1, title: "Asthma diagnosed", note: "Inhaler for exercise." },
+    { id: "h2", short: "Ankle sprain", year: 2014, branch: "ortho", from: "dismissed", title: "Left ankle sprain", note: "“Just a sprain, rest it.”" },
+    { id: "h3", short: "Joint pain", year: 2016, branch: "gp", from: "dismissed", title: "Joint pain, very flexible", note: "“Nothing to worry about at your age.”" },
+    { id: "h5", year: 2018, branch: "neuro", from: "her", title: "Headaches most weeks", note: "“I lose whole afternoons to them.”" },
+    { id: "h7", summary: "Her joints are unusually loose, so they sprain and dislocate easily.", media: "heds", year: 2019, branch: "gp", from: "clinician", docs: 1, key: true, title: "Hypermobile Ehlers-Danlos", note: "Ligament laxity, repeated sprains, proprioception problems. Report attached." },
+    { id: "h8", year: 2019, branch: "neuro", from: "clinician", title: "Chronic migraines", note: "Neurology clinic." },
+    { id: "h9", doc: { caption: "Brain MRI at diagnosis · University hospital · 2020", images: [{ src: "../../design/media/mri-brain-sample.png", alt: "Brain MRI, axial view" }] }, summary: "A small 7 mm lesion in the brain that had bled. To be watched with MRI.", year: 2020, branch: "nsurg", from: "clinician", docs: 2, key: true, title: "Cerebral cavernoma", note: "Left parietal, 7 mm, after a bleeding episode. MRI attached." },
+    { id: "h10", short: "Shoulder surgery", year: 2021, branch: "ortho", from: "clinician", docs: 2, title: "Left shoulder stabilised", note: "Surgery after repeated dislocations." },
+    { id: "h14", year: 2023, branch: "neuro", from: "clinician", title: "Botulinum toxin", note: "For the migraines, every three months." },
+    { id: "h15", short: "MRI stable", year: 2024, branch: "nsurg", from: "clinician", docs: 1, title: "Follow-up MRI: stable", note: "Cavernoma unchanged." },
+    { id: "h16", summary: "Led to pain in her right wrist, from the crutches.", doc: { caption: "Right wrist X-ray · Hand centre · 2026", images: [{ src: "../../design/media/xray-wrist-sample.png", alt: "Right wrist X-ray, front and side views" }] }, year: 2026, branch: "ortho", from: "clinician", docs: 2, key: true, title: "The fall · emergency", note: "Bois-Cerf: X-ray, no fracture. 9 sessions prescribed." },
+    { id: "h17", docs: 1, images: [{ src: "../../design/media/xray-wrist-sample.png", alt: "Wrist X-ray, front and side views" }], short: "Wrist", year: 2026, branch: "hand", from: "clinician", title: "Right wrist tendinopathy", note: "From the crutches." },
+    { id: "h18", short: "Dizziness", year: 2026, branch: "neuro", from: "her", title: "Frequent dizziness", note: "In her preparation of 1 November." },
+    { id: "h19", year: 2026, branch: "pulmo", from: "her", title: "Breathless on exertion", note: "In her preparation of 1 November." },
+    { id: "h21", year: 2026, branch: "physio", from: "you", key: true, title: "Today · session 1 of 9", note: "Initial assessment, here." },
+  ],
 };
