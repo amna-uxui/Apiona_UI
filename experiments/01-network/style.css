@@ -2145,3 +2145,417 @@ body.rail-collapsed .patient-tree { display: none; }   /* folded: only the icons
 .tag-session  { background: #DCE8F7; border-color: #DCE8F7; }
 .tag-accident { background: #F8D3CC; border-color: #F8D3CC; }
 .tag-ok       { background: #D6EECB; border-color: #D6EECB; }
+
+/* ---------- Her history: the garden, alone in the middle; the header steps away ---------- */
+body.is-history .brief, body.is-history .start, body.is-history .map, body.is-history .hurt-body, body.is-history .media, body.is-history .hb-link {
+  opacity: 0 !important; pointer-events: none !important; transition: opacity var(--m-base) ease; }
+
+.hist-bar { position: absolute; z-index: 5; left: calc(var(--rail-space) + 44px); bottom: 22px; display: flex; align-items: center; gap: 18px;
+  transition: left .45s var(--ease), opacity var(--m-base) ease; }
+body.is-history .hist-bar { left: var(--rail-space); right: var(--side); justify-content: center; }
+body.is-consult .hist-bar, body.is-page .hist-bar { opacity: 0; pointer-events: none; }
+.hist-seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--panel); border-radius: 8px; }
+.hist-seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+.hist-seg button.is-on { background: var(--white); box-shadow: 0 0 0 1px var(--rule); font-weight: 500; }
+.hist-time { display: flex; align-items: center; gap: 12px; }
+.hist-time[hidden] { display: none; }
+.hist-play { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #BDBDB7; background: var(--white); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.hist-play svg { width: 12px; height: 12px; fill: var(--ink); margin-left: 2px; }
+.hist-play.is-on { background: var(--you); border-color: var(--you); }
+.hist-range { width: 220px; accent-color: var(--ink); }
+.hist-year { font-size: 14px; font-weight: 500; min-width: 48px; font-variant-numeric: tabular-nums; }
+
+.garden { position: absolute; z-index: 2; left: var(--rail-space); right: var(--side); top: 24px; bottom: 72px;
+  opacity: 0; transition: opacity var(--m-slow) ease, left .45s var(--ease); }
+.garden.is-in { opacity: 1; }
+.garden[hidden] { display: none; }
+body.is-consult .garden, body.is-page .garden { opacity: 0; pointer-events: none; }
+.g-svg { width: 100%; height: 100%; overflow: visible; font-family: var(--font); }
+
+/* light strokes: rings barely there, branches and threads fine and soft */
+.g-ring { fill: none; stroke: #F0F0EC; stroke-width: 1; transition: opacity .6s ease; }
+.g-ring.is-major { stroke: #E2E2DD; }
+.g-yr { font-size: 11px; fill: #9A9A94; letter-spacing: .04em; transition: opacity .6s ease; }
+.g-ring.is-out, .g-yr.is-out { opacity: 0; }
+.g-branch { fill: none; stroke: #8E8E88; stroke-width: 1.1; stroke-linecap: round; }
+.g-blabel { font-size: 13px; fill: #55554F; letter-spacing: .01em; }
+.g-thread { fill: none; stroke: #C9C9C3; stroke-width: .9; stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.1s var(--m-ease), stroke .25s, stroke-width .25s; }
+.g-thread.is-out { stroke-dashoffset: 1; transition-duration: .2s; }
+.g-thread.is-current, .g-thread.is-hint { stroke: var(--ink); stroke-width: 1.2; }
+.g-me { fill: var(--ink); }
+.g-me-t { fill: var(--white); font-size: 10.5px; font-weight: 500; }
+
+/* events pop in as the branch reaches them */
+.g-ev { cursor: pointer; outline: none; transition: opacity .45s ease, transform .6s var(--m-pop); }
+.g-ev.is-out { opacity: 0; transform: scale(.2); pointer-events: none; }
+.g-dot { stroke: var(--ink); stroke-width: 1.1; fill: var(--ink); transition: r .3s var(--m-pop); }
+.g-ev.from-her .g-dot { fill: var(--voice); }
+.g-ev.from-dismissed .g-dot { fill: var(--white); stroke: var(--alert); }
+.g-x { stroke: var(--alert); stroke-width: 1.3; stroke-linecap: round; }
+.g-ev.from-you .g-dot { fill: var(--you); }
+.g-doc { fill: none; stroke: #B5B5AF; stroke-width: .9; }
+.g-label { font-size: 12.5px; fill: var(--ink); paint-order: stroke; stroke: var(--white); stroke-width: 4px; stroke-linejoin: round; opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+.g-ev.is-key:not(.is-out) .g-label, .g-ev.is-hint .g-label, .g-ev.is-current .g-label, .g-ev:focus-visible .g-label { opacity: 1; }
+.g-ev.is-current .g-dot, .g-ev.is-hint .g-dot { r: 7; }
+.g-ev.is-current .g-label { font-weight: 500; }
+.garden.has-current .g-ev:not(.is-current):not(.is-hint):not(.is-out) { opacity: .3; }
+.garden.has-current .g-thread:not(.is-current) { opacity: .4; }
+@media (prefers-reduced-motion: reduce) { .g-ev, .g-thread, .g-ring { transition: none; } }
+
+/* its list in the index: the year and a few words; the rest opens when chosen */
+.hist-index { flex: 0 1 auto; overflow: auto; min-height: 54px; }
+.hist-index[hidden] { display: none; }
+.hist-head { display: flex; align-items: center; gap: 10px; margin: 0; }
+.hist-head span:first-of-type { flex: 1; }
+.hist-count { font-size: 12.5px; color: var(--grey); }
+.hist-key { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--grey); }
+.hist-key li { display: flex; align-items: center; gap: 6px; }
+.hist-key i { width: 10px; height: 10px; border-radius: 50%; border: 1.2px solid var(--ink); }
+.hist-key .k-her { background: var(--voice); }
+.hist-key .k-clin { background: var(--ink); }
+.hist-key .k-dis { background: var(--white); border-color: var(--alert); }
+.hist-body { margin-top: 14px; border-top: 1px dashed var(--ink); }
+.hb-sec { border-bottom: 1px dashed var(--ink); padding: 10px 0 6px; }
+.hb-name { margin: 0 0 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.h-row { width: 100%; display: grid; grid-template-columns: 36px 10px 1fr; gap: 8px; align-items: start; text-align: left; border: 0; background: none; padding: 4px 4px; border-radius: 5px; cursor: pointer; font: inherit; color: var(--ink); transition: opacity .35s ease, background .2s; }
+.h-row.is-out { opacity: .28; }
+.h-row.is-hint { background: rgb(0 0 0 / .04); }
+.h-row.is-current { background: var(--you); }
+.h-year { font-size: 12.5px; color: var(--grey); font-variant-numeric: tabular-nums; padding-top: 1px; }
+.h-mark { width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; border: 1.2px solid var(--ink); background: var(--ink); }
+.h-row.from-her .h-mark { background: var(--voice); }
+.h-row.from-dismissed .h-mark { background: var(--white); border-color: var(--alert); }
+.h-row.from-you .h-mark { background: var(--you); }
+.h-title { display: block; font-size: 14px; line-height: 1.35; }
+.h-more { display: none; }
+.h-row.is-current .h-more { display: block; }
+.h-note { display: block; font-size: 13px; line-height: 1.4; margin-top: 2px; }
+.h-meta { display: block; font-size: 11.5px; color: #3c3c38; margin-top: 3px; }
+@media (max-width: 760px) { .hist-bar, .garden, .hist-index { display: none !important; } }
+
+/* the spiral of time */
+.g-ghost { fill: none; stroke: #F1F1ED; stroke-width: 1; }
+.g-line { fill: none; stroke: #8E8E88; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.g-tip { fill: var(--ink); transition: opacity .4s ease; }
+.g-svg.is-grown .g-tip { opacity: 0; }
+.g-tick circle { fill: #B9B9B3; }
+.g-tick text { font-size: 11px; fill: #9A9A94; letter-spacing: .03em; }
+.g-tick.is-major circle { fill: #8E8E88; }
+.g-tick { transition: opacity .5s ease; }
+.g-tick.is-out { opacity: 0; }
+.g-loop { fill: none; stroke: #D9D9D4; stroke-width: 1; }
+.g-spec { font-size: 11px; fill: #8A8A84; font-weight: 400; }
+.garden.has-branch .g-ev:not(.in-branch):not(.is-out) { opacity: .18; }
+.garden.has-branch .g-ev.in-branch .g-label { opacity: 1; }
+.garden.has-branch .g-thread { opacity: .25; }
+.hb-name { display: flex; width: 100%; justify-content: space-between; align-items: center; border: 0; background: none; padding: 4px 4px; margin: 0 0 2px; border-radius: 5px; cursor: pointer; color: var(--ink);
+  font: inherit; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; text-align: left; }
+.hb-name:hover { background: rgb(0 0 0 / .04); }
+.hb-name.is-on { background: var(--ink); color: var(--white); }
+.hb-n { font-size: 11px; letter-spacing: 0; color: var(--grey); }
+.hb-name.is-on .hb-n { color: #CFCFCA; }
+
+/* the list stays closed: only the specialties; one opens when you choose one of its events (or the specialty itself) */
+.hb-sec .h-row { display: none; }
+.hb-sec.is-open .h-row { display: grid; }
+.hb-sec { padding: 6px 0; }
+.hb-sec.is-open { padding-bottom: 10px; }
+.hb-name { padding: 7px 4px; }
+/* the specialty tag on a label shows only when you point at or choose the event */
+.g-spec { opacity: 0; transition: opacity .2s ease; }
+.g-ev.is-hint .g-spec, .g-ev.is-current .g-spec { opacity: 1; }
+/* growing: the line's tip glows a little as it travels */
+.g-tip { r: 4; fill: var(--ink); filter: drop-shadow(0 0 4px rgb(177 204 238 / .9)); }
+
+/* the hand-drawn spiral: a soft pencil line, gone over twice */
+.g-line { stroke: #7E7E78; stroke-width: 1.15; }
+.g-line2 { stroke: #B9B9B3; stroke-width: .8; opacity: .8; }
+.g-ghost { stroke: #F3F3EF; stroke-width: 1.4; }
+
+/* ---------- Her history, after the reference: a coloured line of time, words on it, circles off it ---------- */
+.garden { --sp: #A9C3EC; --sp-ring: #5E8FD8; --c-her: #3E8A2C; --c-clin: #2A2A28; --c-dis: #D04A36; --c-you: #2D5A68;
+  background-image: radial-gradient(#E3E3DE 1px, transparent 1.3px); background-size: 18px 18px; background-position: 9px 9px; border-radius: 10px; }
+.g-ghost { fill: none; stroke: #EEF2FA; stroke-width: 1.2; }
+.g-line { fill: none; stroke: var(--sp); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.g-tip { fill: var(--sp-ring); filter: drop-shadow(0 0 5px rgb(94 143 216 / .6)); transition: opacity .4s ease; }
+.g-svg.is-grown .g-tip { opacity: 0; }
+.g-me { fill: none; stroke: var(--sp-ring); stroke-width: 1.5; }
+.g-me-t, .g-yr { font-size: 10.5px; fill: #8E8E88; letter-spacing: .04em; }
+.g-yr { transition: opacity .5s ease; }
+
+/* words written on the line: a white halo breaks the line behind them */
+.g-ev { cursor: pointer; outline: none; transition: opacity .5s ease; }
+.g-word { font-size: 12.5px; fill: var(--c-clin); paint-order: stroke; stroke: var(--white); stroke-width: 6px; stroke-linejoin: round; }
+.g-ev.from-her .g-word { fill: var(--c-her); }
+.g-ev.from-dismissed .g-word { fill: var(--c-dis); }
+.g-ev.from-you .g-word { fill: var(--c-you); font-weight: 500; }
+.g-when { font-size: 10px; fill: #A2A29C; paint-order: stroke; stroke: var(--white); stroke-width: 4px; opacity: 0; transition: opacity .25s ease; }
+.g-ev:hover .g-when, .g-ev.is-hint .g-when, .g-ev.is-current .g-when { opacity: 1; }
+.g-ev:hover .g-word, .g-ev.is-hint .g-word { text-decoration: underline; text-underline-offset: 3px; }
+.g-ev.is-current .g-word { font-weight: 500; fill: var(--ink); }
+.g-ev.is-current .g-word { stroke: var(--you); }
+
+/* key findings: a circle off the line, holding what they explain */
+.g-cl { cursor: pointer; outline: none; transition: opacity .5s ease, transform .7s var(--m-pop); }
+.g-stem { fill: none; stroke: var(--sp-ring); stroke-width: 1.1; }
+.g-ring-c { fill: rgb(255 255 255 / .92); stroke: var(--sp-ring); stroke-width: 1.6; transition: stroke-width .2s; }
+.g-cl-title { font-size: 13px; font-weight: 500; fill: var(--sp-ring); paint-order: stroke; stroke: var(--white); stroke-width: 6px; stroke-linejoin: round; }
+.g-cl-row { font-size: 10.5px; fill: var(--c-clin); }
+.g-cl-row.from-her { fill: var(--c-her); }
+.g-cl-row.from-dismissed { fill: var(--c-dis); }
+.g-cl-row.is-current { font-weight: 600; }
+.g-cl:hover .g-ring-c, .g-cl.is-hint .g-ring-c, .g-cl.is-current .g-ring-c { stroke-width: 2.4; }
+.g-cl.is-current .g-ring-c { fill: #F3F7FD; }
+
+/* growing: words and circles appear as the line reaches them */
+.g-ev.is-out, .g-yr.is-out { opacity: 0; pointer-events: none; }
+.g-cl.is-out { opacity: 0; transform: scale(.3); pointer-events: none; }
+.garden.has-current .g-ev:not(.is-current):not(.is-out), .garden.has-current .g-cl:not(.is-current):not(.is-out) { opacity: .35; }
+.garden.has-branch .g-ev:not(.in-branch):not(.is-out), .garden.has-branch .g-cl:not(.in-branch):not(.is-out) { opacity: .2; }
+.garden.has-branch .g-ev.in-branch, .garden.has-branch .g-cl.in-branch { opacity: 1; }
+
+/* below the spiral: what you are looking at (left) and the counts in their colours (right), as in the reference */
+.g-status { position: absolute; left: 16px; bottom: 6px; margin: 0; font-size: 12.5px; color: #55554F; }
+.g-counts { position: absolute; right: 16px; bottom: 6px; margin: 0; padding: 0; list-style: none; text-align: right; font-size: 12.5px; line-height: 1.5; }
+.g-counts .c-her { color: var(--c-her); } .g-counts .c-clin { color: var(--c-clin); } .g-counts .c-dis { color: var(--c-dis); }
+
+/* the list: coloured like the words; no marks needed */
+.hist-index .h-row { grid-template-columns: 36px 1fr; }
+.hist-index .h-row.from-her .h-title { color: #3E8A2C; }
+.hist-index .h-row.from-dismissed .h-title { color: #D04A36; }
+.hist-index .h-row.from-you .h-title { color: #2D5A68; font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .g-ev, .g-cl, .g-yr { transition: none; } }
+
+/* the switch stays where it is in both views; in Her history only a replay button joins it */
+body.is-history .hist-bar { left: calc(var(--rail-space) + 44px); right: auto; justify-content: flex-start; }
+.hist-play { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #CFCFCA; background: var(--white); display: grid; place-items: center; cursor: pointer; padding: 0; color: var(--ink); }
+.hist-play[hidden] { display: none; }
+.hist-play svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin: 0; }
+.hist-play.is-on { background: var(--you); border-color: var(--you); }
+.hist-play.is-on svg { animation: hist-spin 1.2s linear infinite; }
+@keyframes hist-spin { to { transform: rotate(360deg); } }
+.g-status { left: auto; right: 16px; bottom: 64px; }
+.g-cl-more { font-size: 10px; fill: #8E8E88; }
+
+/* Her history, readability pass: no dotted ground; larger type; colours that pass AA contrast on white */
+.garden { background-image: none; --c-her: #2E7420; --c-clin: #1F1F1D; --c-dis: #B3362A; --c-you: #1F4E5C; --sp-ring: #2F64B5; --sp: #9DBAE8; }
+.g-word { font-size: 14.5px; stroke-width: 7px; }
+.g-when { font-size: 12px; fill: #6B6B66; }
+.g-cl-title { font-size: 14.5px; stroke-width: 7px; }
+.g-cl-row { font-size: 12.5px; }
+.g-cl-more { font-size: 12px; fill: #6B6B66; }
+.g-me-t, .g-yr { font-size: 12px; fill: #6B6B66; }
+.g-status, .g-counts { font-size: 13.5px; }
+.g-counts .c-her { color: #2E7420; } .g-counts .c-dis { color: #B3362A; }
+.hist-index .h-row.from-her .h-title { color: #2E7420; }
+.hist-index .h-row.from-dismissed .h-title { color: #B3362A; }
+.hist-index .h-row.from-you .h-title { color: #1F4E5C; }
+/* keyboard: a clear focus ring on words and circles */
+.g-ev:focus-visible .g-word, .g-cl:focus-visible .g-cl-title { stroke: var(--you); stroke-width: 9px; }
+.g-cl:focus-visible .g-ring-c { stroke-width: 3; }
+.hb-name:focus-visible, .h-row:focus-visible, .hist-seg button:focus-visible, .hist-play:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.garden.has-current .g-ev:not(.is-current):not(.is-out), .garden.has-current .g-cl:not(.is-current):not(.is-out) { opacity: .45; }
+
+/* text stays black everywhere; colour only marks who wrote it (highlighter behind the word, a dot in the list) */
+.g-word, .g-ev.from-her .g-word, .g-ev.from-dismissed .g-word, .g-ev.from-you .g-word, .g-cl-title, .g-cl-row, .g-cl-row.from-her, .g-cl-row.from-dismissed { fill: var(--ink); }
+.g-ev.from-you .g-word { font-weight: 500; }
+.g-ev.from-her .g-word, .g-ev.from-dismissed .g-word, .g-ev.from-you .g-word { stroke: none; }
+.g-mark { fill: #BFE8A8; }
+.g-ev.from-dismissed .g-mark { fill: #FFC9C0; }
+.g-ev.from-you .g-mark { fill: var(--you); }
+.g-ev.is-current .g-word { stroke: none; text-decoration: underline; text-underline-offset: 3px; }
+.g-ev.is-current:not(.from-her):not(.from-dismissed):not(.from-you) .g-word { stroke: var(--you); stroke-width: 7px; }
+.g-cl-row.from-her, .g-cl-row.from-dismissed { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 3px; }
+.g-cl-row.from-her { text-decoration-color: #8FD46E; }
+.g-cl-row.from-dismissed { text-decoration-color: #EE6E5B; }
+.g-cl-title { fill: var(--ink); }
+.g-counts li { color: var(--ink) !important; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.g-counts i { width: 18px; height: 9px; border-radius: 2px; }
+.g-counts .k-her { background: #BFE8A8; } .g-counts .k-clin { background: none; border-bottom: 1.5px solid var(--ink); height: 5px; border-radius: 0; } .g-counts .k-dis { background: #FFC9C0; }
+.hist-index .h-row { grid-template-columns: 36px 10px 1fr; }
+.hist-index .h-row .h-title, .hist-index .h-row.from-her .h-title, .hist-index .h-row.from-dismissed .h-title, .hist-index .h-row.from-you .h-title { color: var(--ink); }
+.hist-index .h-mark { width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; border: 1.2px solid var(--ink); background: var(--ink); }
+.hist-index .h-row.from-her .h-mark { background: #8FD46E; }
+.hist-index .h-row.from-dismissed .h-mark { background: #FFC9C0; border-color: #B3362A; }
+.hist-index .h-row.from-you .h-mark { background: var(--you); }
+
+.g-status { left: 0; right: 0; bottom: 4px; text-align: center; font-size: 14px; color: #3c3c38; }
+.g-counts { display: none; }
+.hist-key { margin: 10px 0 0; gap: 6px 16px; font-size: 12.5px; color: var(--ink); }
+.hist-key i { width: 18px; height: 10px; border-radius: 2px; border: 0; }
+.hist-key .k-her { background: #BFE8A8; } .hist-key .k-dis { background: #FFC9C0; } .hist-key .k-you { background: var(--you); }
+
+/* calmer, bigger, readable: no coloured outline around words; the chosen word is simply underlined */
+.garden { top: 12px; bottom: 60px; }
+.g-word { font-size: 16px; stroke-width: 6px; }
+.g-when { font-size: 12.5px; }
+.g-cl-title { font-size: 16px; }
+.g-cl-row { font-size: 13.5px; }
+.g-cl-more { font-size: 12.5px; }
+.g-mark { rx: 2; }
+.g-ev.is-current .g-word, .g-ev.is-current:not(.from-her):not(.from-dismissed):not(.from-you) .g-word,
+.g-ev:focus-visible .g-word, .g-cl:focus-visible .g-cl-title { stroke: var(--white); stroke-width: 6px; font-weight: 500;
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.g-ev.from-her.is-current .g-word, .g-ev.from-dismissed.is-current .g-word, .g-ev.from-you.is-current .g-word,
+.g-ev.from-her:focus-visible .g-word, .g-ev.from-dismissed:focus-visible .g-word, .g-ev.from-you:focus-visible .g-word { stroke: none; }
+/* words arrive softly as the line reaches them */
+.g-ev { transition: opacity .9s ease; }
+.g-cl { transition: opacity .9s ease, transform 1s var(--m-ease); }
+.g-cl.is-out { transform: scale(.6); }
+
+/* circle rows: the highlighter replaces the underline */
+.g-cl-row.from-her, .g-cl-row.from-dismissed { text-decoration: none; }
+.g-mark.m-her { fill: #BFE8A8; } .g-mark.m-dis { fill: #FFC9C0; }
+
+/* the hint sits in the index, where the details appear */
+.hist-hint { margin: 10px 0 0; font-size: 13.5px; line-height: 1.4; color: #3c3c38; }
+
+/* key findings: a hub with linked bubbles (no text inside circles) */
+.g-hub { fill: #F3F7FD; stroke: var(--sp-ring); stroke-width: 1.6; transition: r .25s var(--m-pop); }
+.g-cl:hover .g-hub, .g-cl.is-current .g-hub, .g-cl.is-hint .g-hub { r: 13; fill: var(--you); }
+.g-link { fill: none; stroke: var(--sp-ring); stroke-width: 1; opacity: .8; }
+.g-bub { fill: var(--white); stroke: var(--sp-ring); stroke-width: 1.4; transition: r .2s var(--m-pop), fill .2s; }
+.g-kid { cursor: pointer; outline: none; transition: opacity .9s ease; }
+.g-kid-t { font-size: 14px; fill: var(--ink); paint-order: stroke; stroke: var(--white); stroke-width: 5px; stroke-linejoin: round; }
+.g-kid.from-her .g-kid-t, .g-kid.from-dismissed .g-kid-t { stroke: none; }
+.g-kid:hover .g-bub, .g-kid.is-current .g-bub, .g-kid:focus-visible .g-bub { r: 7.5; fill: var(--you); }
+.g-kid.is-current .g-kid-t, .g-kid:focus-visible .g-kid-t { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.g-kid.is-out { opacity: 0; pointer-events: none; }
+.garden.has-current .g-cl.is-current .g-kid:not(.is-current) { opacity: .5; }
+
+/* documents in the history list: small prints; open, they come to the middle as on the home screen */
+.h-prints { position: relative; display: flex; align-items: flex-end; gap: 0; margin-top: 10px; height: 74px; cursor: zoom-in; }
+.h-print { position: relative; width: 52px; height: 70px; margin-right: -22px; overflow: hidden; background: #000; border-radius: 2px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .15), 0 6px 14px -6px rgb(0 0 0 / .35); transform: rotate(calc((var(--i) - .5) * 5deg)); transition: transform .3s var(--m-ease); }
+.h-print.is-paper { background: var(--white); outline: 1px solid var(--rule); outline-offset: -1px; }
+.h-print img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.h-print .drawn-page { width: 100%; height: 100%; padding: 5px; box-sizing: border-box; }
+.h-prints:hover .h-print { transform: rotate(0) translateY(-3px); }
+.h-open { margin-left: 34px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.h-prints:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+.h-viewer { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  background: rgb(255 255 255 / .94); opacity: 0; transition: opacity .3s ease; cursor: zoom-out; padding: 40px; }
+.h-viewer[hidden] { display: none; }
+.h-viewer.is-in { opacity: 1; }
+.hv-pages { display: flex; gap: 28px; align-items: center; justify-content: center; max-width: 100%; }
+.hv-page { margin: 0; height: min(72vh, 760px); aspect-ratio: 1 / 1.3; background: #000; box-shadow: 0 2px 6px rgb(0 0 0 / .1), 0 30px 60px -30px rgb(0 0 0 / .45);
+  transform: translateY(24px) scale(.92); transition: transform .5s var(--m-ease) calc(var(--i) * 70ms); overflow: hidden; }
+.hv-page.is-paper { background: var(--white); outline: 1px solid var(--rule); }
+.h-viewer.is-in .hv-page { transform: none; }
+.hv-page img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.hv-page .drawn-page.is-big { width: 100%; height: 100%; padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+.hv-page .drawn-page.is-big .dp-type { font-size: 12px; } .hv-page .drawn-page.is-big .dp-title { font-size: 22px; } .hv-page .drawn-page.is-big .dp-from { font-size: 13px; }
+.hv-page .drawn-page.is-big .dp-lines { gap: 12px; margin-top: 18px; } .hv-page .drawn-page.is-big .dp-lines i { height: 4px; }
+.hv-cap { margin: 0; text-align: center; font-size: 15px; }
+.hv-cap span { display: block; margin-top: 4px; font-size: 13px; color: var(--grey); }
+
+/* clean circles for the hubs and bubbles; they grow a little on hover */
+.g-hub { fill: #F3F7FD; stroke: var(--sp-ring); stroke-width: 1.6; transition: r .25s var(--m-pop), fill .2s; }
+.g-cl:hover .g-hub, .g-cl.is-current .g-hub, .g-cl.is-hint .g-hub { r: 13; fill: var(--you); }
+.g-bub { fill: var(--white); stroke: var(--sp-ring); stroke-width: 1.4; transition: r .2s var(--m-pop), fill .2s; }
+.g-kid:hover .g-bub, .g-kid.is-current .g-bub, .g-kid:focus-visible .g-bub { r: 7.5; fill: var(--you); }
+.g-me { fill: none; stroke: var(--sp-ring); stroke-width: 1.5; }
+/* the report sits on the right of the view, next to the index */
+/* the documents of the chosen event: a pile of prints on the right of the view, next to the index */
+.h-pile { position: absolute; right: 16px; top: 8px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  border: 0; background: none; padding: 0; cursor: zoom-in; font: inherit; color: var(--ink); text-align: right; max-width: 200px;
+  opacity: 0; transform: translateY(8px); transition: opacity .3s ease, transform .4s var(--m-ease); }
+.h-pile[hidden] { display: none; }
+.h-pile.is-in { opacity: 1; transform: none; }
+.hp-prints { display: flex; flex-direction: row-reverse; height: 112px; align-items: flex-end; }
+.h-pile .h-print { width: 76px; height: 104px; margin-right: 0; margin-left: -38px; }
+.h-pile:hover .h-print { transform: rotate(0) translateY(-4px); }
+.hp-cap { margin-top: 6px; font-size: 13px; line-height: 1.35; }
+.hp-hint { font-size: 12.5px; color: var(--grey); text-decoration: underline; text-underline-offset: 3px; }
+.h-pile:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 4px; }
+.h-pile { top: auto; bottom: 8px; }   /* bottom right, beside the index, clear of the spiral */
+
+/* the big circles are back: the finding's events written inside */
+.g-ring-c { fill: rgb(255 255 255 / .92); stroke: var(--sp-ring); stroke-width: 1.6; }
+.g-cl:hover .g-ring-c, .g-cl.is-hint .g-ring-c, .g-cl.is-current .g-ring-c { stroke-width: 2.4; }
+.g-cl.is-current .g-ring-c { fill: #F3F7FD; }
+.g-cl-row { font-size: 13.5px; fill: var(--ink); cursor: pointer; }
+.g-cl-row.from-her, .g-cl-row.from-dismissed { text-decoration: none; }
+.g-cl-row.is-current { font-weight: 600; }
+
+/* an opened circle: its events come out as bubbles around it, tied by thin lines; the text inside steps back */
+.g-burst { pointer-events: none; }
+.g-cl.is-open .g-burst { pointer-events: auto; }
+.g-kid { cursor: pointer; outline: none; opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2);
+  transition: opacity .3s ease, transform .5s var(--m-pop); }
+.g-cl.is-open .g-kid { opacity: 1; transform: none; transition-delay: calc(var(--i) * 45ms); }
+.g-link { fill: none; stroke: var(--sp-ring); stroke-width: 1; opacity: .7; }
+.g-bub { fill: var(--white); stroke: var(--sp-ring); stroke-width: 1.4; transition: r .2s var(--m-pop), fill .2s; }
+.g-kid-t { font-size: 14px; fill: var(--ink); paint-order: stroke; stroke: var(--white); stroke-width: 5px; stroke-linejoin: round; }
+.g-kid.from-her .g-kid-t, .g-kid.from-dismissed .g-kid-t { stroke: none; }
+.g-kid:hover .g-bub, .g-kid.is-current .g-bub, .g-kid:focus-visible .g-bub { r: 7.5; fill: var(--you); }
+.g-kid.is-current .g-kid-t, .g-kid:focus-visible .g-kid-t { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.g-cl .g-cl-row, .g-cl .g-cl-more, .g-cl .g-mark { transition: opacity .3s ease; }
+.g-cl.is-open .g-cl-row, .g-cl.is-open .g-cl-more, .g-cl.is-open > .g-mark { opacity: 0; }
+.g-cl.is-open .g-ring-c { fill: #F3F7FD; }
+.g-cl .g-count { font-size: 13px; fill: var(--sp-ring); opacity: 0; transition: opacity .3s ease .1s; }
+.g-cl.is-open .g-count { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .g-kid { transition: none; } }
+
+/* choosing something never fades the rest: every label stays readable */
+
+
+/* opened circle: its bubbles all stay fully visible */
+.garden.has-current .g-cl.is-current .g-kid:not(.is-current) { opacity: 1; }
+/* the report: larger, at the top next to the index (at the bottom if a word is in the way) */
+.h-pile { top: 8px; bottom: auto; max-width: 240px; }
+.h-pile.at-bottom { top: auto; bottom: 8px; }
+.hp-prints { height: 160px; }
+.h-pile .h-print { width: 112px; height: 152px; margin-left: -56px; }
+.hp-cap { font-size: 14px; }
+.hp-hint { font-size: 13px; }
+
+.h-pile.pos-tr { top: 8px; bottom: auto; right: 16px; left: auto; align-items: flex-end; text-align: right; }
+.h-pile.pos-br { top: auto; bottom: 8px; right: 16px; left: auto; align-items: flex-end; text-align: right; }
+.h-pile.pos-tl { top: 8px; bottom: auto; left: 16px; right: auto; align-items: flex-start; text-align: left; }
+.h-pile.pos-bl { top: auto; bottom: 8px; left: 16px; right: auto; align-items: flex-start; text-align: left; }
+.h-pile.pos-tl .hp-prints, .h-pile.pos-bl .hp-prints { flex-direction: row; }
+.h-pile.pos-tl .h-print, .h-pile.pos-bl .h-print { margin-left: 0; margin-right: -56px; }
+
+/* the report: just left of the index, level with its top; the index never moves */
+.stage > .h-pile { position: absolute; z-index: 5; top: 96px; bottom: auto; left: auto; right: calc(var(--side) + 12px);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px; width: 200px; max-width: none; padding: 10px; text-align: right;
+  background: var(--white); border-radius: 8px; }
+.stage > .h-pile .hp-prints { flex-direction: row-reverse; height: 150px; padding-left: 50px; }
+.stage > .h-pile .h-print { width: 104px; height: 142px; margin-right: 0; margin-left: -50px; }
+.stage > .h-pile .hp-text { display: flex; flex-direction: column; gap: 4px; }
+body:not(.is-history) .h-pile { display: none; }
+
+/* a circle holds one sentence about its finding; choosing it only strengthens its outline */
+.g-cl-sum { font-size: 12.5px; fill: var(--ink); }
+.g-cl.is-current .g-ring-c { stroke-width: 2.6; fill: #F3F7FD; }
+.h-rel { display: block; font-size: 13px; line-height: 1.4; margin-top: 4px; }
+
+/* the opened finding keeps its sentence and its colour; its related events sit around it, fully visible */
+.g-cl.is-open .g-cl-sum { opacity: 1; }
+.g-cl .g-kid, .garden.has-current .g-cl.is-current .g-kid:not(.is-current) { opacity: 0; }
+.g-cl.is-open .g-kid, .garden.has-current .g-cl.is-open .g-kid:not(.is-current) { opacity: 1; }
+/* in Her history the hidden header must not catch any click (its children allowed clicks on their own) */
+body.is-history .brief, body.is-history .brief * { pointer-events: none !important; visibility: hidden; }
+
+/* focus: what you choose stays at full strength (a word, or a finding with its title, sentence and related events);
+   the rest of the spiral steps back so the chosen information stands out */
+.g-ev, .g-cl, .g-line, .g-yr, .g-centre { transition: opacity .35s ease; }
+.garden.has-current .g-ev:not(.is-current):not(.is-out) { opacity: .2 !important; }
+.garden.has-current .g-cl:not(.is-current):not(.is-out) { opacity: .2 !important; }
+.garden.has-current .g-cl.is-current { opacity: 1 !important; }
+.garden.has-current .g-line, .garden.has-current .g-yr, .garden.has-current .g-centre { opacity: .3; }
+
+.g-cl .g-kid, .g-burst { display: none; }   /* no bubbles: a finding shows its document directly */
+
+/* a chosen finding: the incidents it explains stay lit where they happened on the spiral */
+.garden.has-current .g-ev.is-related:not(.is-out) { opacity: 1 !important; }
+.g-ev.is-related .g-word { text-decoration: underline; text-decoration-color: var(--sp-ring); text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+
+/* every incident shows its year, always (not only on hover) */
+.g-when { opacity: 1 !important; font-size: 12px; fill: #6B6B66; }
+.g-yrs { display: none; }   /* each incident carries its own year now; the separate markers are no longer needed */
+
+/* the index stays quiet: no event counts */
+.hist-count, .hb-n { display: none; }
