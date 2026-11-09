@@ -29,8 +29,10 @@
       tool: { type: "chips", options: ["Saturday, on the stairs of my building", "During sport", "At work"] }, sample: "Saturday, I missed a step on the stairs of my building" },
     { id: "where", label: "Where", lines: ["Where does it hurt? Tap on the body. You can choose more than one place."],
       tool: { type: "body" }, sample: "My right foot, my right knee and my right wrist" },
-    { id: "pain", label: "Pain", lines: ["At its worst, how strong is the pain?", "And when is it worst?"],
-      tool: { type: "pain", options: ["Walking", "On the stairs", "At night", "Sitting"] }, sample: "About 6 out of 10, when I walk and at night" },
+    { id: "pain", label: "Pain", lines: ["At its worst, how strong is the pain?"],
+      tool: { type: "pain" }, sample: "About 6 out of 10" },
+    { id: "worst", label: "Worst when", lines: ["When is it worst? You can choose more than one."],
+      tool: { type: "chips", multi: true, options: ["Walking", "On the stairs", "At night", "Sitting"] }, sample: "When I walk, and at night" },
     { id: "health", label: "Also", lines: ["Is there anything else about your health Marc should know? Even if it seems unrelated."],
       tool: { type: "chips", multi: true, options: ["I often feel dizzy", "I get breathless on stairs", "Headaches", "Nothing else"] }, sample: "I often feel dizzy, and I get breathless when I climb stairs" },
     { id: "wants", label: "You would like", lines: ["What would you most like from this first session?"],
@@ -38,7 +40,7 @@
     { id: "papers", label: "Papers", lines: ["Did the emergency give you any papers? A photo is enough."],
       tool: { type: "papers" }, sample: null },
   ];
-  const ACK = { where: "Thank you. Marc will look at each of them.", health: "Good to know. Marc will keep it in mind.", wants: "Noted." };
+  const ACK = { where: (a) => (/ and /.test(a) ? "Thank you. Marc will look at each of them." : "Thank you. Marc will look at it."), health: "Good to know. Marc will keep it in mind.", wants: "Noted." };
   const answers = {};
   let step = -1, editing = false, busy = false;
 
@@ -115,23 +117,13 @@
       }));
       done.addEventListener("click", () => answer(list(chosen())));
     }
-    if (t.type === "pain") {
+    if (t.type === "pain") {   // one tap on a number is the answer
       box.innerHTML = `<div class="scale" role="group" aria-label="Pain from 0 to 10">${Array.from({ length: 11 }, (_, n) => `<button type="button" aria-pressed="false">${n}</button>`).join("")}</div>
-        <div class="scale-ends"><span>No pain</span><span>The worst</span></div>
-        <p class="tool-label">Worst when</p>
-        <div class="chips">${t.options.map((o) => `<button type="button" class="chip" aria-pressed="false">${o}</button>`).join("")}</div>
-        <div class="tool-row"><button type="button" class="chip is-done" disabled>Done</button></div>`;
-      const done = box.querySelector(".is-done");
-      let level = null;
+        <div class="scale-ends"><span>No pain</span><span>The worst</span></div>`;
       box.querySelectorAll(".scale button").forEach((b) => b.addEventListener("click", () => {
         box.querySelectorAll(".scale button").forEach((x) => x.setAttribute("aria-pressed", x === b));
-        level = b.textContent; done.disabled = false;
+        answer(`${b.textContent} out of 10`);
       }));
-      box.querySelectorAll(".chips .chip").forEach((c) => c.addEventListener("click", () => c.setAttribute("aria-pressed", c.getAttribute("aria-pressed") !== "true")));
-      done.addEventListener("click", () => {
-        const when = [...box.querySelectorAll('.chips .chip[aria-pressed="true"]')].map((x) => x.textContent.toLowerCase());
-        answer(`${level} out of 10${when.length ? `, worst ${list(when)}` : ""}`);
-      });
     }
     if (t.type === "papers") {
       box.innerHTML = `<div class="chips"><button type="button" class="chip" data-a="photo">Take a photo</button><button type="button" class="chip" data-a="file">Choose a file</button><button type="button" class="chip" data-a="none">I have none</button></div>`;
@@ -158,7 +150,7 @@
     if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
     say.value = "";
     if (editing) { editing = false; await wait(500); review(s.id); busy = false; return; }
-    if (ACK[s.id]) await bot(ACK[s.id]);
+    if (ACK[s.id]) await bot(typeof ACK[s.id] === "function" ? ACK[s.id](text) : ACK[s.id]);
     busy = false;
     if (step + 1 < STEPS.length) return ask(step + 1);
     await bot("That's everything. Here is what Marc will read. You can change anything before you send it.");
