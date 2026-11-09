@@ -2635,3 +2635,13 @@ body.is-history .brief, body.is-history .brief * { pointer-events: none !importa
 }
 @media (max-width: 760px) { body.m-history .brief .tags { display: none; } }   /* their colours would read as part of the history's key */
 @media (max-width: 760px) { body.m-history .brief .p-facts { display: none; } }   /* her details are on Today; here only her name and the two buttons stay */
+/* phone header (A): photo on the left; the two tabs and the summary's button at the top right; her name on its own line below */
+.m-who-ctl { display: none; }
+@media (max-width: 760px) {
+  .brief .who { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 10px; padding-right: 0; }
+  .brief .who .photo { grid-column: 1; grid-row: 1; }
+  .brief .who .who-text { grid-column: 1 / -1; grid-row: 2; }
+  .m-who-ctl { display: flex; grid-column: 2; grid-row: 1; justify-self: end; align-items: center; gap: 8px; }
+  .m-who-ctl .hist-seg button { padding: 7px 10px; font-size: 13.5px; }
+  .m-who-ctl .m-sum-btn { position: static; flex: none; width: 38px; height: 38px; }
+}

@@ -478,15 +478,14 @@
     <button type="button" class="m-hist-play" aria-label="Grow her history again" hidden>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3"/></svg></button>`;
   ($(".brief .tags") || $(".brief")).after(mSeg);
-  // and a round button beside the summary's, at the top: the quickest way in
-  const mBtn = document.createElement("button");
-  mBtn.type = "button";
-  mBtn.className = "m-sum-btn m-hist-btn";
-  mBtn.setAttribute("aria-label", "Show her history");
-  mBtn.setAttribute("aria-pressed", "false");
-  mBtn.innerHTML = `<svg class="i" aria-hidden="true"><use href="#i-history"/></svg>`;
+  // at the top right, beside her photo: the two tabs, then the summary's button
+  const seg = mSeg.querySelector(".hist-seg");
   const sumBtn = $("#m-sum-btn");
-  if (sumBtn) sumBtn.before(mBtn);
+  const ctl = document.createElement("div");
+  ctl.className = "m-who-ctl";
+  ctl.append(seg);
+  if (sumBtn) ctl.append(sumBtn);
+  ($(".brief .who") || $(".brief")).append(ctl);
 
   const related = {};   // an incident → the findings it belongs with, and each finding → itself and its incidents
   Object.entries(clusters).forEach(([k, kids]) => { related[k] = [k, ...kids]; });
@@ -582,21 +581,14 @@
 
   function mView(v) {
     const on = v === "history";
-    mSeg.querySelectorAll(".hist-seg button").forEach((b) => { const me = b.dataset.v === v; b.classList.toggle("is-on", me); b.setAttribute("aria-checked", me); });
+    seg.querySelectorAll("button").forEach((b) => { const me = b.dataset.v === v; b.classList.toggle("is-on", me); b.setAttribute("aria-checked", me); });
     mHist.querySelector(".m-hist-play").hidden = !on;
     document.body.classList.toggle("m-history", on);
-    mBtn.classList.toggle("is-on", on); mBtn.setAttribute("aria-pressed", on);
     mHist.hidden = !on;
-    if (on) { mChoose(null); mGrow(); }
+    if (on) { if (sumBtn && sumBtn.classList.contains("is-on")) sumBtn.click(); mChoose(null); mGrow(); }
     else { mTimers.forEach(clearTimeout); if (!sheet.hidden) mCloseDoc(); }
   }
-  mSeg.querySelectorAll(".hist-seg button").forEach((b) => b.addEventListener("click", () => mView(b.dataset.v)));
-  mBtn.addEventListener("click", () => {
-    const on = !document.body.classList.contains("m-history");
-    if (on && sumBtn && sumBtn.classList.contains("is-on")) sumBtn.click();   // the summary card steps away
-    mView(on ? "history" : "today");
-    if (on) $(".stage").scrollTo({ top: mHist.offsetTop - 64, behavior: reduce ? "auto" : "smooth" });
-  });
+  seg.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => mView(b.dataset.v)));
   mHist.querySelector(".m-hist-play").addEventListener("click", () => { if (!sheet.hidden) mCloseDoc(); mChoose(null); mGrow(); });
   phone.addEventListener("change", () => { if (!phone.matches && document.body.classList.contains("m-history")) mView("today"); });
   addEventListener("resize", () => { if (!mHist.hidden) mLine(); });
