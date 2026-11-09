@@ -467,4 +467,120 @@
   }
   bar.querySelectorAll(".hist-seg button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
   addEventListener("resize", () => { if (!garden.hidden) build(); });
+
+  /* ---------- on a phone: the same history as one hand-drawn line running down the page ---------- */
+  const phone = matchMedia("(max-width: 760px)");
+  const mSeg = document.createElement("div");
+  mSeg.className = "m-hist-bar";
+  mSeg.innerHTML = `<div class="hist-seg" role="radiogroup" aria-label="View">
+      <button type="button" role="radio" aria-checked="true" data-v="today" class="is-on">Today</button>
+      <button type="button" role="radio" aria-checked="false" data-v="history">Her history</button></div>
+    <button type="button" class="m-hist-play" aria-label="Grow her history again" hidden>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3"/></svg></button>`;
+  ($(".brief .tags") || $(".brief")).after(mSeg);
+
+  const related = {};   // an incident → the findings it belongs with, and each finding → itself and its incidents
+  Object.entries(clusters).forEach(([k, kids]) => { related[k] = [k, ...kids]; });
+  const mRow = (e) => {
+    const finding = !!clusters[e.id], d = finding && docsOf(e);
+    const mark = { her: "m-her", dismissed: "m-dis", you: "m-you" }[e.from];
+    return `<li class="mh-row${finding ? " is-finding" : ""}" data-ev="${e.id}">
+      <span class="mh-year">${e.year}</span>${finding ? `<span class="mh-dot" aria-hidden="true"></span>` : ""}
+      <div class="mh-text">
+        <button type="button" class="mh-title"${e.id === "h21" ? ` data-today` : ""}>${mark ? `<span class="mh-mark ${mark}">${e.title}</span>` : e.title}</button>
+        ${finding ? `<p class="mh-sum">${e.summary}</p>` : ""}
+        ${d ? `<button type="button" class="mh-doc" data-doc="${e.id}" aria-label="Open: ${d.caption}">
+          <span class="mh-thumb${d.paper ? " is-paper" : ""}">${page(d.pages[0])}</span><span class="mh-doc-name">${d.caption.split(" · ")[0]}</span></button>` : ""}
+      </div></li>`;
+  };
+  const mHist = document.createElement("section");
+  mHist.className = "m-hist";
+  mHist.hidden = true;
+  mHist.setAttribute("aria-label", "Her history, from her first record to today");
+  mHist.innerHTML = `<ul class="mh-key" aria-label="Key"><li><i class="k-her"></i>Told by her</li><li><i class="k-dis"></i>No diagnosis</li><li><i class="k-you"></i>Today</li></ul>
+    <div class="mh-body"><svg class="mh-line" aria-hidden="true"><path/></svg>
+      <ol class="mh-list">${[...H.events].sort((a, b) => when[a.id] - when[b.id]).map(mRow).join("")}</ol></div>`;
+  $(".side").prepend(mHist);
+
+  // the line, drawn by hand down the page: it wavers a little from side to side
+  function mLine() {
+    const body = mHist.querySelector(".mh-body"), h = body.offsetHeight, x = 66, pts = [];
+    for (let y = 0; y <= h; y += 8) pts.push(`${(x + Math.sin(y / 97) * 2.2 + Math.sin(y / 31 + 1.3) * 0.9).toFixed(1)},${y}`);
+    const sv = mHist.querySelector(".mh-line"), path = sv.querySelector("path");
+    sv.setAttribute("viewBox", `0 0 ${body.offsetWidth} ${h}`);
+    sv.style.height = h + "px";
+    path.setAttribute("d", "M" + pts.join(" L"));
+    return path;
+  }
+  // it grows from 2010 down to today; each line of her history appears as the line reaches it
+  let mTimers = [];
+  function mGrow() {
+    mTimers.forEach(clearTimeout); mTimers = [];
+    const path = mLine(), rows = [...mHist.querySelectorAll(".mh-row")];
+    const play = mSeg.querySelector(".m-hist-play");
+    if (reduce) { path.style.strokeDasharray = ""; rows.forEach((r) => r.classList.add("is-in")); return; }
+    const len = path.getTotalLength(), h = mHist.querySelector(".mh-body").offsetHeight, dur = 4200;
+    rows.forEach((r) => r.classList.remove("is-in"));
+    path.style.transition = "none";
+    path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+    void path.getBoundingClientRect();
+    path.style.transition = `stroke-dashoffset ${dur}ms cubic-bezier(.45, .05, .35, 1)`;
+    path.style.strokeDashoffset = 0;
+    play.classList.add("is-on");
+    // the same easing, inverted roughly: a row appears when the line passes its top
+    const ease = (k) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+    const timeAt = (f) => { let lo = 0, hi = 1; for (let n = 0; n < 24; n++) { const m = (lo + hi) / 2; if (ease(m) < f) lo = m; else hi = m; } return hi * dur; };
+    rows.forEach((r) => mTimers.push(setTimeout(() => r.classList.add("is-in"), timeAt(Math.min(1, (r.offsetTop + 6) / h)))));
+    mTimers.push(setTimeout(() => { play.classList.remove("is-on"); path.style.strokeDasharray = ""; }, dur + 100));
+  }
+
+  // choosing a finding lights it and what it explains; the rest of her history steps back
+  let mOn = null;
+  function mChoose(id) {
+    mOn = id && id !== mOn ? id : null;
+    const lit = mOn ? related[mOn] || [mOn] : [];
+    mHist.classList.toggle("has-current", !!mOn);
+    mHist.querySelectorAll(".mh-row").forEach((r) => r.classList.toggle("is-lit", lit.includes(r.dataset.ev)));
+  }
+
+  // a document comes up as a sheet from the bottom
+  const sheet = document.createElement("div");
+  sheet.className = "m-doc-sheet";
+  sheet.hidden = true;
+  sheet.setAttribute("role", "dialog");
+  sheet.setAttribute("aria-label", "Document");
+  document.body.appendChild(sheet);
+  function mOpenDoc(id) {
+    const d = docsOf(evById[id]); if (!d) return;
+    sheet.innerHTML = `<div class="mds-card"><span class="mds-handle" aria-hidden="true"></span>
+      <div class="mds-pages">${d.pages.map((p) => `<figure class="mds-page${d.paper ? " is-paper" : ""}">${page(p, true)}</figure>`).join("")}</div>
+      <p class="mds-cap">${d.caption}</p><button type="button" class="mds-close">Close</button></div>`;
+    sheet.hidden = false; void sheet.offsetWidth; sheet.classList.add("is-in");
+  }
+  function mCloseDoc() { sheet.classList.remove("is-in"); setTimeout(() => { if (!sheet.classList.contains("is-in")) sheet.hidden = true; }, 400); }
+  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.closest(".mds-close") || e.target.closest(".mds-handle")) mCloseDoc(); });
+
+  mHist.addEventListener("click", (e) => {
+    const doc = e.target.closest(".mh-doc");
+    if (doc) { mOpenDoc(doc.dataset.doc); return; }
+    const t = e.target.closest(".mh-title");
+    if (!t) return;
+    if (t.hasAttribute("data-today")) { mView("today"); $(".stage").scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }); return; }
+    const id = t.closest(".mh-row").dataset.ev;
+    mChoose(clusters[id] ? id : inCluster[id] || null);
+  });
+
+  function mView(v) {
+    const on = v === "history";
+    mSeg.querySelectorAll(".hist-seg button").forEach((b) => { const me = b.dataset.v === v; b.classList.toggle("is-on", me); b.setAttribute("aria-checked", me); });
+    mSeg.querySelector(".m-hist-play").hidden = !on;
+    document.body.classList.toggle("m-history", on);
+    mHist.hidden = !on;
+    if (on) { mChoose(null); mGrow(); }
+    else { mTimers.forEach(clearTimeout); if (!sheet.hidden) mCloseDoc(); }
+  }
+  mSeg.querySelectorAll(".hist-seg button").forEach((b) => b.addEventListener("click", () => mView(b.dataset.v)));
+  mSeg.querySelector(".m-hist-play").addEventListener("click", () => { if (!sheet.hidden) mCloseDoc(); mChoose(null); mGrow(); });
+  phone.addEventListener("change", () => { if (!phone.matches && document.body.classList.contains("m-history")) mView("today"); });
+  addEventListener("resize", () => { if (!mHist.hidden) mLine(); });
 })();
