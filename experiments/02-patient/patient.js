@@ -78,7 +78,7 @@
     composer.classList.add("is-off");
     for (const line of s.lines) await bot(line);
     composer.classList.remove("is-off");
-    say.placeholder = s.tool.type === "papers" ? "Or tell Marc about them" : "Or type your answer";
+    say.placeholder = s.tool.type === "papers" ? "Or type here" : "Or type your answer";
     tool(s);
   }
 
@@ -205,7 +205,10 @@
         ? `<span class="r-files">${answers.files.map((p) => paper(p)).join("")}</span>` : `<span class="mark">${esc(answers[s.id] || "—")}</span>`;
       return `<button type="button" class="r-row${s.id === changed ? " is-new" : ""}" data-step="${s.id}"><dt>${s.label}</dt><dd>${v}</dd><span class="r-edit">Change</span></button>`;
     }).join("");
-    $("#r-list").querySelectorAll(".r-row").forEach((r) => r.addEventListener("click", () => change(r.dataset.step)));
+    $("#r-list").querySelectorAll(".r-row").forEach((r) => { if (sent) { r.disabled = true; r.querySelector(".r-edit").remove(); } else r.addEventListener("click", () => change(r.dataset.step)); });
+    $("#r-title").textContent = sent ? "What you sent to Marc" : "What Marc will read";
+    $(".r-text").textContent = sent ? "Marc will read it before your session." : "Check it. Tap a line to change it.";
+    $(".r-foot").hidden = sent;
     show("review");
   }
   // changing a line goes back to the conversation and asks that one question again
@@ -218,19 +221,30 @@
   }
 
   /* ---------- start, back, send ---------- */
+  let sent = false;
   $("#w-start").addEventListener("click", async () => {
+    if (sent) return review();   // after sending: what she sent, to read again
     show("chat");
     if (step >= 0) return;   // coming back: the conversation is where she left it
     await bot("Hello Camille M. I'm Apiona's assistant. I'll help you prepare your first session with Marc, so he knows where you are before you arrive.");
     ask(0);
   });
   $("#p-back").addEventListener("click", () => {
-    if ($("#review").classList.contains("is-on")) return show("chat");
-    show("welcome");
-    $("#w-start").textContent = step >= 0 ? "Continue preparing" : "Prepare my session";
+    if ($("#review").classList.contains("is-on") && !sent) return show("chat");
+    home();
   });
-  $("#r-send").addEventListener("click", () => show("sent"));
-  $("#s-again").addEventListener("click", () => location.reload());
+  $("#r-send").addEventListener("click", () => { sent = true; show("sent"); });
+  $("#s-home").addEventListener("click", home);
+
+  // home, as it is now: before, the one thing to do; after sending, that it is done
+  function home() {
+    const text = $("#welcome .w-main > .w-text"), btn = $("#w-start");
+    if (sent) {
+      text.innerHTML = `<span class="w-done"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9"/><path d="M6 10.4l2.6 2.6L14 7.6"/></svg>Sent to Marc</span>He will read it before your session. Nothing else to do until Tuesday.`;
+      btn.textContent = "See what you sent";
+    } else btn.textContent = step >= 0 ? "Continue preparing" : "Prepare my session";
+    show("welcome");
+  }
 
   // the greeting follows her time of day
   const h = new Date().getHours();
