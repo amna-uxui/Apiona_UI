@@ -155,7 +155,7 @@
     if (box) box.classList.add("is-done");
     her(text, extra);
     answers[s.id] = text;
-    if (s.id === "papers" && text === "None") answers.files = [];
+    if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
     say.value = "";
     if (editing) { editing = false; await wait(500); review(s.id); busy = false; return; }
     if (ACK[s.id]) await bot(ACK[s.id]);
@@ -183,6 +183,19 @@
     for (const ch of s.sample) { say.value += ch; await wait(28); }   // her words arrive as she says them
     mic.classList.remove("is-on");
     say.placeholder = "Or type your answer";
+  });
+
+  // the paperclip: she can add a document at any moment. On the papers question it is her answer;
+  // anywhere else it is added for Marc and the conversation carries on where it was.
+  $("#c-file").addEventListener("change", (e) => {
+    const picked = [...e.target.files].map((f, i) => ({ id: `f${Date.now()}-${i}`, title: f.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 28), from: "Added by you" }));
+    e.target.value = "";
+    if (!picked.length || step < 0) return;
+    answers.files = [...(answers.files || []), ...picked];
+    const prints = `<span class="files">${picked.map((p) => paper(p, "is-in")).join("")}</span>`;
+    if (STEPS[step] && STEPS[step].id === "papers") return answer(`${answers.files.length} paper${answers.files.length > 1 ? "s" : ""}`, prints);
+    her(`${picked.length > 1 ? `${picked.length} documents` : "A document"} for Marc`, prints);
+    if (!answers.papers) answers.papers = "Added in the conversation";
   });
 
   /* ---------- review ---------- */
