@@ -2633,3 +2633,5 @@ body.is-history .brief, body.is-history .brief * { pointer-events: none !importa
   .mh-head .mh-key { margin: 0; }
   .mh-head .m-hist-play { flex: none; }
 }
+@media (max-width: 760px) { body.m-history .brief .tags { display: none; } }   /* their colours would read as part of the history's key */
+@media (max-width: 760px) { body.m-history .brief .p-facts { display: none; } }   /* her details are on Today; here only her name and the two buttons stay */
