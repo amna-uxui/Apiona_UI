@@ -478,6 +478,15 @@
     <button type="button" class="m-hist-play" aria-label="Grow her history again" hidden>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3"/></svg></button>`;
   ($(".brief .tags") || $(".brief")).after(mSeg);
+  // and a round button beside the summary's, at the top: the quickest way in
+  const mBtn = document.createElement("button");
+  mBtn.type = "button";
+  mBtn.className = "m-sum-btn m-hist-btn";
+  mBtn.setAttribute("aria-label", "Show her history");
+  mBtn.setAttribute("aria-pressed", "false");
+  mBtn.innerHTML = `<svg class="i" aria-hidden="true"><use href="#i-history"/></svg>`;
+  const sumBtn = $("#m-sum-btn");
+  if (sumBtn) sumBtn.before(mBtn);
 
   const related = {};   // an incident → the findings it belongs with, and each finding → itself and its incidents
   Object.entries(clusters).forEach(([k, kids]) => { related[k] = [k, ...kids]; });
@@ -497,10 +506,11 @@
   mHist.className = "m-hist";
   mHist.hidden = true;
   mHist.setAttribute("aria-label", "Her history, from her first record to today");
-  mHist.innerHTML = `<ul class="mh-key" aria-label="Key"><li><i class="k-her"></i>Told by her</li><li><i class="k-dis"></i>No diagnosis</li><li><i class="k-you"></i>Today</li></ul>
+  mHist.innerHTML = `<div class="mh-head"><ul class="mh-key" aria-label="Key"><li><i class="k-her"></i>Told by her</li><li><i class="k-dis"></i>No diagnosis</li><li><i class="k-you"></i>Today</li></ul></div>
     <div class="mh-body"><svg class="mh-line" aria-hidden="true"><path/></svg>
       <ol class="mh-list">${[...H.events].sort((a, b) => when[a.id] - when[b.id]).map(mRow).join("")}</ol></div>`;
   $(".side").prepend(mHist);
+  mHist.querySelector(".mh-head").appendChild(mSeg.querySelector(".m-hist-play"));   // the replay sits with the key, at the top of the line
 
   // the line, drawn by hand down the page: it wavers a little from side to side
   function mLine() {
@@ -517,7 +527,7 @@
   function mGrow() {
     mTimers.forEach(clearTimeout); mTimers = [];
     const path = mLine(), rows = [...mHist.querySelectorAll(".mh-row")];
-    const play = mSeg.querySelector(".m-hist-play");
+    const play = mHist.querySelector(".m-hist-play");
     if (reduce) { path.style.strokeDasharray = ""; rows.forEach((r) => r.classList.add("is-in")); return; }
     const len = path.getTotalLength(), h = mHist.querySelector(".mh-body").offsetHeight, dur = 4200;
     rows.forEach((r) => r.classList.remove("is-in"));
@@ -573,14 +583,21 @@
   function mView(v) {
     const on = v === "history";
     mSeg.querySelectorAll(".hist-seg button").forEach((b) => { const me = b.dataset.v === v; b.classList.toggle("is-on", me); b.setAttribute("aria-checked", me); });
-    mSeg.querySelector(".m-hist-play").hidden = !on;
+    mHist.querySelector(".m-hist-play").hidden = !on;
     document.body.classList.toggle("m-history", on);
+    mBtn.classList.toggle("is-on", on); mBtn.setAttribute("aria-pressed", on);
     mHist.hidden = !on;
     if (on) { mChoose(null); mGrow(); }
     else { mTimers.forEach(clearTimeout); if (!sheet.hidden) mCloseDoc(); }
   }
   mSeg.querySelectorAll(".hist-seg button").forEach((b) => b.addEventListener("click", () => mView(b.dataset.v)));
-  mSeg.querySelector(".m-hist-play").addEventListener("click", () => { if (!sheet.hidden) mCloseDoc(); mChoose(null); mGrow(); });
+  mBtn.addEventListener("click", () => {
+    const on = !document.body.classList.contains("m-history");
+    if (on && sumBtn && sumBtn.classList.contains("is-on")) sumBtn.click();   // the summary card steps away
+    mView(on ? "history" : "today");
+    if (on) $(".stage").scrollTo({ top: mHist.offsetTop - 64, behavior: reduce ? "auto" : "smooth" });
+  });
+  mHist.querySelector(".m-hist-play").addEventListener("click", () => { if (!sheet.hidden) mCloseDoc(); mChoose(null); mGrow(); });
   phone.addEventListener("change", () => { if (!phone.matches && document.body.classList.contains("m-history")) mView("today"); });
   addEventListener("resize", () => { if (!mHist.hidden) mLine(); });
 })();

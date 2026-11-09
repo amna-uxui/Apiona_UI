@@ -2622,3 +2622,14 @@ body.is-history .brief, body.is-history .brief * { pointer-events: none !importa
   .mh-row { transition: none; transform: none; }
   .mds-card { transition: none; }
 }
+@media (max-width: 760px) {
+  .who:has(.m-hist-btn) { padding-right: 104px; }
+  .m-sum-btn.m-hist-btn { right: 52px; }
+  .m-sum-btn.m-hist-btn.is-on { transform: none; }
+}
+@media (max-width: 760px) {
+  .m-hist-bar { display: none; }   /* the history icon at the top is the only way in */
+  .mh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
+  .mh-head .mh-key { margin: 0; }
+  .mh-head .m-hist-play { flex: none; }
+}
