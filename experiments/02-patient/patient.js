@@ -62,11 +62,13 @@
     scroll();
     return li;
   }
-  async function bot(text) {
+  // questions sit in a grey bubble; everything else the assistant says (hello, thank you) is plain, quieter text
+  async function bot(text, question = false) {
     const t = add("<i></i><i></i><i></i>", "msg bot typing");
     t.setAttribute("aria-label", "Typing");
     await wait(Math.min(1100, 380 + text.length * 12));
     t.classList.remove("typing"); t.removeAttribute("aria-label");
+    if (!question) t.classList.add("note");
     t.textContent = text;
     scroll();
   }
@@ -78,7 +80,7 @@
     step = k; progress();
     const s = STEPS[k];
     composer.classList.add("is-off");
-    for (const line of s.lines) await bot(line);
+    for (const line of s.lines) await bot(line, true);
     composer.classList.remove("is-off");
     say.placeholder = s.tool.type === "papers" ? "Or type here" : "Or type your answer";
     tool(s);
@@ -145,6 +147,7 @@
     const s = STEPS[step];
     const box = log.querySelector(`.tool[data-step="${s.id}"]:not(.is-done)`);
     if (box) box.classList.add("is-done");
+    dropIntro();
     her(text, extra);
     answers[s.id] = text;
     if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
@@ -159,6 +162,13 @@
     composer.classList.add("is-off");
     step = STEPS.length; progress();
   }
+
+  // once she starts (types, or answers), the hello has done its job and leaves
+  function dropIntro() {
+    const intro = log.querySelector(".intro:not(.is-gone)");
+    if (intro) { intro.classList.add("is-gone"); setTimeout(() => intro.remove(), still ? 0 : 350); }
+  }
+  say.addEventListener("input", dropIntro);
 
   // typing and speaking answer the open question
   composer.addEventListener("submit", (e) => {
@@ -219,6 +229,7 @@
     show("chat");
     if (step >= 0) return;   // coming back: the conversation is where she left it
     await bot("Hello Camille M. I'm Apiona's assistant. I'll help you prepare your first session with Marc, so he knows where you are before you arrive.");
+    const hello = log.lastElementChild; if (hello) hello.classList.add("intro");
     ask(0);
   });
   $("#p-back").addEventListener("click", () => {
