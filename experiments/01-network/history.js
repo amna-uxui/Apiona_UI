@@ -128,6 +128,7 @@
     when[e.id] = e.year + 0.05 + ((same.indexOf(e) + 1) / (same.length + 1)) * 0.9;
   });
   const tEnd = H.end + 0.95;
+  year = tEnd;   // shown complete unless it is growing
   // how far along the line a moment sits: partly by time, partly by how much is written along the line by then
   const lineT = H.events.map((e) => when[e.id]).sort((a, b) => a - b);   // words and circle titles each get room
   const fracOf = (t) => {
@@ -135,7 +136,7 @@
     let k = 0; while (k < lineT.length && lineT[k] < t) k++;
     const lo = k ? lineT[k - 1] : H.start, hi = k < lineT.length ? lineT[k] : tEnd;
     const rank = (k + (hi > lo ? (t - lo) / (hi - lo) : 0)) / (lineT.length + 1);
-    return Math.max(0, Math.min(1, time * 0.3 + rank * 0.7));
+    return Math.max(0, Math.min(1, time * 0.12 + rank * 0.88));
   };
   // drawn by hand: the radius wanders a little, slowly and unevenly
   const wobble = (a) => Math.sin(a * 2.1) * 3 + Math.sin(a * 5.3 + 1.2) * 1.4 + Math.sin(a * 11.7 + 0.4) * 0.6;
@@ -330,7 +331,7 @@
   function grow(y) {
     year = y;
     const whole = Math.min(H.end, Math.floor(y + 1e-6));
-    const t = y >= H.end ? tEnd : y;
+    const t = Math.min(y, tEnd);   // this year grows one incident at a time too
     svg.querySelector(".g-line").setAttribute("d", pathTo(t));
     const tip = at(t), c = svg.querySelector(".g-tip"); c.setAttribute("cx", tip.x); c.setAttribute("cy", tip.y);
     svg.classList.toggle("is-grown", t >= tEnd - 1e-6);
@@ -415,7 +416,7 @@
   const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
   function play() {
     cancelAnimationFrame(raf);
-    if (reduce) { grow(H.end); return; }
+    if (reduce) { grow(tEnd); return; }
     const dur = 10000, t0 = performance.now();
     // the moment that sits at a given share of the line's length (the inverse of fracOf)
     const momentAt = (f) => { let lo = H.start, hi = tEnd; for (let n = 0; n < 40; n++) { const m = (lo + hi) / 2; if (fracOf(m) < f) lo = m; else hi = m; } return hi; };
@@ -425,7 +426,7 @@
       const k = Math.min(1, (now - t0) / dur);
       grow(momentAt(Math.min(1, Math.max(0, pace(k)))));
       if (k < 1) raf = requestAnimationFrame(step);
-      else { grow(H.end); bar.querySelector(".hist-play").classList.remove("is-on"); }
+      else { grow(tEnd); bar.querySelector(".hist-play").classList.remove("is-on"); }
     };
     grow(H.start);
     raf = requestAnimationFrame(step);
