@@ -193,3 +193,16 @@ p, h1, h2 { margin: 0; }
 .w-tabs .is-on { color: var(--ink); font-weight: 500; }
 .w-tabs .is-on::after { background: var(--ink); }
 #welcome .w-title { margin-top: 8px; }   /* her photo is the one in the top bar */
+
+/* home, calmer: everything close together at the top, the one button low where the thumb is */
+.w-main { flex: 1; padding: 26px 20px 16px; }
+#welcome .w-title { margin-top: 0; font-size: 28px; }
+.w-card { margin-top: 22px; background: var(--panel); border-radius: 8px; padding: 14px 16px 16px; }
+#welcome .w-card .w-appt { margin-top: 10px; }
+#welcome .w-marc { background: var(--white); }
+#welcome .w-main > .w-text { margin-top: 20px; font-size: 17px; line-height: 1.5; }
+.w-act { flex: none; padding: 12px 20px 14px; }
+.c-attach { flex: none; width: 40px; height: 44px; display: grid; place-items: center; cursor: pointer; margin-right: -4px; }
+.c-attach svg { width: 22px; height: 22px; fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.c-attach:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
+.composer.is-off .c-attach { opacity: .4; pointer-events: none; }
