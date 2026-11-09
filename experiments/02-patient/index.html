@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
-  <link rel="stylesheet" href="patient.css?v=p-10">
+  <link rel="stylesheet" href="patient.css?v=p-13">
 </head>
 <body>
   <!-- Camille's side: on her phone. A short conversation that prepares her first session with Marc, her physiotherapist. -->
@@ -71,13 +71,15 @@
 
     <!-- 4 · sent -->
     <section class="screen" id="sent" aria-labelledby="s-title">
-      <svg class="s-seal" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34"/><path d="M26 41l9 9 19-20"/></svg>
-      <h1 class="s-title" id="s-title">Sent to Marc</h1>
-      <p class="s-text">He will read it before your session on Tuesday 3 November at 10:00.</p>
-      <button class="p-btn is-quiet" id="s-again" type="button">Start again</button>
+      <div class="s-main">
+        <svg class="s-seal" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34"/><path d="M26 41l9 9 19-20"/></svg>
+        <h1 class="s-title" id="s-title">Sent to Marc</h1>
+        <p class="s-text">He will read it before your session on Tuesday 3 November at 10:00.</p>
+      </div>
+      <div class="w-act"><button class="p-btn is-go" id="s-home" type="button">Back to home</button></div>
     </section>
   </div>
 
-  <script src="patient.js?v=p-10"></script>
+  <script src="patient.js?v=p-13"></script>
 </body>
 </html>
