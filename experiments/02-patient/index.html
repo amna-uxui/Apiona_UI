@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
-  <link rel="stylesheet" href="patient.css?v=p-36">
+  <link rel="stylesheet" href="patient.css?v=p-54">
 </head>
 <body>
   <!-- Camille's side: on her phone. A short conversation that prepares her first session with Marc, her physiotherapist. -->
@@ -46,7 +46,9 @@
     <!-- 2 · the conversation -->
     <section class="screen" id="chat" aria-label="Conversation">
       <ol class="log" id="log" aria-live="polite"></ol>
+      <div class="c-dock" id="c-dock"></div>
       <form class="composer" id="composer" autocomplete="off">
+        <input type="file" id="c-camera" accept="image/*" capture="environment" class="sr-only" tabindex="-1" aria-hidden="true">
         <label class="c-attach" aria-label="Add a document">
           <input type="file" id="c-file" accept="image/*,application/pdf" multiple class="sr-only">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5 12.4 19a5 5 0 0 1-7.1-7.1l8-8a3.4 3.4 0 0 1 4.8 4.8l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3"/></svg>
@@ -81,8 +83,11 @@
       </div>
       <div class="w-act"><button class="p-btn is-go" id="s-home" type="button">Back to home</button></div>
     </section>
+
+    <!-- a photo she added, seen large; a tap closes it -->
+    <div class="viewer" id="viewer" hidden><img alt=""><p></p><span class="v-close">Close</span></div>
   </div>
 
-  <script src="patient.js?v=p-36"></script>
+  <script src="patient.js?v=p-54"></script>
 </body>
 </html>
