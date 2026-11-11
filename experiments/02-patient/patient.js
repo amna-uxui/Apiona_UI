@@ -67,7 +67,8 @@
   async function bot(text, question = false) {
     const t = add("<i></i><i></i><i></i>", "msg bot typing");
     t.setAttribute("aria-label", "Typing");
-    await wait(Math.min(1100, 380 + text.length * 12));
+    // the opening keeps its longer beat; once she is answering, the next line follows sooner
+    await wait(step < 0 ? Math.min(1100, 380 + text.length * 12) : Math.min(1000, 550 + text.length * 7));
     // the message settles in place of the dots: the bubble opens from its corner, the words fade in.
     // Only transform and opacity move, so the text never re-wraps or gets clipped.
     t.classList.remove("typing"); t.removeAttribute("aria-label");
@@ -88,6 +89,7 @@
     composer.classList.remove("is-off");
     say.placeholder = "Type your answer…";
     tool(s);
+    log.lastElementChild.querySelectorAll(".chip").forEach((c, i) => c.style.setProperty("--i", i));   // one after another
   }
 
   function tool(s) {
@@ -150,7 +152,7 @@
     busy = true;
     const s = STEPS[step];
     const box = log.querySelector(`.tool[data-step="${s.id}"]:not(.is-done)`);
-    if (box) box.classList.add("is-done");
+    if (box) leave(box);
     dropIntro();
     her(text, extra);
     answers[s.id] = text;
@@ -165,6 +167,16 @@
     end.querySelector("button").addEventListener("click", () => review());
     composer.classList.add("is-off");
     step = STEPS.length; progress();
+  }
+
+  // answered chips fold away instead of vanishing, so her reply slides up into their place
+  function leave(box) {
+    box.classList.add("is-done");
+    if (still) return box.remove();
+    box.style.overflow = "hidden";
+    box.animate([{ height: `${box.offsetHeight}px`, opacity: 1, paddingTop: "2px", paddingBottom: "4px", marginTop: "0px" }, { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", marginTop: "-10px" }],
+                { duration: 450, easing: "cubic-bezier(.45, 0, .25, 1)" }).finished.then(() => box.remove());
+    box.style.cssText += "margin-top:-10px;height:0;padding:0;opacity:0";   // hold the folded state until it is removed
   }
 
   // once she starts (types, or answers), the hello has done its job and leaves
