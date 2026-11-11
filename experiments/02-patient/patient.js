@@ -7,19 +7,24 @@
   const $ = (s) => document.querySelector(s);
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("still");
   const wait = (ms) => new Promise((r) => setTimeout(r, still ? 0 : ms));
-  const log = $("#log"), say = $("#say"), composer = $("#composer");
+  const log = $("#log"), say = $("#say"), composer = $("#composer"), dock = $("#c-dock");   // dock: Done, low by the thumb
 
   // the body, front view: her right is on the left of the picture (the same drawing as on Marc's side)
+  // places on the body, head to feet: what she colours is named after the nearest of them, so Marc reads words
   const SPOTS = [
     ["head", "Head", 100, 22], ["neck", "Neck", 100, 60],
     ["r-shoulder", "Right shoulder", 62, 86], ["l-shoulder", "Left shoulder", 139, 86],
-    ["back", "Lower back", 100, 175],
+    ["chest", "Chest", 100, 112],
+    ["r-arm", "Right arm", 53, 150], ["l-arm", "Left arm", 148, 150],
+    ["belly", "Belly", 100, 175],
     ["r-wrist", "Right wrist", 33, 221], ["l-wrist", "Left wrist", 168, 221],
     ["r-hip", "Right hip", 78, 222], ["l-hip", "Left hip", 123, 222],
+    ["r-hand", "Right hand", 20, 250], ["l-hand", "Left hand", 181, 250],
+    ["r-thigh", "Right thigh", 81, 270], ["l-thigh", "Left thigh", 120, 270],
     ["r-knee", "Right knee", 77, 317], ["l-knee", "Left knee", 124, 317],
+    ["r-shin", "Right shin", 77, 380], ["l-shin", "Left shin", 124, 380],
     ["r-foot", "Right foot", 76, 440], ["l-foot", "Left foot", 125, 440],
   ];
-  const PAPERS = [{ id: "xray", title: "X-ray report", from: "Bois-Cerf emergency" }, { id: "rx", title: "Prescription", from: "9 sessions" }];
 
   // the seven questions, in order. `label` names the line on the review; `sample` is what she says when she speaks.
   const STEPS = [
@@ -40,7 +45,7 @@
     { id: "papers", label: "Papers", lines: ["Did the emergency give you any papers? A photo is enough."],
       tool: { type: "papers" }, sample: null },
   ];
-  const ACK = { where: (a) => (/ and /.test(a) ? "Thank you. Marc will look at each of them." : "Thank you. Marc will look at it."), health: "Good to know. Marc will keep it in mind.", wants: "Noted." };
+  const ACK = {};   // no reply lines between questions: the next question follows her answer
   const answers = {};
   let step = -1, editing = false, busy = false;
 
@@ -54,7 +59,23 @@
   function progress() { $("#p-step").textContent = `${Math.min(step + 1, STEPS.length)} of ${STEPS.length}`; }
 
   /* ---------- the conversation ---------- */
-  const scroll = () => setTimeout(() => log.scrollTo({ top: log.scrollHeight, behavior: still ? "auto" : "smooth" }), 30);
+  // each new question moves up to the top of the chat, with her last answer just above it,
+  // so what she has to answer always has the screen to itself; the earlier lines scroll away
+  const room = () => { log.style.paddingBottom = `${Math.max(0, log.clientHeight - 200)}px`; };
+  room(); addEventListener("resize", room);
+  const scroll = () => setTimeout(() => {
+    room();
+    const q = [...log.querySelectorAll(".msg.bot:not(.intro)")].pop();
+    let top = 0;
+    if (q) {
+      const before = q.previousElementSibling;
+      top = before && before.classList.contains("her") ? before.offsetTop - 14 : q.offsetTop - 14;
+      if (!before || before.classList.contains("intro")) top = 0;   // the first question stays under the hello
+    }
+    const last = log.lastElementChild;   // never leave something new (a paper she added) out of sight
+    if (last && last.offsetTop + last.offsetHeight > top + log.clientHeight) top = Math.max(top, last.offsetTop + last.offsetHeight - log.clientHeight + 16);
+    log.scrollTo({ top: Math.max(0, top), behavior: still ? "auto" : "smooth" });
+  }, 30);
   function add(html, cls) {
     const li = document.createElement("li");
     li.className = cls;
@@ -67,7 +88,8 @@
   async function bot(text, question = false) {
     const t = add("<i></i><i></i><i></i>", "msg bot typing");
     t.setAttribute("aria-label", "Typing");
-    await wait(Math.min(1100, 380 + text.length * 12));
+    // the opening keeps its longer beat; once she is answering, the next line follows sooner
+    await wait(step < 0 ? Math.min(1100, 380 + text.length * 12) : Math.min(1000, 550 + text.length * 7));
     // the message settles in place of the dots: the bubble opens from its corner, the words fade in.
     // Only transform and opacity move, so the text never re-wraps or gets clipped.
     t.classList.remove("typing"); t.removeAttribute("aria-label");
@@ -78,16 +100,21 @@
   }
   function her(text, extra = "") { add(`${esc(text)}${extra}`, "msg her"); }
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const paper = (p, cls = "") => `<span class="paper ${cls}" aria-label="${p.title}"><b>${p.title}</b><i></i><i></i><i></i><i></i></span>`;
+  // a paper she added: a photo shows itself; a PDF or other file shows as a little page with its name. Tap to see it large.
+  const paper = (p, cls = "") => p.url && p.kind === "img"
+    ? `<span class="paper is-photo ${cls}" data-id="${p.id}" role="button" tabindex="0" aria-label="See ${esc(p.title)}"><img src="${p.url}" alt=""></span>`
+    : `<span class="paper ${cls}" data-id="${p.id}" role="button" tabindex="0" aria-label="See ${esc(p.title)}"><b>${esc(p.title)}</b><i></i><i></i><i></i><i></i>${p.kind === "pdf" ? "<em>PDF</em>" : ""}</span>`;
 
   async function ask(k) {
     step = k; progress();
+    dock.replaceChildren();
     const s = STEPS[k];
     composer.classList.add("is-off");
     for (const line of s.lines) await bot(line, true);
     composer.classList.remove("is-off");
     say.placeholder = "Type your answer…";
     tool(s);
+    log.lastElementChild.querySelectorAll(".chip").forEach((c, i) => c.style.setProperty("--i", i));   // one after another
   }
 
   function tool(s) {
@@ -95,49 +122,67 @@
     box.dataset.step = s.id;
     const t = s.tool;
     if (t.type === "chips") {
-      box.innerHTML = `<div class="chips">${t.options.map((o) => `<button type="button" class="chip" ${t.multi ? 'aria-pressed="false"' : ""}>${o}</button>`).join("")}</div>
-        ${t.multi ? `<div class="tool-row"><button type="button" class="chip is-done" disabled>Done</button></div>` : ""}`;
-      const done = box.querySelector(".is-done");
-      box.querySelectorAll(".chip:not(.is-done)").forEach((c) => c.addEventListener("click", () => {
+      box.innerHTML = `<div class="chips">${t.options.map((o) => `<button type="button" class="chip" ${t.multi ? 'aria-pressed="false"' : ""}>${o}</button>`).join("")}</div>`;
+      box.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
         if (!t.multi) return answer(c.textContent);
         const none = c.textContent === "Nothing else";
         if (none) box.querySelectorAll('.chip[aria-pressed]').forEach((x) => x !== c && x.setAttribute("aria-pressed", "false"));
         else box.querySelectorAll('.chip[aria-pressed]').forEach((x) => x.textContent === "Nothing else" && x.setAttribute("aria-pressed", "false"));
         c.setAttribute("aria-pressed", c.getAttribute("aria-pressed") !== "true");
-        done.disabled = !box.querySelector('.chip[aria-pressed="true"]');
+        compose(list([...box.querySelectorAll('.chip[aria-pressed="true"]')].map((x) => x.textContent)));
       }));
-      if (done) done.addEventListener("click", () => answer(list([...box.querySelectorAll('.chip[aria-pressed="true"]')].map((x) => x.textContent))));
     }
-    if (t.type === "body") {
-      box.innerHTML = `<div class="body-pick"><div class="body-fig">${bodySvg}${SPOTS.map(([id, name, x, y]) =>
-          `<button type="button" class="spot" data-id="${id}" aria-pressed="false" aria-label="${name}" style="left:${(x / 201) * 100}%;top:${((y + 10) / 471) * 100}%"></button>`).join("")}</div>
-        <div><p class="tool-label">Where it hurts</p><ul class="body-list"><li class="none">Nothing chosen yet</li></ul></div></div>
-        <div class="tool-row"><button type="button" class="chip is-done" disabled>Done</button></div>`;
-      const ul = box.querySelector(".body-list"), done = box.querySelector(".is-done");
-      const chosen = () => [...box.querySelectorAll('.spot[aria-pressed="true"]')].map((b) => b.getAttribute("aria-label"));
-      box.querySelectorAll(".spot").forEach((b) => b.addEventListener("click", () => {
-        b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true");
-        const c = chosen();
-        ul.innerHTML = c.length ? c.map((n) => `<li>${n}</li>`).join("") : `<li class="none">Nothing chosen yet</li>`;
-        done.disabled = !c.length;
-      }));
-      done.addEventListener("click", () => answer(list(chosen())));
+    if (t.type === "body") {   // she taps a part of the body and it turns soft red; a second tap clears it
+      box.innerHTML = `<div class="body-pick"><div class="body-fig"><span class="body-side is-r" aria-hidden="true">Right</span><span class="body-side is-l" aria-hidden="true">Left</span>${bodySvg}<canvas class="body-paint" aria-hidden="true"></canvas></div>
+        <div class="body-chosen"></div></div>`;
+      const fig = box.querySelector(".body-fig"), cv = box.querySelector(".body-paint"), ctx = cv.getContext("2d");
+      const shown = box.querySelector(".body-chosen");
+      const shape = new Path2D();   // the silhouette, in the drawing's own units (viewBox 0 -10 201 471)
+      const p = fig.querySelector("svg path"); if (p) shape.addPath(new Path2D(p.getAttribute("d")));
+      shape.ellipse(100.7, 2, 12, 10, 0, 0, Math.PI * 2);
+      const k = window.devicePixelRatio || 1;
+      cv.width = fig.clientWidth * k; cv.height = fig.clientHeight * k;
+      ctx.setTransform(cv.width / 201, 0, 0, cv.height / 471, 0, (10 * cv.height) / 471);
+      const hit = new Set();
+      const at = (e) => { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * 201, ((e.clientY - r.top) / r.height) * 471 - 10]; };
+      const nearest = ([x, y]) => SPOTS.reduce((a, b) => (Math.hypot(b[2] - x, b[3] - y) < Math.hypot(a[2] - x, a[3] - y) ? b : a));
+      const inside = ([x, y]) => ctx.isPointInPath(shape, x * (cv.width / 201), (y + 10) * (cv.height / 471));
+      function paint() {   // each chosen part as a soft red area, kept inside the silhouette
+        ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore();
+        ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = "#EE6E5B";
+        SPOTS.filter((x) => hit.has(x[1])).forEach(([, , x, y]) => { ctx.beginPath(); ctx.ellipse(x, y, 17, 22, 0, 0, Math.PI * 2); ctx.fill(); });
+        ctx.globalCompositeOperation = "destination-in"; ctx.fill(shape);
+      }
+      function refresh() {
+        paint();
+        const names = SPOTS.map((x) => x[1]).filter((n) => hit.has(n));
+        const html = names.map((n) => `<span class="body-tag">${n}</span>`).join("");
+        if (shown.innerHTML !== html) shown.innerHTML = html;
+        compose(list(names));
+      }
+      cv.addEventListener("click", (e) => {
+        const pt = at(e);
+        if (!inside(pt)) return;
+        const n = nearest(pt)[1];
+        hit.has(n) ? hit.delete(n) : hit.add(n);
+        refresh();
+      });
     }
-    if (t.type === "pain") {   // one tap on a number is the answer
-      box.innerHTML = `<div class="scale" role="group" aria-label="Pain from 0 to 10">${Array.from({ length: 11 }, (_, n) => `<button type="button" aria-pressed="false">${n}</button>`).join("")}</div>
-        <div class="scale-ends"><span>No pain</span><span>The worst</span></div>`;
-      box.querySelectorAll(".scale button").forEach((b) => b.addEventListener("click", () => {
-        box.querySelectorAll(".scale button").forEach((x) => x.setAttribute("aria-pressed", x === b));
-        answer(`${b.textContent} out of 10`);
+    if (t.type === "pain") {   // three words, the usual mild / moderate / strong bands; one tap is the answer
+      const LEVELS = [["Mild", "1–3"], ["Moderate", "4–6"], ["Strong", "7–10"]];
+      box.innerHTML = `<div class="chips">${LEVELS.map(([w, n]) => `<button type="button" class="chip pain-w">${w}</button>`).join("")}</div>`;
+      box.querySelectorAll(".pain-w").forEach((b, i) => b.addEventListener("click", () => {
+        b.classList.add("is-on");
+        answer(LEVELS[i][0]);   // she says the word; Marc reads the word and its numbers
+        answers.pain = `${LEVELS[i][0]} (${LEVELS[i][1]} out of 10)`;
       }));
     }
     if (t.type === "papers") {
       box.innerHTML = `<div class="chips"><button type="button" class="chip" data-a="photo">Take a photo</button><button type="button" class="chip" data-a="file">Choose a file</button><button type="button" class="chip" data-a="none">I have none</button></div>`;
       box.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
         if (c.dataset.a === "none") return answer("None");
-        // the prototype has her two papers ready: the X-ray report and the prescription
-        answers.files = PAPERS;
-        answer(`${PAPERS.length} papers`, `<span class="files">${PAPERS.map((p) => paper(p, "is-in")).join("")}</span>`);
+        // the phone's own camera, or her files and photos; what she picks becomes her answer
+        (c.dataset.a === "photo" ? $("#c-camera") : $("#c-file")).click();
       }));
     }
     scroll();
@@ -150,7 +195,8 @@
     busy = true;
     const s = STEPS[step];
     const box = log.querySelector(`.tool[data-step="${s.id}"]:not(.is-done)`);
-    if (box) box.classList.add("is-done");
+    if (box) leave(box);
+    dock.replaceChildren();
     dropIntro();
     her(text, extra);
     answers[s.id] = text;
@@ -161,10 +207,20 @@
     busy = false;
     if (step + 1 < STEPS.length) return ask(step + 1);
     await bot("That's everything. Here is what Marc will read. You can change anything before you send it.");
-    const end = add(`<div class="tool-row" style="justify-content:flex-start"><button type="button" class="chip is-done">Check and send</button></div>`, "tool");
-    end.querySelector("button").addEventListener("click", () => review());
+    dock.innerHTML = `<div class="tool-row"><button type="button" class="chip is-done">Check and send</button></div>`;
+    dock.querySelector("button").addEventListener("click", () => review());
     composer.classList.add("is-off");
     step = STEPS.length; progress();
+  }
+
+  // answered chips fold away instead of vanishing, so her reply slides up into their place
+  function leave(box) {
+    box.classList.add("is-done");
+    if (still) return box.remove();
+    box.style.overflow = "hidden";
+    box.animate([{ height: `${box.offsetHeight}px`, opacity: 1, paddingTop: "2px", paddingBottom: "4px", marginTop: "0px" }, { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", marginTop: "-10px" }],
+                { duration: 450, easing: "cubic-bezier(.45, 0, .25, 1)" }).finished.then(() => box.remove());
+    box.style.cssText += "margin-top:-10px;height:0;padding:0;opacity:0";   // hold the folded state until it is removed
   }
 
   // once she starts (types, or answers), the hello has done its job and leaves
@@ -175,6 +231,8 @@
   say.addEventListener("input", () => { dropIntro(); ready(); });
   // the send arrow stays neutral until there is something to send
   function ready() { $("#c-send").classList.toggle("is-ready", !!say.value.trim()); }
+  // when she can choose several, her choices write her answer in the field; the green arrow sends it, like any message
+  function compose(text) { say.value = text; ready(); }
 
   // typing and speaking answer the open question
   composer.addEventListener("submit", (e) => {
@@ -195,16 +253,42 @@
 
   // the paperclip: she can add a document at any moment. On the papers question it is her answer;
   // anywhere else it is added for Marc and the conversation carries on where it was.
-  $("#c-file").addEventListener("change", (e) => {
-    const picked = [...e.target.files].map((f, i) => ({ id: `f${Date.now()}-${i}`, title: f.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 28), from: "Added by you" }));
+  const files = [];   // everything she added, kept so a print can be opened large
+  function added(e) {
+    const picked = [...e.target.files].map((f, i) => {
+      const kind = /^image\//.test(f.type) ? "img" : /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name) ? "pdf" : "file";
+      const p = { id: `f${Date.now()}-${i}`, title: f.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 28) || "Photo", from: "Added by you", kind, url: URL.createObjectURL(f) };
+      files.push(p); return p;
+    });
     e.target.value = "";
     if (!picked.length || step < 0) return;
     answers.files = [...(answers.files || []), ...picked];
     const prints = `<span class="files">${picked.map((p) => paper(p, "is-in")).join("")}</span>`;
-    if (STEPS[step] && STEPS[step].id === "papers") return answer(`${answers.files.length} paper${answers.files.length > 1 ? "s" : ""}`, prints);
-    her(`${picked.length > 1 ? `${picked.length} documents` : "A document"} for Marc`, prints);
+    const n = answers.files.length, photos = answers.files.every((p) => p.kind === "img");
+    if (STEPS[step] && STEPS[step].id === "papers") return answer(`${n} ${photos ? "photo" : "paper"}${n > 1 ? "s" : ""}`, prints);
+    her(`${picked.length > 1 ? `${picked.length} documents` : picked[0].kind === "img" ? "A photo" : "A document"} for Marc`, prints);
     if (!answers.papers) answers.papers = "Added in the conversation";
+  }
+  $("#c-file").addEventListener("change", added);
+  $("#c-camera").addEventListener("change", added);
+
+  // tap a print: a photo opens large over the page, a PDF opens in the phone's own viewer
+  const viewer = $("#viewer");
+  function openPaper(id) {
+    const p = files.find((x) => x.id === id);
+    if (!p) return;
+    if (p.kind !== "img") return window.open(p.url, "_blank");
+    viewer.querySelector("img").src = p.url;
+    viewer.querySelector("p").textContent = p.title;
+    viewer.hidden = false;
+  }
+  document.addEventListener("click", (e) => { const t = e.target.closest(".paper[data-id]"); if (t) { e.stopPropagation(); openPaper(t.dataset.id); } }, true);
+  document.addEventListener("keydown", (e) => {
+    const t = e.target.closest && e.target.closest(".paper[data-id]");
+    if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openPaper(t.dataset.id); }
+    if (e.key === "Escape") viewer.hidden = true;
   });
+  viewer.addEventListener("click", () => { viewer.hidden = true; });
 
   /* ---------- review ---------- */
   function review(changed) {
