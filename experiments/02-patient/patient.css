@@ -228,3 +228,38 @@ p, h1, h2 { margin: 0; }
 .msg.bot.note { background: none; padding: 2px 2px; color: var(--grey); font-size: 15px; max-width: 92%; }
 .msg.intro { transition: opacity .3s ease, max-height .35s ease, margin .35s ease, padding .35s ease; max-height: 200px; overflow: hidden; }
 .msg.intro.is-gone { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -10px; }
+
+/* ---------- home, calmer: white ground, the appointment above, the one thing to do low by the thumb ---------- */
+.app:has(#welcome.is-on) .p-top { padding: 0 24px; }
+#welcome .w-main { padding: 28px 24px 0; }
+#welcome .w-title { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; }
+#welcome .w-soon { margin-top: 32px; }
+.w-soon > span:first-child { display: inline-block; background: #FFB5DE; color: var(--ink); font-size: 13px; font-weight: 500; padding: 4px 11px; border-radius: 999px; }   /* pink: waiting, as on Marc's side */
+#welcome .w-appt { margin-top: 12px; padding: 0; background: none; gap: 14px; }
+#welcome .w-marc { width: 46px; height: 46px; background: var(--panel); }
+#welcome .w-appt-when { font-size: 19px; font-weight: 600; }
+#welcome .w-appt-who { font-size: 14.5px; font-weight: 400; color: var(--grey); }
+#welcome .w-act { padding: 0 24px 18px; }
+#welcome .w-act > .w-text { margin: 0 0 16px; font-size: 17px; line-height: 1.5; }
+#welcome .w-tabs { padding: 8px 0 calc(10px + env(safe-area-inset-bottom)); font-size: 11.5px; color: #8F8F89; }
+.w-tabs span { gap: 3px; }
+.w-tabs span::after { display: none; }
+.w-tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.w-tabs .is-on { color: var(--ink); }
+
+/* ---------- chat, quieter: the question is what catches the eye ---------- */
+:root { --bot: #F2F0EB; --her: #E3F4D9; }   /* warm grey for Apiona, pale green for Camille */
+.msg.bot { background: var(--bot); }
+.msg.bot:not(.note):not(.typing) { font-size: 17px; font-weight: 500; line-height: 1.4; }
+.msg.her { background: var(--her); }
+.p-me[hidden] { display: none; }
+.p-step { font-size: 13px; letter-spacing: 0; text-transform: none; }
+/* attach, mic: the same plain icons; send: neutral until there is an answer */
+.c-attach, .c-mic { width: 40px; height: 44px; border: 0; background: none; border-radius: 6px; }
+.c-attach svg, .c-mic svg { width: 22px; height: 22px; stroke: var(--grey); stroke-width: 1.6; }
+.c-mic.is-on { background: none; animation: none; }
+.c-mic.is-on svg { stroke: var(--alert); }
+.c-send { background: var(--panel); border-color: var(--panel); transition: background .2s, border-color .2s; }
+.c-send svg { stroke: var(--grey); }
+.c-send.is-ready { background: var(--voice); border-color: var(--voice); }
+.c-send.is-ready svg { stroke: var(--ink); }

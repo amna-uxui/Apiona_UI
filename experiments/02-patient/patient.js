@@ -24,7 +24,7 @@
   // the seven questions, in order. `label` names the line on the review; `sample` is what she says when she speaks.
   const STEPS = [
     { id: "why", label: "Why", lines: ["What brings you to physiotherapy?"],
-      tool: { type: "chips", options: ["I fell", "A pain that came slowly", "After an operation"] }, sample: "I fell" },
+      tool: { type: "chips", options: ["I fell", "Pain started gradually", "After surgery"] }, sample: "I fell" },
     { id: "how", label: "What happened", lines: ["I'm sorry to hear that. When did it happen, and how?"],
       tool: { type: "chips", options: ["Saturday, on the stairs of my building", "During sport", "At work"] }, sample: "Saturday, I missed a step on the stairs of my building" },
     { id: "where", label: "Where", lines: ["Where does it hurt? Tap on the body. You can choose more than one place."],
@@ -49,8 +49,9 @@
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("is-on", s.id === id));
     $("#p-back").hidden = id === "welcome" || id === "sent";
     $("#p-step").hidden = id !== "chat";
+    $(".p-me").hidden = id !== "welcome";   // her photo belongs to the home greeting
   }
-  function progress() { $("#p-step").textContent = `Preparing · ${Math.min(step + 1, STEPS.length)} of ${STEPS.length}`; }
+  function progress() { $("#p-step").textContent = `${Math.min(step + 1, STEPS.length)} of ${STEPS.length}`; }
 
   /* ---------- the conversation ---------- */
   const scroll = () => setTimeout(() => log.scrollTo({ top: log.scrollHeight, behavior: still ? "auto" : "smooth" }), 30);
@@ -82,7 +83,7 @@
     composer.classList.add("is-off");
     for (const line of s.lines) await bot(line, true);
     composer.classList.remove("is-off");
-    say.placeholder = s.tool.type === "papers" ? "Or type here" : "Or type your answer";
+    say.placeholder = "Type your answer…";
     tool(s);
   }
 
@@ -151,7 +152,7 @@
     her(text, extra);
     answers[s.id] = text;
     if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
-    say.value = "";
+    say.value = ""; ready();
     if (editing) { editing = false; await wait(500); review(s.id); busy = false; return; }
     if (ACK[s.id]) await bot(typeof ACK[s.id] === "function" ? ACK[s.id](text) : ACK[s.id]);
     busy = false;
@@ -168,7 +169,9 @@
     const intro = log.querySelector(".intro:not(.is-gone)");
     if (intro) { intro.classList.add("is-gone"); setTimeout(() => intro.remove(), still ? 0 : 350); }
   }
-  say.addEventListener("input", dropIntro);
+  say.addEventListener("input", () => { dropIntro(); ready(); });
+  // the send arrow stays neutral until there is something to send
+  function ready() { $("#c-send").classList.toggle("is-ready", !!say.value.trim()); }
 
   // typing and speaking answer the open question
   composer.addEventListener("submit", (e) => {
@@ -182,9 +185,9 @@
     if (!s || !s.sample || mic.classList.contains("is-on")) return;
     mic.classList.add("is-on"); say.value = ""; say.placeholder = "Listening…";
     await wait(900);
-    for (const ch of s.sample) { say.value += ch; await wait(28); }   // her words arrive as she says them
+    for (const ch of s.sample) { say.value += ch; ready(); await wait(28); }   // her words arrive as she says them
     mic.classList.remove("is-on");
-    say.placeholder = "Or type your answer";
+    say.placeholder = "Type your answer…"; ready();
   });
 
   // the paperclip: she can add a document at any moment. On the papers question it is her answer;
@@ -228,7 +231,7 @@
     if (sent) return review();   // after sending: what she sent, to read again
     show("chat");
     if (step >= 0) return;   // coming back: the conversation is where she left it
-    await bot("Hello Camille M. I'm Apiona's assistant. I'll help you prepare your first session with Marc, so he knows where you are before you arrive.");
+    await bot("Hi Camille M., I'll ask you a few short questions so Marc knows what happened before your session. Only Marc will read your answers, and you can check them before you send.");
     const hello = log.lastElementChild; if (hello) hello.classList.add("intro");
     ask(0);
   });
@@ -241,7 +244,7 @@
 
   // home, as it is now: before, the one thing to do; after sending, that it is done
   function home() {
-    const text = $("#welcome .w-main > .w-text"), btn = $("#w-start");
+    const text = $("#welcome .w-act > .w-text"), btn = $("#w-start");
     if (sent) {
       text.innerHTML = `<span class="w-done"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9"/><path d="M6 10.4l2.6 2.6L14 7.6"/></svg>Sent to Marc</span>He will read it before your session. Nothing else to do until Tuesday.`;
       btn.textContent = "See what you sent";
@@ -249,9 +252,6 @@
     show("welcome");
   }
 
-  // the greeting follows her time of day
-  const h = new Date().getHours();
-  $("#w-greet").textContent = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 
   let bodySvg = "";
   fetch("../../design/illustrations/body-female.svg").then((r) => r.text()).then((t) => (bodySvg = t.replace("<svg", '<svg aria-hidden="true"')));
