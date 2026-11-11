@@ -266,5 +266,7 @@ p, h1, h2 { margin: 0; }
 
 /* a message's words fade in once its bubble has grown from the typing dots */
 .msg.bot { align-self: flex-start; }   /* the typing dots sit in a small bubble that grows */
-.msg-text { display: block; animation: words-in .45s .14s var(--ease) both; }
-@keyframes words-in { from { opacity: 0; transform: translateY(3px); } }
+.msg.arrive { transform-origin: 0 100%; animation: bubble-in .32s var(--ease) both; }
+@keyframes bubble-in { from { transform: scale(.94); } }
+.msg-text { display: block; animation: words-in .4s .08s ease-out both; }
+@keyframes words-in { from { opacity: 0; } }
