@@ -68,9 +68,18 @@
     const t = add("<i></i><i></i><i></i>", "msg bot typing");
     t.setAttribute("aria-label", "Typing");
     await wait(Math.min(1100, 380 + text.length * 12));
+    // the dots' bubble grows into the message, then the words fade in: no jump
+    const from = t.getBoundingClientRect(), bg = getComputedStyle(t).backgroundColor;
     t.classList.remove("typing"); t.removeAttribute("aria-label");
     if (!question) t.classList.add("note");
-    t.textContent = text;
+    t.innerHTML = `<span class="msg-text">${esc(text)}</span>`;
+    if (!still) {
+      const to = t.getBoundingClientRect();
+      t.style.overflow = "hidden";
+      t.animate([{ width: `${from.width}px`, height: `${from.height}px`, backgroundColor: bg },
+                 { width: `${to.width}px`, height: `${to.height}px`, backgroundColor: getComputedStyle(t).backgroundColor }],
+                { duration: 380, easing: "cubic-bezier(.22, 1, .36, 1)" }).finished.then(() => { t.style.overflow = ""; });
+    }
     scroll();
   }
   function her(text, extra = "") { add(`${esc(text)}${extra}`, "msg her"); }
