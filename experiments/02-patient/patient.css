@@ -263,3 +263,8 @@ p, h1, h2 { margin: 0; }
 .c-send svg { stroke: var(--grey); }
 .c-send.is-ready { background: var(--voice); border-color: var(--voice); }
 .c-send.is-ready svg { stroke: var(--ink); }
+
+/* a message's words fade in once its bubble has grown from the typing dots */
+.msg.bot { align-self: flex-start; }   /* the typing dots sit in a small bubble that grows */
+.msg-text { display: block; animation: words-in .45s .14s var(--ease) both; }
+@keyframes words-in { from { opacity: 0; transform: translateY(3px); } }
