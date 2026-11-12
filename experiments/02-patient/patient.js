@@ -220,7 +220,7 @@
     if (still) return box.remove();
     box.style.overflow = "hidden";
     box.animate([{ height: `${box.offsetHeight}px`, opacity: 1, paddingTop: "2px", paddingBottom: "4px", marginTop: "0px" }, { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", marginTop: "-10px" }],
-                { duration: 450, easing: "cubic-bezier(.45, 0, .25, 1)" }).finished.then(() => box.remove());
+                { duration: 700, easing: "cubic-bezier(.33, 0, .2, 1)" }).finished.then(() => box.remove());
     box.style.cssText += "margin-top:-10px;height:0;padding:0;opacity:0";   // hold the folded state until it is removed
   }
 
