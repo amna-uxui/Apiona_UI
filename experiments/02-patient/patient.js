@@ -197,7 +197,6 @@
     const box = log.querySelector(`.tool[data-step="${s.id}"]:not(.is-done)`);
     if (box) leave(box);
     dock.replaceChildren();
-    dropIntro();
     her(text, extra);
     answers[s.id] = text;
     if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
@@ -223,12 +222,7 @@
     box.style.cssText += "margin-top:-10px;height:0;padding:0;opacity:0";   // hold the folded state until it is removed
   }
 
-  // once she starts (types, or answers), the hello has done its job and leaves
-  function dropIntro() {
-    const intro = log.querySelector(".intro:not(.is-gone)");
-    if (intro) { intro.classList.add("is-gone"); setTimeout(() => intro.remove(), still ? 0 : 350); }
-  }
-  say.addEventListener("input", () => { dropIntro(); ready(); });
+  say.addEventListener("input", ready);
   // the send arrow stays neutral until there is something to send
   function ready() { $("#c-send").classList.toggle("is-ready", !!say.value.trim()); }
   // when she can choose several, her choices write her answer in the field; the green arrow sends it, like any message
@@ -320,6 +314,7 @@
     if (step >= 0) return;   // coming back: the conversation is where she left it
     await bot("Hi Camille M., I'll ask you a few short questions so Marc knows what happened before your session. Only Marc will read your answers, and you can check them before you send.");
     const hello = log.lastElementChild; if (hello) hello.classList.add("intro");
+    await wait(1800);   // time to read the hello before the first question; it then stays, and scrolls away with the next question
     ask(0);
   });
   $("#p-back").addEventListener("click", () => {

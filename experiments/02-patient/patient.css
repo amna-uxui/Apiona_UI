@@ -325,3 +325,6 @@ p, h1, h2 { margin: 0; }
 .c-dock .tool-row { margin: 0; }
 .c-dock .chip.is-done { width: 100%; border-radius: 6px; min-width: 0; padding: 13px 16px; font-size: 16px; font-weight: 500; animation: msg-in .35s var(--ease) both; }
 .c-dock .chip.is-done[disabled] { display: none; }
+
+/* nothing in the chat may be squeezed when it grows longer than the screen (the hello was crushed to nothing) */
+.log > * { flex-shrink: 0; }
