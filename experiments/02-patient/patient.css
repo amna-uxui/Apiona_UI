@@ -354,3 +354,13 @@ p, h1, h2 { margin: 0; }
 #sent.is-on .s-seal circle { animation-duration: .8s; }
 #sent.is-on .s-seal path { animation-duration: .8s; animation-delay: .5s; }
 .c-send { transition: background .4s ease, border-color .4s ease; }
+
+/* sent: Marc's photo with a small green tick, it reached him */
+.s-marc { position: relative; width: 96px; height: 96px; }
+.s-marc img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; background: var(--panel); }
+.s-tick { position: absolute; right: -2px; bottom: 0; width: 34px; height: 34px; padding: 7px; border-radius: 50%; background: var(--voice); box-shadow: 0 0 0 3px var(--white); }
+.s-tick path { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; }
+#sent.is-on .s-marc img { animation: msg-in .8s var(--ease) both; }
+#sent.is-on .s-tick { animation: msg-in .8s .4s var(--ease) both; }
+#sent.is-on .s-tick path { animation: tick .8s .8s ease forwards; }
+@media (prefers-reduced-motion: reduce) { .s-tick path { stroke-dashoffset: 0; } }
