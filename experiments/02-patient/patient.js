@@ -61,9 +61,25 @@
   /* ---------- the conversation ---------- */
   // each new question moves up to the top of the chat, with her last answer just above it,
   // so what she has to answer always has the screen to itself; the earlier lines scroll away
-  const room = () => { log.style.paddingBottom = `${Math.max(0, log.clientHeight - 200)}px`; };
+  const room = () => { log.style.paddingBottom = `${Math.max(0, log.clientHeight - 60)}px`; };   // enough for any line to reach the top in one glide
   room(); addEventListener("resize", room);
-  const scroll = () => setTimeout(() => {
+  // one slow glide, eased at both ends, and only once what is folding away has finished,
+  // so the chat never moves twice (that read as a bounce)
+  let settle = Promise.resolve(), glide = 0, heading = null;
+  function glideTo(top) {
+    if (heading !== null && Math.abs(heading - top) < 2) return;   // already gliding there: let it carry on
+    cancelAnimationFrame(glide); heading = null;
+    const from = log.scrollTop, d = top - from;
+    if (Math.abs(d) < 2) return;
+    if (still) { log.scrollTop = top; return; }
+    const t0 = performance.now(), dur = Math.min(1000, 550 + Math.abs(d) * 0.6);
+    const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const step = (now) => { const k = Math.min(1, (now - t0) / dur); log.scrollTop = from + d * ease(k); if (k < 1) glide = requestAnimationFrame(step); else heading = null; };
+    heading = top; glide = requestAnimationFrame(step);
+  }
+  const scroll = async () => {
+    await settle;
+    await new Promise((res) => setTimeout(res, 30));
     room();
     const q = [...log.querySelectorAll(".msg.bot:not(.intro)")].pop();
     let top = 0;
@@ -74,18 +90,19 @@
     }
     const last = log.lastElementChild;   // never leave something new (a paper she added) out of sight
     if (last && last.offsetTop + last.offsetHeight > top + log.clientHeight) top = Math.max(top, last.offsetTop + last.offsetHeight - log.clientHeight + 16);
-    log.scrollTo({ top: Math.max(0, top), behavior: still ? "auto" : "smooth" });
-  }, 30);
-  function add(html, cls) {
+    glideTo(Math.min(Math.max(0, top), log.scrollHeight - log.clientHeight));
+  };
+  function add(html, cls, move = true) {
     const li = document.createElement("li");
     li.className = cls;
     li.innerHTML = html;
     log.appendChild(li);
-    scroll();
+    if (move) scroll();
     return li;
   }
   // questions sit in a grey bubble; everything else the assistant says (hello, thank you) is plain, quieter text
   async function bot(text, question = false) {
+    await settle;   // the next line waits until her answered options have folded away
     const t = add("<i></i><i></i><i></i>", "msg bot typing");
     t.setAttribute("aria-label", "Typing");
     // the opening keeps its longer beat; once she is answering, the next line follows sooner
@@ -98,7 +115,7 @@
     t.classList.add("arrive");
     scroll();
   }
-  function her(text, extra = "") { add(`${esc(text)}${extra}`, "msg her"); }
+  function her(text, extra = "", move = true) { add(`${esc(text)}${extra}`, "msg her", move); }
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   // a paper she added: a photo shows itself; a PDF or other file shows as a little page with its name. Tap to see it large.
   const paper = (p, cls = "") => p.url && p.kind === "img"
@@ -199,7 +216,7 @@
     dock.replaceChildren();
     const hello = log.querySelector(".intro");   // her first answer: the hello has done its job and folds away
     if (hello) leave(hello);
-    her(text, extra);
+    her(text, extra, false);   // no move here: the next question brings it into view in one glide
     answers[s.id] = text;
     if (s.id === "papers" && text === "None" && !(answers.files || []).length) answers.files = [];
     say.value = ""; ready();
@@ -219,8 +236,9 @@
     box.classList.add("is-done");
     if (still) return box.remove();
     box.style.overflow = "hidden";
-    box.animate([{ height: `${box.offsetHeight}px`, opacity: 1, paddingTop: "2px", paddingBottom: "4px", marginTop: "0px" }, { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", marginTop: "-10px" }],
-                { duration: 700, easing: "cubic-bezier(.33, 0, .2, 1)" }).finished.then(() => box.remove());
+    const fold = box.animate([{ height: `${box.offsetHeight}px`, opacity: 1, paddingTop: "2px", paddingBottom: "4px", marginTop: "0px" }, { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", marginTop: "-10px" }],
+                { duration: 700, easing: "cubic-bezier(.33, 0, .2, 1)" });
+    settle = Promise.all([settle, fold.finished.then(() => box.remove(), () => box.remove())]);   // the hello and the options can fold together
     box.style.cssText += "margin-top:-10px;height:0;padding:0;opacity:0";   // hold the folded state until it is removed
   }
 
