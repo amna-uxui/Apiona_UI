@@ -328,3 +328,29 @@ p, h1, h2 { margin: 0; }
 
 /* nothing in the chat may be squeezed when it grows longer than the screen (the hello was crushed to nothing) */
 .log > * { flex-shrink: 0; }
+
+/* ---------- calm motion: no bounce, no scaling, slow soft fades with a very small rise ---------- */
+:root { --ease: cubic-bezier(.33, 0, .2, 1); --pop: cubic-bezier(.33, 0, .2, 1); }
+@keyframes screen-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes msg-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes words-in { from { opacity: 0; } }
+@keyframes paper-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes seal-in { from { opacity: 0; transform: scale(.9); } }
+@keyframes dot { 0%, 100% { opacity: .25; } 50% { opacity: .8; } }
+.screen.is-on { animation-duration: .7s; }
+.msg { animation-duration: .7s; }
+.msg.typing i { animation-duration: 1.6s; }
+.msg.arrive { animation-duration: .8s; }
+.msg-text { animation-duration: .9s; animation-delay: .2s; }
+.tool:not(.is-done) { animation-duration: .8s; animation-delay: .5s; }
+.tool:not(.is-done) .chip { animation-duration: .8s; animation-delay: calc(.5s + var(--i, 0) * .15s); }
+.chip { transition: background .35s ease, border-color .35s ease; }
+.chip:active { transform: none; }
+.spot::before, .spot::after { transition: transform .5s var(--ease); }
+.body-tag, .c-dock .chip.is-done { animation-duration: .7s; }
+.paper.is-in { animation-duration: .8s; }
+.viewer { animation-duration: .5s; }
+#sent.is-on .s-seal circle { animation-duration: .8s; }
+#sent.is-on .s-seal path { animation-duration: .8s; animation-delay: .5s; }
+.c-send { transition: background .4s ease, border-color .4s ease; }
